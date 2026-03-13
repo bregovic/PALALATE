@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     // Check access
     const isOwner = service.ownerId === user.id;
-    const isGranted = service.accessGrants.some((g) => g.granteeId === user.id);
+    const isGranted = service.accessGrants.some((g: any) => g.granteeId === user.id);
     if (!isOwner && !isGranted) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -66,6 +66,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         periodicPrice: body.periodicPrice != null ? parseFloat(body.periodicPrice) : undefined,
         renewalDate: body.renewalDate ? new Date(body.renewalDate) : undefined,
         maxSharedSlots: body.maxSharedSlots != null ? parseInt(body.maxSharedSlots) : undefined,
+        pricingType: body.pricingType,
+        pricingDetails: body.pricingDetails,
         updatedAt: new Date(),
       },
     });

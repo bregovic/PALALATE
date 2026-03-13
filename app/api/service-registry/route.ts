@@ -24,8 +24,8 @@ export async function POST(req: Request) {
 
     const service = await prisma.serviceRegistry.upsert({
       where: { name },
-      update: { category, defaultPrice, currency, billingCycle, description },
-      create: { name, category, defaultPrice, currency, billingCycle, description },
+      update: { category, defaultPrice, currency, billingCycle, description, pricingType: body.pricingType },
+      create: { name, category, defaultPrice, currency, billingCycle, description, pricingType: body.pricingType },
     });
 
     return NextResponse.json(service, { status: 201 });

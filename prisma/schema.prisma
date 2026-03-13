@@ -87,6 +87,23 @@ enum FriendshipStatus {
   BLOCKED
 }
 
+model ServiceCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  icon      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("service_categories")
+}
+
+enum PricingType {
+  PAID
+  AFFILIATE
+  INCLUDED
+  FREE
+}
+
 // ─── SERVICE REGISTRY (Číselník) ──────────────────────────────────────────────
 model ServiceRegistry {
   id           String   @id @default(cuid())
@@ -95,6 +112,7 @@ model ServiceRegistry {
   defaultPrice Decimal? @db.Decimal(10, 2)
   currency     String   @default("CZK")
   billingCycle BillingCycle @default(MONTHLY)
+  pricingType  PricingType  @default(PAID)
   iconUrl      String?
   websiteUrl   String?
   description  String?
@@ -118,6 +136,8 @@ model Service {
   periodicPrice    Decimal         @db.Decimal(10, 2)
   currency         String          @default("CZK")
   billingCycle     BillingCycle    @default(MONTHLY)
+  pricingType      PricingType     @default(PAID)
+  pricingDetails   String?         // e.g. "V ceně Revolut Ultra"
   renewalDate      DateTime?
   status           ServiceStatus   @default(ACTIVE)
   sharingStatus    SharingStatus   @default(SHARING_DISABLED)

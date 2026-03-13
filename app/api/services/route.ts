@@ -79,6 +79,8 @@ export async function POST(req: NextRequest) {
         periodicPrice: parseFloat(periodicPrice),
         currency: currency || "CZK",
         billingCycle: billingCycle || "MONTHLY",
+        pricingType: body.pricingType || "PAID",
+        pricingDetails: body.pricingDetails || null,
         renewalDate: renewalDate ? new Date(renewalDate) : null,
         sharingStatus: sharingStatus || "SHARING_DISABLED",
         sharingVisibility: sharingVisibility || "FRIENDS_ONLY",

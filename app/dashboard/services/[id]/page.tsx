@@ -22,6 +22,8 @@ interface Service {
   accessGrants: any[];
   accessRequests: any[];
   isOwner: boolean;
+  pricingType: "PAID" | "AFFILIATE" | "INCLUDED" | "FREE";
+  pricingDetails: string | null;
   _count: { accessGrants: number };
 }
 
@@ -56,6 +58,8 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     category: "",
     maxSharedSlots: 0,
     renewalDate: "",
+    pricingType: "PAID" as "PAID" | "AFFILIATE" | "INCLUDED" | "FREE",
+    pricingDetails: "",
   });
 
   const [savingEdit, setSavingEdit] = useState(false);
@@ -82,6 +86,8 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         category: data.category || "",
         maxSharedSlots: data.maxSharedSlots,
         renewalDate: data.renewalDate ? data.renewalDate.split("T")[0] : "",
+        pricingType: data.pricingType,
+        pricingDetails: data.pricingDetails || "",
       });
     } catch {
       setError("Chyba při načítání.");
@@ -178,11 +184,23 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
             <div className="card-body">
               <div className="grid-2" style={{ gap: 20 }}>
                 <div>
-                  <label className="text-muted text-xs block mb-1">CENA</label>
+                  <label className="text-muted text-xs block mb-1">CENA / DEAL</label>
                   <div style={{ fontSize: "1.2rem", fontWeight: 700 }}>
-                    {Number(service.periodicPrice).toFixed(2)} {service.currency}
-                    <span style={{ fontSize: "0.9rem", fontWeight: 400, marginLeft: 6 }}>/ {service.billingCycle}</span>
+                    {service.pricingType === "PAID" ? (
+                      <>
+                        {Number(service.periodicPrice).toFixed(2)} {service.currency}
+                        <span style={{ fontSize: "0.9rem", fontWeight: 400, marginLeft: 6 }}>/ {service.billingCycle}</span>
+                      </>
+                    ) : (
+                      <span className="text-brand-600">
+                        {service.pricingType === "AFFILIATE" ? "💎 Affiliate / Deal" : 
+                         service.pricingType === "INCLUDED" ? "🎁 V balíčku" : "✨ Zdarma"}
+                      </span>
+                    )}
                   </div>
+                  {service.pricingDetails && (
+                    <div className="text-xs text-muted mt-1">{service.pricingDetails}</div>
+                  )}
                 </div>
                 <div>
                   <label className="text-muted text-xs block mb-1">STAV SDÍLENÍ</label>
@@ -475,6 +493,40 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   />
                 </div>
               </div>
+
+              {/* Pricing Type toggle in Edit */}
+              <div className="form-group mt-4">
+                <label className="form-label">Typ platby</label>
+                <div className="flex gap-2">
+                  {[
+                    { id: "PAID", label: "Placené" },
+                    { id: "AFFILIATE", label: "Affiliate" },
+                    { id: "INCLUDED", label: "V balíčku" },
+                    { id: "FREE", label: "Zdarma" }
+                  ].map(t => (
+                    <button 
+                      key={t.id}
+                      type="button"
+                      onClick={() => setEditForm({...editForm, pricingType: t.id as any})}
+                      className={`btn btn-sm ${editForm.pricingType === t.id ? 'btn-secondary' : 'btn-ghost'}`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {editForm.pricingType !== "PAID" && (
+                <div className="form-group mt-4">
+                  <label className="form-label">Detaily k dealu</label>
+                  <input 
+                    className="form-input"
+                    placeholder="Např. V ceně Revolut Ultra"
+                    value={editForm.pricingDetails}
+                    onChange={e => setEditForm({...editForm, pricingDetails: e.target.value})}
+                  />
+                </div>
+              )}
               <div className="form-group mt-4">
                 <label className="form-label">Popis / poznámka k platbě</label>
                 <textarea 

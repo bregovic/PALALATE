@@ -11,10 +11,17 @@ interface RegistryService {
   currency: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  icon?: string;
+}
+
 export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: string[] }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [registry, setRegistry] = useState<RegistryService[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,36 +30,49 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
   
   // Custom service form
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isNewCategory, setIsNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  
   const [customService, setCustomService] = useState({
     name: "",
-    category: "Ostatní",
+    category: "",
     defaultPrice: 0,
     currency: "CZK",
     billingCycle: "MONTHLY",
+    pricingType: "PAID",
+    pricingDetails: "",
     description: ""
   });
 
   useEffect(() => {
-    fetch("/api/service-registry")
-      .then(res => res.json())
-      .then(data => {
-        setRegistry(data);
+    const fetchData = async () => {
+      try {
+        const [regRes, catRes] = await Promise.all([
+          fetch("/api/service-registry"),
+          fetch("/api/categories")
+        ]);
+        const regData = await regRes.json();
+        const catData = await catRes.json();
+        setRegistry(regData);
+        setCategories(catData);
+      } catch (err) {
+        console.error("Failed to fetch data", err);
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch registry", err);
-        setLoading(false);
-      });
+      }
+    };
+    fetchData();
   }, []);
 
-  const categories = useMemo(() => {
-    const cats = new Set<string>();
-    cats.add("Vše");
+  const availableCategories = useMemo(() => {
+    const names = new Set<string>();
+    names.add("Vše");
     registry.forEach(s => {
-      if (s.category) cats.add(s.category);
+      if (s.category) names.add(s.category);
     });
-    return Array.from(cats);
-  }, [registry]);
+    categories.forEach(c => names.add(c.name));
+    return Array.from(names);
+  }, [registry, categories]);
 
   const filtered = useMemo(() => {
     return registry.filter(s => {
@@ -85,7 +105,8 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
             providerName: item.name,
             periodicPrice: item.defaultPrice || 0,
             currency: item.currency || "CZK",
-            category: item.category || "other"
+            category: item.category || "other",
+            pricingType: "PAID"
           }),
         });
       }
@@ -105,10 +126,25 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
     setLoading(true);
 
     try {
+      let finalCategory = customService.category;
+
+      if (isNewCategory && newCategoryName) {
+        const catRes = await fetch("/api/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: newCategoryName }),
+        });
+        if (catRes.ok) {
+          const newCat = await catRes.json();
+          setCategories(prev => [...prev, newCat]);
+          finalCategory = newCat.name;
+        }
+      }
+
       const res = await fetch("/api/service-registry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(customService),
+        body: JSON.stringify({ ...customService, category: finalCategory }),
       });
 
       if (res.ok) {
@@ -117,13 +153,16 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
         setShowAddForm(false);
         setCustomService({
           name: "",
-          category: "Ostatní",
+          category: "",
           defaultPrice: 0,
           currency: "CZK",
           billingCycle: "MONTHLY",
+          pricingType: "PAID",
+          pricingDetails: "",
           description: ""
         });
-        // Automatically select it
+        setIsNewCategory(false);
+        setNewCategoryName("");
         toggleSelection(newItem.id, false);
       }
     } catch (err) {
@@ -150,8 +189,8 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
           <div className="card-header" style={{ borderBottom: "1px solid var(--border-subtle)", padding: "20px 24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
               <div>
-                <h3 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>🔍 Najdi a přidej služby</h3>
-                <p className="text-xs text-muted">Vyber si služby ze seznamu a potvrď tlačítkem</p>
+                <h3 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>🔍 Číselník služeb</h3>
+                <p className="text-xs text-muted">Hledej podle názvu nebo filtruj podle kategorií</p>
               </div>
               
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -171,15 +210,15 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                 <button 
                   onClick={handleAddSelected}
                   disabled={selectedIds.length === 0 || isAdding}
-                  className={`btn ${selectedIds.length > 0 ? 'btn-primary' : 'btn-ghost'} btn-sm`}
+                  className={`btn ${selectedIds.length > 0 ? 'btn-primary' : 'btn-glow'} btn-sm`}
                 >
-                  {isAdding ? "Přidávám..." : `Aktivovat vybrané (${selectedIds.length})`}
+                  {isAdding ? "Přidávám..." : `Přidat vybrané (${selectedIds.length})`}
                 </button>
               </div>
             </div>
 
             <div style={{ display: "flex", gap: 8, marginTop: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {categories.map(cat => (
+              {availableCategories.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -192,15 +231,15 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
             </div>
           </div>
 
-          <div className="card-body" style={{ minHeight: 120 }}>
+          <div className="card-body">
             {filtered.length === 0 ? (
               <div className="text-center p-8">
-                <p className="text-muted mb-4">Nic jsme nenašli...</p>
+                <p className="text-muted mb-4">Služba nenalezena.</p>
                 <button 
                   onClick={() => { setShowAddForm(true); setCustomService({...customService, name: searchTerm}); }}
                   className="btn btn-secondary btn-sm"
                 >
-                  ➕ Přidat "{searchTerm}" jako novou službu
+                  ➕ Přidat "{searchTerm}" do systému
                 </button>
               </div>
             ) : (
@@ -246,7 +285,7 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                   className="flex items-center gap-2 p-3 border border-dashed rounded-xl text-slate-400 hover:text-brand-600 hover:border-brand-300 hover:bg-brand-50 transition-all cursor-pointer text-sm"
                 >
                   <div className="w-5 h-5 flex items-center justify-center">➕</div>
-                  <span>Přidat vlastní...</span>
+                  <span>Jiná...</span>
                 </div>
               </div>
             )}
@@ -254,16 +293,17 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
         </div>
       )}
 
-      {/* Expanded Custom Service Modal/Form */}
+      {/* NEW SERVICE MODAL */}
       {showAddForm && (
         <div className="modal-overlay" style={{ zIndex: 1100 }}>
-          <div className="modal" style={{ maxWidth: 500 }}>
+          <div className="modal" style={{ maxWidth: 550 }}>
             <div className="modal-header">
-              <h3>🆕 Přidat novou službu do číselníku</h3>
+              <h3>🆕 Nová služba</h3>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowAddForm(false)}>✕</button>
             </div>
             <div className="modal-body">
-              <div className="grid-1" style={{ gap: 16 }}>
+              <div className="grid-1" style={{ gap: 20 }}>
+                {/* Basic Info */}
                 <div className="form-group">
                   <label className="form-label">Název služby</label>
                   <input 
@@ -273,55 +313,112 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                     onChange={e => setCustomService({...customService, name: e.target.value})}
                   />
                 </div>
-                <div className="grid-2" style={{ gap: 16 }}>
-                  <div className="form-group">
-                    <label className="form-label">Cena</label>
-                    <input 
-                      type="number"
-                      className="form-input" 
-                      value={customService.defaultPrice}
-                      onChange={e => setCustomService({...customService, defaultPrice: parseFloat(e.target.value)})}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Měna</label>
-                    <select 
-                      className="form-select"
-                      value={customService.currency}
-                      onChange={e => setCustomService({...customService, currency: e.target.value})}
-                    >
-                      <option value="CZK">CZK</option>
-                      <option value="EUR">EUR</option>
-                      <option value="USD">USD</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="grid-2" style={{ gap: 16 }}>
-                  <div className="form-group">
-                    <label className="form-label">Kategorie</label>
-                    <input 
-                      className="form-input" 
-                      value={customService.category}
-                      onChange={e => setCustomService({...customService, category: e.target.value})}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Frekvence</label>
-                    <select 
-                      className="form-select"
-                      value={customService.billingCycle}
-                      onChange={e => setCustomService({...customService, billingCycle: e.target.value})}
-                    >
-                      <option value="MONTHLY">Měsíčně</option>
-                      <option value="YEARLY">Ročně</option>
-                      <option value="WEEKLY">Týdně</option>
-                    </select>
-                  </div>
-                </div>
+
+                {/* Category Selection */}
                 <div className="form-group">
-                  <label className="form-label">Poznámka / Popis</label>
+                  <label className="form-label">Kategorie</label>
+                  {!isNewCategory ? (
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <select 
+                        className="form-select"
+                        value={customService.category}
+                        onChange={e => setCustomService({...customService, category: e.target.value})}
+                      >
+                        <option value="">-- Vyber kategorii --</option>
+                        {availableCategories.filter(c => c !== "Vše").map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                      <button 
+                        onClick={() => setIsNewCategory(true)}
+                        className="btn btn-secondary btn-sm"
+                      >➕</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input 
+                        placeholder="Název nové kategorie"
+                        className="form-input"
+                        value={newCategoryName}
+                        onChange={e => setNewCategoryName(e.target.value)}
+                      />
+                      <button 
+                        onClick={() => { setIsNewCategory(false); setNewCategoryName(""); }}
+                        className="btn btn-ghost btn-sm"
+                      >✕</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pricing Type */}
+                <div className="form-group">
+                  <label className="form-label">Typ platby</label>
+                  <div className="grid-2" style={{ gap: 10 }}>
+                    {[
+                      { id: "PAID", label: "Pravidelná platba" },
+                      { id: "AFFILIATE", label: "Affiliate / Deal" },
+                      { id: "INCLUDED", label: "V ceně jiného balíčku" },
+                      { id: "FREE", label: "Zdarma" }
+                    ].map(type => (
+                      <label key={type.id} className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer ${customService.pricingType === type.id ? 'bg-brand-50 border-brand-300' : ''}`}>
+                        <input 
+                          type="radio" 
+                          name="pricingType"
+                          checked={customService.pricingType === type.id}
+                          onChange={() => setCustomService({...customService, pricingType: type.id})}
+                        />
+                        <span className="text-sm">{type.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price (if paid) */}
+                {customService.pricingType === "PAID" ? (
+                  <div className="grid-3" style={{ gap: 12 }}>
+                    <div className="form-group" style={{ gridColumn: "span 1" }}>
+                      <label className="form-label">Cena</label>
+                      <input 
+                        type="number"
+                        className="form-input" 
+                        value={customService.defaultPrice}
+                        onChange={e => setCustomService({...customService, defaultPrice: parseFloat(e.target.value)})}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Měna</label>
+                      <select className="form-select" value={customService.currency} onChange={e => setCustomService({...customService, currency: e.target.value})}>
+                        <option value="CZK">CZK</option>
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Frekvence</label>
+                      <select className="form-select" value={customService.billingCycle} onChange={e => setCustomService({...customService, billingCycle: e.target.value})}>
+                        <option value="MONTHLY">Měsíčně</option>
+                        <option value="YEARLY">Ročně</option>
+                        <option value="WEEKLY">Týdně</option>
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="form-group">
+                    <label className="form-label">Detaily k "neplacení" (např. "V ceně Revolut Ultra")</label>
+                    <input 
+                      placeholder="Uveď důvod nebo deal..."
+                      className="form-input"
+                      value={customService.pricingDetails}
+                      onChange={e => setCustomService({...customService, pricingDetails: e.target.value})}
+                    />
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label className="form-label">Poznámka</label>
                   <textarea 
                     className="form-input" 
+                    style={{ minHeight: 60 }}
                     value={customService.description}
                     onChange={e => setCustomService({...customService, description: e.target.value})}
                   />
@@ -335,7 +432,7 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                 className="btn btn-primary"
                 disabled={!customService.name || loading}
               >
-                Uložit a vybrat
+                Uložit a přidat
               </button>
             </div>
           </div>
