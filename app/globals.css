@@ -1182,3 +1182,12 @@ tbody tr:hover { background: var(--bg-elevated); }
   box-shadow: 0 0 6px var(--danger-400);
   animation: pulse 2s infinite;
 }
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3.5px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2.5s ease-in-out infinite;
+}

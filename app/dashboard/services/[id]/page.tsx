@@ -37,7 +37,8 @@ interface Service {
   requiresBookingApproval: boolean;
   isTerminated: boolean;
   priceIntervals: PriceInterval[];
-  _count: { accessGrants: number };
+  manualSlots: any[];
+  _count: { accessGrants: number; manualSlots: number };
 }
 
 export default function ServiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -102,6 +103,13 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
 
   const [savingEdit, setSavingEdit] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
+
+  // Manual slots
+  const [showAddManualSlotModal, setShowAddManualSlotModal] = useState(false);
+  const [slotType, setSlotType] = useState<"MANUAL" | "SYSTEM">("MANUAL");
+  const [manualSlotForm, setManualSlotForm] = useState({ name: "", note: "", userId: "" });
+  const [savingManualSlot, setSavingManualSlot] = useState(false);
+  const [friendships, setFriendships] = useState<any[]>([]);
 
   async function load() {
     setLoading(true);
@@ -267,9 +275,20 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     }
   };
 
+  const loadFriendships = async () => {
+    try {
+      const res = await fetch("/api/contacts");
+      if (res.ok) {
+        const data = await res.json();
+        setFriendships(data.filter((f: any) => f.status === "ACCEPTED"));
+      }
+    } catch (err) { console.error(err); }
+  };
+
   useEffect(() => { 
     load(); 
     loadCategories();
+    loadFriendships();
   }, [id]);
 
   useEffect(() => {
@@ -327,6 +346,57 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     } else {
       const err = await res.json();
       alert(err.error || "Chyba při rezervaci");
+    }
+  }
+
+  async function handleSaveManualSlot() {
+    setSavingManualSlot(true);
+    try {
+      if (slotType === "SYSTEM") {
+        const res = await fetch(`/api/services/${id}/access-grants`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            granteeId: manualSlotForm.userId,
+            startsAt: new Date().toISOString(),
+          }),
+        });
+        if (res.ok) {
+          setShowAddManualSlotModal(false);
+          setManualSlotForm({ name: "", note: "", userId: "" });
+          load();
+        } else {
+           const err = await res.json();
+           alert(err.error || "Chyba při propojování uživatele");
+        }
+      } else {
+        const res = await fetch(`/api/services/${id}/manual-slots`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(manualSlotForm),
+        });
+        if (res.ok) {
+          setShowAddManualSlotModal(false);
+          setManualSlotForm({ name: "", note: "", userId: "" });
+          load();
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingManualSlot(false);
+    }
+  }
+
+  async function handleDeleteManualSlot(slotId: string) {
+    if (!confirm("Opravdu chcete odstranit toto obsazené místo?")) return;
+    try {
+      const res = await fetch(`/api/services/${id}/manual-slots?slotId=${slotId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) load();
+    } catch (e) {
+      console.error(e);
     }
   }
 
@@ -546,9 +616,9 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
           <div className="card">
             <div className="card-header">
               <h3>👥 Kdo má přístup</h3>
-              <div className="badge badge-primary text-xs">
-                {service._count.accessGrants} / {service.maxSharedSlots || "∞"}
-              </div>
+              {service.isOwner && (
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowAddManualSlotModal(true)}>＋ Ručně obsadit</button>
+              )}
             </div>
             <div className="card-body">
               <div className="flex gap-4 mb-4 overflow-x-auto pb-2">
@@ -558,39 +628,67 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                  </div>
                  <div className="flex flex-col items-center p-3 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 min-w-[80px]">
                     <span className="text-[10px] font-bold uppercase">Obsazeno</span>
-                    <span className="text-lg font-bold">{service._count.accessGrants}</span>
+                    <span className="text-lg font-bold">{service._count.accessGrants + (service.manualSlots?.length || 0)}</span>
                  </div>
                  <div className="flex flex-col items-center p-3 bg-green-50 text-green-700 rounded-xl border border-green-100 min-w-[80px]">
                     <span className="text-[10px] font-bold uppercase">Volno</span>
                     <span className="text-lg font-bold">
-                      {service.maxSharedSlots ? (service.maxSharedSlots - service._count.accessGrants) : '∞'}
+                      {service.maxSharedSlots ? (service.maxSharedSlots - (service._count.accessGrants + (service.manualSlots?.length || 0))) : '∞'}
                     </span>
                  </div>
               </div>
-              {service.accessGrants.length === 0 ? (
-                <p className="text-muted text-sm">Zatím nikdo. Sdílej radost!</p>
+
+              {(service.accessGrants.length === 0 && (!service.manualSlots || service.manualSlots.length === 0)) ? (
+                <p className="text-muted text-sm italic">Zatím nikdo. Sdílej radost!</p>
               ) : (
                 <div className="table-wrap">
                   <table>
                     <thead>
                       <tr>
-                        <th>Uživatel</th>
-                        <th>Od</th>
-                        <th>Model platby</th>
+                        <th>Uživatel / Příjemce</th>
+                        <th>Typ / Od</th>
+                        <th>Model / Poznámka</th>
                         <th></th>
                       </tr>
                     </thead>
                     <tbody>
+                      {/* System users */}
                       {service.accessGrants.map((g: any) => (
                         <tr key={g.id}>
                           <td>
-                            <div className="font-bold">{g.grantee.name}</div>
+                            <div className="font-bold flex items-center gap-2">
+                              {g.grantee.name}
+                              <span className="text-[9px] bg-blue-100 text-blue-600 px-1 rounded uppercase font-bold">Systém</span>
+                            </div>
                             <div className="text-xs text-muted">{g.grantee.email}</div>
                           </td>
                           <td className="text-sm">{new Date(g.startsAt).toLocaleDateString()}</td>
                           <td><span className="badge badge-gray">{g.pricingModel}</span></td>
                           <td>
-                            {service.isOwner && <button className="btn btn-ghost btn-sm text-danger">Odebrat</button>}
+                            {service.isOwner && <button className="btn btn-ghost btn-sm text-danger opacity-50 cursor-not-allowed" title="Zatím nelze odebrat systémové uživatele odsud">Odebrat</button>}
+                          </td>
+                        </tr>
+                      ))}
+                      {/* Manual slots */}
+                      {service.manualSlots?.map((slot: any) => (
+                        <tr key={slot.id}>
+                          <td>
+                            <div className="font-bold flex items-center gap-2">
+                              {slot.name}
+                              <span className="text-[9px] bg-amber-100 text-amber-600 px-1 rounded uppercase font-bold">Manuální</span>
+                            </div>
+                          </td>
+                          <td className="text-sm italic text-muted">Vnější slot</td>
+                          <td className="text-xs text-muted">{slot.note || "—"}</td>
+                          <td>
+                            {service.isOwner && (
+                              <button 
+                                className="btn btn-ghost btn-sm text-danger" 
+                                onClick={() => handleDeleteManualSlot(slot.id)}
+                              >
+                                Odebrat
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -1094,6 +1192,96 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                <button className="btn btn-ghost w-full" onClick={() => setShowAddCredentialModal(false)}>Zrušit</button>
                <button className="btn btn-primary w-full" disabled={savingCred} onClick={handleAddCredential}>
                  {savingCred ? "Ukládám..." : "Uložit údaje"}
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Add Manual Slot Modal */}
+      {showAddManualSlotModal && (
+        <div className="modal-overlay" onMouseDown={e => e.target === e.currentTarget && setShowAddManualSlotModal(false)}>
+          <div className="modal" onMouseDown={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <h3>👥 Ručně obsadit místo</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => setShowAddManualSlotModal(false)}>✕</button>
+            </div>
+            <div className="modal-body flex flex-col gap-4">
+               <div className="form-group">
+                 <label className="form-label font-bold">Typ obsazení</label>
+                 <div className="flex gap-2">
+                    <button 
+                      className={`btn btn-sm flex-1 ${slotType === 'MANUAL' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setSlotType('MANUAL')}
+                    >
+                      Vnější kontakt
+                    </button>
+                    <button 
+                      className={`btn btn-sm flex-1 ${slotType === 'SYSTEM' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setSlotType('SYSTEM')}
+                    >
+                      Uživatel systému
+                    </button>
+                 </div>
+               </div>
+
+               {slotType === 'MANUAL' ? (
+                 <>
+                   <div className="form-group">
+                     <label className="form-label font-bold">Jméno / Text (povinné)</label>
+                     <input 
+                       className="form-input" 
+                       placeholder="Např. Babička, nebo jméno kamaráda..."
+                       value={manualSlotForm.name} 
+                       onChange={e => setManualSlotForm({...manualSlotForm, name: e.target.value})} 
+                     />
+                   </div>
+                   <div className="form-group">
+                     <label className="form-label">Poznámka (volitelně)</label>
+                     <input 
+                       className="form-input" 
+                       placeholder="Např. Neplatí, dárkový poukaz..."
+                       value={manualSlotForm.note} 
+                       onChange={e => setManualSlotForm({...manualSlotForm, note: e.target.value})} 
+                     />
+                   </div>
+                 </>
+               ) : (
+                 <div className="form-group">
+                   <label className="form-label font-bold">Vybrat z kontaktů</label>
+                   {friendships.length === 0 ? (
+                     <div className="p-4 bg-muted rounded-lg text-center text-xs text-muted">
+                       Zatím nemáš žádné potvrzené přátele v kontaktech.
+                     </div>
+                   ) : (
+                     <select 
+                       className="form-select"
+                       value={manualSlotForm.userId}
+                       onChange={e => setManualSlotForm({...manualSlotForm, userId: e.target.value})}
+                     >
+                       <option value="">— Vyberte uživatele —</option>
+                       {friendships.map((f: any) => {
+                         const other = f.requester.id === service.ownerId ? f.addressee : f.requester;
+                         return <option key={other.id} value={other.id}>{other.name} ({other.email})</option>
+                       })}
+                     </select>
+                   )}
+                 </div>
+               )}
+               
+               <p className="text-[10px] text-muted italic">
+                 {slotType === 'MANUAL' 
+                   ? "💡 Tento slot se započítá do celkové kapacity, ale není přidělen konkrétnímu uživateli v systému."
+                   : "💡 Tímto přímo udělíte přístup vybranému uživateli, aniž by musel posílat žádost."}
+               </p>
+            </div>
+            <div className="modal-footer flex gap-3">
+               <button className="btn btn-ghost w-full" onClick={() => setShowAddManualSlotModal(false)}>Zrušit</button>
+               <button 
+                className="btn btn-primary w-full" 
+                disabled={savingManualSlot || (slotType === 'MANUAL' ? !manualSlotForm.name : !manualSlotForm.userId)} 
+                onClick={handleSaveManualSlot}
+               >
+                 {savingManualSlot ? "Ukládám..." : "Obsadit místo"}
                </button>
             </div>
           </div>

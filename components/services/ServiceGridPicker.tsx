@@ -10,6 +10,8 @@ interface RegistryService {
   defaultPrice: number | null;
   currency: string;
   isShareable: boolean;
+  billingCycle: string;
+  pricingType: string;
 }
 
 interface Category {
@@ -108,7 +110,8 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
             periodicPrice: item.defaultPrice || 0,
             currency: item.currency || "CZK",
             category: item.category || "other",
-            pricingType: "PAID"
+            pricingType: item.pricingType || "PAID",
+            billingCycle: item.billingCycle || "MONTHLY"
           }),
         });
       }
@@ -151,13 +154,25 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
 
   return (
     <div className="mb-8">
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: isOpen ? 16 : 0 }}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: isOpen ? 24 : 0 }}>
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className={`btn ${isOpen ? 'btn-secondary' : 'btn-primary'} btn-sm shadow-sm`}
-          style={{ height: 44, padding: "0 24px", borderRadius: "var(--radius-full)" }}
+          className={`btn ${isOpen ? 'btn-secondary' : 'btn-primary'} shadow-lg animate-bounce-subtle`}
+          style={{ 
+            width: 64, 
+            height: 64, 
+            borderRadius: "50%", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            padding: 0,
+            fontSize: "2rem",
+            transform: isOpen ? 'rotate(45deg)' : 'none',
+            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}
+          title={isOpen ? "Zavřít číselník" : "Přidat službu z číselníku"}
         >
-          {isOpen ? "✕ Zavřít číselník" : "✨ Rychlé přidání z číselníku"}
+          ＋
         </button>
       </div>
 

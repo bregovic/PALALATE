@@ -162,8 +162,21 @@ model Service {
   settlementPeriods SettlementPeriod[]
   bookings         Booking[]
   priceIntervals   PriceInterval[]
+  manualSlots      ManualSlot[]
 
   @@map("services")
+}
+
+model ManualSlot {
+  id        String   @id @default(cuid())
+  serviceId String
+  name      String
+  note      String?
+  createdAt DateTime @default(now())
+
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@map("manual_slots")
 }
 
 model Booking {

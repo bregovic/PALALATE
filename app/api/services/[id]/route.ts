@@ -24,8 +24,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           where: { status: "PENDING" },
           include: { requester: { select: { id: true, name: true, email: true } } },
         },
-        _count: { select: { accessGrants: { where: { status: "ACTIVE" } } } },
+        _count: { 
+          select: { 
+            accessGrants: { where: { status: "ACTIVE" } },
+            manualSlots: true
+          } 
+        },
         priceIntervals: { orderBy: { startDate: "asc" } },
+        manualSlots: true,
       },
     });
 

@@ -586,13 +586,36 @@ function ServicesTab() {
                   <td>{Number(s.defaultPrice).toFixed(2)} {s.currency} / {s.billingCycle}</td>
                   <td>{s.isShareable ? <span className="badge badge-green">Povoleno</span> : <span className="badge badge-gray">Zakázáno</span>}</td>
                   <td>
-                    <button 
-                      className="btn btn-ghost btn-icon btn-sm"
-                      onClick={() => startEdit(s)}
-                      title="Upravit"
-                    >
-                      ✏️
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        className="btn btn-primary btn-sm"
+                        onClick={async () => {
+                          const res = await fetch("/api/services", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              serviceName: s.name,
+                              providerName: s.name,
+                              periodicPrice: s.defaultPrice || 0,
+                              currency: s.currency || "CZK",
+                              category: s.category || "other",
+                              pricingType: s.pricingType || "PAID",
+                              billingCycle: s.billingCycle || "MONTHLY"
+                            }),
+                          });
+                          if (res.ok) alert(`Služba ${s.name} byla přidána do tvého seznamu!`);
+                        }}
+                      >
+                        ➕ Do mých služeb
+                      </button>
+                      <button 
+                        className="btn btn-ghost btn-icon btn-sm"
+                        onClick={() => startEdit(s)}
+                        title="Upravit"
+                      >
+                        ✏️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

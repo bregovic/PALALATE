@@ -88,19 +88,10 @@ export default async function DashboardPage() {
 
   return (
     <div className="page-content animate-fade-in">
-      {/* Hero */}
       <div className="dashboard-hero mb-6">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <div>
-            <h1 style={{ fontSize: "1.6rem", marginBottom: 0 }}>
-              {greeting}, <span className="gradient-text">{user.name.split(" ")[0]}</span> 👋
-            </h1>
-          </div>
-          <Link href="/dashboard/services/new" className="btn btn-primary" id="add-service-hero-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
-            Přidat službu
-          </Link>
-        </div>
+        <h1 style={{ fontSize: "1.6rem", marginBottom: 0 }}>
+          {greeting}, <span className="gradient-text">{user.name.split(" ")[0]}</span> 👋
+        </h1>
       </div>
 
       {/* Stat cards */}
@@ -159,10 +150,7 @@ export default async function DashboardPage() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="28" height="28"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                 </div>
                 <div className="empty-title">Žádné služby</div>
-                <p className="empty-desc">Přidej své první předplatné a začni ho spravovat jako profesionál.</p>
-                <Link href="/dashboard/services/new" className="btn btn-primary btn-sm mt-4">
-                  Přidat první službu
-                </Link>
+                <p className="empty-desc">Přidej své první předplatné v sekci Moje služby pomocí číselníku.</p>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -259,9 +247,9 @@ export default async function DashboardPage() {
       {/* Quick actions */}
       <div className="card">
         <div className="card-body" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Link href="/dashboard/services/new" className="btn btn-secondary" id="qa-add-service">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
-            Přidat službu
+          <Link href="/dashboard/services" className="btn btn-secondary" id="qa-services">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            Moje služby
           </Link>
           <Link href="/dashboard/contacts" className="btn btn-secondary" id="qa-contacts">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
