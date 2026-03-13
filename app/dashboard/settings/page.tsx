@@ -62,11 +62,9 @@ export default function SettingsPage() {
         <button className={`tab ${tab === "privacy" ? "active" : ""}`} onClick={() => setTab("privacy")}>
           🛡️ Soukromí
         </button>
-        {user?.role === "ADMIN" && (
-          <button className={`tab ${tab === "management" ? "active" : ""}`} onClick={() => setTab("management")}>
-            ⚙️ Správa
-          </button>
-        )}
+        <button className={`tab ${tab === "management" ? "active" : ""}`} onClick={() => setTab("management")}>
+          ⚙️ Správa
+        </button>
       </div>
 
       {tab === "profile" && (
