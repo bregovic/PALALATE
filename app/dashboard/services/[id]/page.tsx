@@ -33,7 +33,7 @@ interface Service {
   pricingDetails: string | null;
   renewalDate: string | null;
   startDate: string | null;
-  allowConcurrentUse: boolean;
+  usageMode: "PRIVATE" | "SHARED_ROTATION" | "SHARED" | "LICENSE";
   requiresBookingApproval: boolean;
   isTerminated: boolean;
   priceIntervals: PriceInterval[];
@@ -93,7 +93,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     pricingType: "PAID" as "PAID" | "AFFILIATE" | "INCLUDED" | "FREE",
     pricingDetails: "",
     startDate: "",
-    allowConcurrentUse: true,
+    usageMode: "PRIVATE" as "PRIVATE" | "SHARED_ROTATION" | "SHARED" | "LICENSE",
     requiresBookingApproval: false,
     isTerminated: false,
     priceIntervals: [] as PriceInterval[],
@@ -136,7 +136,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         pricingType: data.pricingType,
         pricingDetails: data.pricingDetails || "",
         startDate: data.startDate ? data.startDate.split("T")[0] : "",
-        allowConcurrentUse: data.allowConcurrentUse ?? true,
+        usageMode: data.usageMode ?? "PRIVATE",
         requiresBookingApproval: data.requiresBookingApproval ?? false,
         isTerminated: data.isTerminated ?? false,
         priceIntervals: (data.priceIntervals || []).map((pi: any) => ({
@@ -292,10 +292,10 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
   }, [id]);
 
   useEffect(() => {
-    if (service && !service.allowConcurrentUse) {
+    if (service && service.usageMode === "SHARED_ROTATION") {
       fetchBookings();
     }
-  }, [service?.allowConcurrentUse]);
+  }, [service?.usageMode]);
 
   async function reveal(cid: string) {
     setRevealing(prev => ({ ...prev, [cid]: true }));
@@ -440,7 +440,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           
           {/* Reservations / Calendar Component Area */}
-          {!service.allowConcurrentUse && (
+          {service.usageMode === "SHARED_ROTATION" && (
             <div className="card border-amber-200 shadow-sm animate-fade-in">
               <div className="card-header bg-amber-50 flex justify-between items-center">
                 <h3 className="text-amber-800">📅 Rezervace a termíny</h3>
@@ -553,11 +553,10 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                 <div>
                   <label className="text-muted text-xs block mb-1">REŽIM POUŽÍVÁNÍ</label>
                   <div className="font-medium">
-                    {service.allowConcurrentUse ? (
-                      <span className="text-green-600">✅ Souběžné</span>
-                    ) : (
-                      <span className="text-amber-600">🕒 Rezervační</span>
-                    )}
+                    {service.usageMode === "PRIVATE" && <span className="text-muted">🔒 Soukromé</span>}
+                    {service.usageMode === "SHARED" && <span className="text-green-600">👥 Sdílené</span>}
+                    {service.usageMode === "SHARED_ROTATION" && <span className="text-amber-600">🕒 Sdílené (Střídání)</span>}
+                    {service.usageMode === "LICENSE" && <span className="text-blue-600">🔑 Licence</span>}
                   </div>
                 </div>
               </div>
@@ -703,13 +702,13 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         {/* Right Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           
-          {!service.allowConcurrentUse && (
+          {service.usageMode === "SHARED_ROTATION" && (
              <div className="card shadow-md border-amber-200 bg-amber-50 animate-fade-in">
                <div className="card-header border-amber-200" style={{ background: "rgba(251, 191, 36, 0.1)" }}>
-                 <h3 className="text-amber-800">🕒 Rezervační režim</h3>
+                 <h3 className="text-amber-800">🕒 Sdílené (Střídání)</h3>
                </div>
                <div className="card-body text-sm text-amber-700">
-                  Tato služba neumožňuje souběžné používání. 
+                  Tato služba vyžaduje plánování přístupu (rezervace).
                   {service.requiresBookingApproval ? " Všechny rezervace musí schválit vlastník." : " Rezervace jsou automaticky potvrzeny."}
                   <button className="btn btn-primary w-full mt-4" onClick={() => alert("Kalendář bude brzy implementován! Prozatím se domluvte v chatu.")}>
                     📅 Otevřít kalendář
@@ -865,17 +864,26 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   </select>
                 </div>
                 <div className="form-group" style={{ gridColumn: "1 / -1" }}>
-                  <div className="flex gap-4 p-3 bg-muted rounded-lg border border-subtle">
-                     <label className="flex items-center gap-2 cursor-pointer">
-                       <input type="checkbox" checked={editForm.allowConcurrentUse} onChange={e => setEditForm({...editForm, allowConcurrentUse: e.target.checked})} />
-                       <span className="text-sm font-bold">Souběžné používání</span>
-                     </label>
-                     {!editForm.allowConcurrentUse && (
-                        <label className="flex items-center gap-2 cursor-pointer ml-auto border-l pl-4 border-subtle">
-                          <input type="checkbox" checked={editForm.requiresBookingApproval} onChange={e => setEditForm({...editForm, requiresBookingApproval: e.target.checked})} />
-                          <span className="text-sm">Vyžadovat schválení termínu</span>
-                        </label>
-                     )}
+                  <div className="flex flex-col gap-3 p-3 bg-muted rounded-lg border border-subtle">
+                     <label className="text-xs font-bold uppercase text-muted">Režim používání / Sdílení</label>
+                     <div className="flex gap-4 items-center">
+                       <select 
+                         className="form-select text-sm flex-1"
+                         value={editForm.usageMode}
+                         onChange={e => setEditForm({...editForm, usageMode: e.target.value as any})}
+                       >
+                         <option value="PRIVATE">🔒 Soukromé</option>
+                         <option value="SHARED">👥 Sdílené (Souběžné)</option>
+                         <option value="SHARED_ROTATION">🕒 Sdílené (Střídání / Rezervace)</option>
+                         <option value="LICENSE">🔑 Licence / Slot</option>
+                       </select>
+                       {editForm.usageMode === "SHARED_ROTATION" && (
+                          <label className="flex items-center gap-2 cursor-pointer ml-auto border-l pl-4 border-subtle">
+                            <input type="checkbox" checked={editForm.requiresBookingApproval} onChange={e => setEditForm({...editForm, requiresBookingApproval: e.target.checked})} />
+                            <span className="text-sm">Schvalování termínů</span>
+                          </label>
+                       )}
+                     </div>
                   </div>
                 </div>
                 <div className="form-group flex items-center gap-2" style={{ gridColumn: "1 / -1", padding: '8px 0' }}>

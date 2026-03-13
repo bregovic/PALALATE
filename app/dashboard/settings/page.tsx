@@ -395,7 +395,7 @@ function ServicesTab() {
     pricingType: "PAID",
     isShareable: true,
     description: "",
-    allowConcurrentUse: true,
+    usageMode: "PRIVATE",
     requiresBookingApproval: false,
   });
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
@@ -444,7 +444,7 @@ function ServicesTab() {
       pricingType: service.pricingType || "PAID",
       isShareable: service.isShareable,
       description: service.description || "",
-      allowConcurrentUse: service.allowConcurrentUse ?? true,
+      usageMode: service.usageMode || "PRIVATE",
       requiresBookingApproval: service.requiresBookingApproval ?? false,
     });
     setEditingServiceId(service.id);
@@ -455,7 +455,7 @@ function ServicesTab() {
     setSvcForm({
       name: "", category: "", defaultPrice: 0, currency: "CZK",
       billingCycle: "MONTHLY", pricingType: "PAID", isShareable: true, description: "",
-      allowConcurrentUse: true, requiresBookingApproval: false
+      usageMode: "PRIVATE", requiresBookingApproval: false
     });
     setEditingServiceId(null);
   };
@@ -518,12 +518,21 @@ function ServicesTab() {
                    <input type="checkbox" checked={svcForm.isShareable} onChange={e => setSvcForm({...svcForm, isShareable: e.target.checked})} />
                    <span className="text-sm">Lze sdílet ve skupině</span>
                  </label>
-                 <label className="flex items-center gap-2 cursor-pointer">
-                   <input type="checkbox" checked={svcForm.allowConcurrentUse} onChange={e => setSvcForm({...svcForm, allowConcurrentUse: e.target.checked})} />
-                   <span className="text-sm">Lze používat současně (souběžně)</span>
-                 </label>
-                 {!svcForm.allowConcurrentUse && (
-                   <label className="flex items-center gap-2 cursor-pointer ml-4">
+                 <div className="flex flex-col gap-1 mt-2">
+                    <label className="text-xs font-bold text-muted uppercase">Režim používání</label>
+                    <select 
+                      className="form-select text-sm" 
+                      value={svcForm.usageMode} 
+                      onChange={e => setSvcForm({...svcForm, usageMode: e.target.value})}
+                    >
+                       <option value="PRIVATE">🔒 Soukromé</option>
+                       <option value="SHARED">👥 Sdílené</option>
+                       <option value="SHARED_ROTATION">🕒 Střídání (Rezervace)</option>
+                       <option value="LICENSE">🔑 Licence</option>
+                    </select>
+                 </div>
+                 {svcForm.usageMode === "SHARED_ROTATION" && (
+                   <label className="flex items-center gap-2 cursor-pointer mt-1">
                      <input type="checkbox" checked={svcForm.requiresBookingApproval} onChange={e => setSvcForm({...svcForm, requiresBookingApproval: e.target.checked})} />
                      <span className="text-xs">Vyžadovat schválení rezervace</span>
                    </label>
@@ -600,7 +609,9 @@ function ServicesTab() {
                               currency: s.currency || "CZK",
                               category: s.category || "other",
                               pricingType: s.pricingType || "PAID",
-                              billingCycle: s.billingCycle || "MONTHLY"
+                              billingCycle: s.billingCycle || "MONTHLY",
+                              usageMode: s.usageMode || "PRIVATE",
+                              requiresBookingApproval: s.requiresBookingApproval || false
                             }),
                           });
                           if (res.ok) alert(`Služba ${s.name} byla přidána do tvého seznamu!`);

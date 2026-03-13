@@ -14,12 +14,21 @@ interface Friendship {
   addressee: { id: string; name: string; email: string };
 }
 
+interface Invitation {
+  id: string;
+  email: string;
+  message: string | null;
+  createdAt: string;
+  status: string;
+}
+
 interface CurrentUser {
   id: string;
 }
 
 export default function ContactsPage() {
   const [friendships, setFriendships] = useState<Friendship[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -34,9 +43,10 @@ export default function ContactsPage() {
       fetch("/api/contacts"),
       fetch("/api/me"),
     ]);
-    const fs = await fsRes.json();
+    const data = await fsRes.json();
     const me = await meRes.json();
-    setFriendships(Array.isArray(fs) ? fs : []);
+    setFriendships(Array.isArray(data.friendships) ? data.friendships : []);
+    setInvitations(Array.isArray(data.invitations) ? data.invitations : []);
     setCurrentUserId(me?.id || "");
     setLoading(false);
   }
@@ -205,9 +215,9 @@ export default function ContactsPage() {
       </div>
 
       {/* Pending outgoing */}
-      {pendingOutgoing.length > 0 && (
+      {(pendingOutgoing.length > 0 || invitations.length > 0) && (
         <div className="card">
-          <div className="card-header"><h3>📤 Odeslané žádosti</h3></div>
+          <div className="card-header"><h3>📤 Odeslané žádosti a pozvánky</h3></div>
           <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {pendingOutgoing.map((f) => {
               const other = getOther(f);
@@ -218,10 +228,22 @@ export default function ContactsPage() {
                     <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{other.name}</div>
                     <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{other.email}</div>
                   </div>
-                  <span className="badge badge-yellow">⏳ Čeká na odpověď</span>
+                  <span className="badge badge-yellow">⏳ Čeká na přijetí</span>
                 </div>
               );
             })}
+            {invitations.map((inv) => (
+              <div key={inv.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderTop: "1px solid var(--border-subtle)" }}>
+                <div className="user-avatar" style={{ width: 40, height: 40, background: "var(--bg-muted)", color: "var(--text-muted)" }}>
+                  ✉️
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{inv.email}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Pozvání do aplikace</div>
+                </div>
+                <span className="badge badge-purple">📩 Pozvánka odeslána</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -248,7 +270,7 @@ export default function ContactsPage() {
                   onChange={(e) => setInviteEmail(e.target.value)}
                   autoFocus
                 />
-                <span className="form-hint">Uživatel musí být registrován v Palalate</span>
+                <span className="form-hint">Pokud uživatel není v Palalate, odešleme mu pozvánku emailem.</span>
               </div>
               <div className="form-group">
                 <label className="form-label">Zpráva (nepovinná)</label>

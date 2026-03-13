@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { 
       name, category, defaultPrice, currency, billingCycle, 
-      description, isShareable, allowConcurrentUse, requiresBookingApproval 
+      description, isShareable, usageMode, requiresBookingApproval 
     } = body;
 
     if (!name) {
@@ -29,12 +29,12 @@ export async function POST(req: Request) {
       where: { name },
       update: { 
         category, defaultPrice, currency, billingCycle, description, 
-        isShareable, allowConcurrentUse, requiresBookingApproval,
+        isShareable, usageMode, requiresBookingApproval,
         pricingType: body.pricingType 
       },
       create: { 
         name, category, defaultPrice, currency, billingCycle, description, 
-        isShareable, allowConcurrentUse, requiresBookingApproval,
+        isShareable, usageMode, requiresBookingApproval,
         pricingType: body.pricingType 
       },
     });

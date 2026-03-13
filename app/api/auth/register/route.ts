@@ -58,6 +58,49 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // CHECK FOR PENDING INVITATIONS
+    try {
+      const pendingInvites = await prisma.invitation.findMany({
+        where: { email: email.toLowerCase(), status: "PENDING" },
+      });
+
+      if (pendingInvites.length > 0) {
+        for (const invite of pendingInvites) {
+          // Create auto-accepted friendship
+          await prisma.friendship.create({
+            data: {
+              requesterId: invite.inviterId,
+              addresseeId: user.id,
+              status: "ACCEPTED",
+              acceptedAt: new Date(),
+              message: "Automaticky propojeno po registraci",
+            },
+          });
+
+          // Mark invite as accepted
+          await prisma.invitation.update({
+            where: { id: invite.id },
+            data: { status: "ACCEPTED" },
+          });
+
+          // Optional: Notify inviter that the friend joined
+          await prisma.notification.create({
+            data: {
+              userId: invite.inviterId,
+              type: "FRIEND_REQUEST_ACCEPTED",
+              payload: {
+                friendId: user.id,
+                friendName: user.name,
+              },
+            },
+          });
+        }
+      }
+    } catch (inviteErr) {
+      console.error("[Register] Error processing invitations", inviteErr);
+      // Don't fail registration if invitation linking fails
+    }
+
     // Auto-login after registration
     const token = crypto.randomBytes(32).toString("hex");
     const expiresAt = new Date();

@@ -58,6 +58,8 @@ export function ServicesListClient({ initialServices }: Props) {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [updatingBulk, setUpdatingBulk] = useState(false);
 
   const categories = useMemo(() => {
     const cats = new Set<string>();
@@ -108,6 +110,35 @@ export function ServicesListClient({ initialServices }: Props) {
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.length === filteredAndSorted.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredAndSorted.map(s => s.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const handleBulkUpdate = async (mode: string) => {
+    if (selectedIds.length === 0) return;
+    setUpdatingBulk(true);
+    try {
+      const res = await fetch("/api/services/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds, usageMode: mode }),
+      });
+      if (res.ok) {
+        window.location.reload(); // Quick refresh
+      }
+    } finally {
+      setUpdatingBulk(false);
+    }
+  };
+
   const statusBadge = (status: string) => {
     const map: Record<string, { label: string; cls: string }> = {
       ACTIVE: { label: "Aktivní", cls: "badge-green" },
@@ -119,10 +150,12 @@ export function ServicesListClient({ initialServices }: Props) {
     return <span className={`badge ${m.cls}`}>{m.label}</span>;
   };
 
-  const sharingBadge = (status: string) => {
-    if (status === "SHARING_ENABLED") return <span className="sharing-indicator sharing-enabled">Sdílím</span>;
-    if (status === "SHARING_PAUSED") return <span className="sharing-indicator sharing-paused">Pauza</span>;
-    return <span className="sharing-indicator sharing-disabled">Nesdílím</span>;
+  const sharingBadge = (mode: string) => {
+    if (mode === "PRIVATE") return <span className="sharing-indicator sharing-disabled">🔒 Soukromé</span>;
+    if (mode === "SHARED") return <span className="sharing-indicator sharing-enabled">👥 Sdílené</span>;
+    if (mode === "SHARED_ROTATION") return <span className="sharing-indicator sharing-paused">🕒 Střídání</span>;
+    if (mode === "LICENSE") return <span className="sharing-indicator sharing-enabled">🔑 Licence</span>;
+    return <span className="sharing-indicator sharing-disabled">Soukromé</span>;
   };
 
   if (services.length === 0) {
@@ -139,9 +172,6 @@ export function ServicesListClient({ initialServices }: Props) {
             Víme, že platíš Spotify, Netflix a dalších 7 věcí. Přidej je sem a konečně
             zjisti, kolik tě to všechno stojí. 🫢
           </p>
-          <Link href="/dashboard/services/new" className="btn btn-primary mt-4">
-            Přidat první službu
-          </Link>
         </div>
       </div>
     );
@@ -223,11 +253,34 @@ export function ServicesListClient({ initialServices }: Props) {
         </div>
       )}
 
+      {selectedIds.length > 0 && (
+         <div className="p-4 bg-brand-50 rounded-2xl border border-brand-200 flex items-center gap-4 animate-fade-in shadow-sm">
+            <span className="text-sm font-bold text-brand-700">Vybráno: {selectedIds.length} položek</span>
+            <div className="flex gap-2 ml-auto items-center">
+               <span className="text-xs text-muted uppercase font-bold">Změnit režim:</span>
+               <button onClick={() => handleBulkUpdate("PRIVATE")} disabled={updatingBulk} className="btn btn-ghost btn-sm bg-white border border-brand-200">🔒 Soukromé</button>
+               <button onClick={() => handleBulkUpdate("SHARED")} disabled={updatingBulk} className="btn btn-ghost btn-sm bg-white border border-brand-200">👥 Sdílené</button>
+               <button onClick={() => handleBulkUpdate("SHARED_ROTATION")} disabled={updatingBulk} className="btn btn-ghost btn-sm bg-white border border-brand-200">🕒 Střídání</button>
+               <button onClick={() => handleBulkUpdate("LICENSE")} disabled={updatingBulk} className="btn btn-ghost btn-sm bg-white border border-brand-200">🔑 Licence</button>
+               <div className="w-px h-6 bg-brand-200 mx-2" />
+               <button onClick={() => setSelectedIds([])} className="btn btn-ghost btn-sm">Zrušit výběr</button>
+            </div>
+         </div>
+      )}
+
       <div className="card">
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
+                <th style={{ width: 40, paddingRight: 0 }}>
+                   <input 
+                     type="checkbox" 
+                     className="w-4 h-4 cursor-pointer"
+                     checked={filteredAndSorted.length > 0 && selectedIds.length === filteredAndSorted.length}
+                     onChange={handleSelectAll}
+                   />
+                </th>
                 <th onClick={() => toggleSort("name")} className="cursor-pointer hover:text-brand-600">
                   Služba {sortCol === "name" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
@@ -255,7 +308,15 @@ export function ServicesListClient({ initialServices }: Props) {
                   : null;
 
                 return (
-                  <tr key={svc.id}>
+                  <tr key={svc.id} className={selectedIds.includes(svc.id) ? "bg-brand-50/30" : ""}>
+                    <td style={{ width: 40, paddingRight: 0 }}>
+                       <input 
+                         type="checkbox" 
+                         className="w-4 h-4 cursor-pointer"
+                         checked={selectedIds.includes(svc.id)}
+                         onChange={() => toggleSelect(svc.id)}
+                       />
+                    </td>
                     <td>
                       <div className="flex items-center gap-3">
                         <div className="text-xl w-8 text-center">{icon}</div>
@@ -290,7 +351,7 @@ export function ServicesListClient({ initialServices }: Props) {
                       )}
                     </td>
                     <td>{statusBadge(svc.status)}</td>
-                    <td>{sharingBadge(svc.sharingStatus)}</td>
+                    <td>{sharingBadge((svc as any).usageMode)}</td>
                     <td>
                       <span className="text-xs text-muted">
                         {svc._count.accessGrants} aktivních

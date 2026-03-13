@@ -39,6 +39,7 @@ model User {
   auditLogs         AuditLog[]
   sessions          Session[]
   bookings          Booking[]
+  invitations       Invitation[] @relation("Inviter")
 
   @@map("users")
 }
@@ -113,8 +114,7 @@ model ServiceRegistry {
   iconUrl       String?
   websiteUrl    String?
   description   String?
-  allowConcurrentUse Boolean @default(true)
-  requiresBookingApproval Boolean @default(false)
+  usageMode     UsageMode    @default(PRIVATE)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -148,7 +148,7 @@ model Service {
   internalNote     String?
   licenseType      String?
   sharingConditions String?
-  allowConcurrentUse Boolean @default(true)
+  usageMode        UsageMode       @default(PRIVATE)
   requiresBookingApproval Boolean @default(false)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
@@ -239,6 +239,13 @@ enum BillingCycle {
   YEARLY
   ONEOFF
   CUSTOM
+}
+
+enum UsageMode {
+  PRIVATE           // Soukromé
+  SHARED_ROTATION   // Sdílené (Střídání)
+  SHARED            // Sdílené
+  LICENSE           // Licence
 }
 
 // ─── CREDENTIAL SECRET ────────────────────────────────────────────────────────
@@ -521,4 +528,23 @@ model PriceInterval {
   service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@map("service_price_intervals")
+}
+
+model Invitation {
+  id          String   @id @default(cuid())
+  inviterId   String
+  email       String
+  message     String?
+  status      InvitationStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+
+  inviter     User     @relation("Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@map("invitations")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
 }

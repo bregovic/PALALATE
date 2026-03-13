@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       sharingStatus, sharingVisibility, maxSharedSlots,
       legalNote, tags, iconUrl, websiteUrl,
       licenseType, sharingConditions, internalNote, startDate,
-      allowConcurrentUse, requiresBookingApproval, isTerminated
+      usageMode, requiresBookingApproval, isTerminated
     } = body;
 
     if (!serviceName || !providerName || periodicPrice == null) {
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
         licenseType: licenseType || null,
         sharingConditions: sharingConditions || null,
         internalNote: internalNote || null,
-        allowConcurrentUse: allowConcurrentUse !== undefined ? Boolean(allowConcurrentUse) : true,
+        usageMode: (usageMode || "PRIVATE") as any,
         requiresBookingApproval: requiresBookingApproval !== undefined ? Boolean(requiresBookingApproval) : false,
         isTerminated: isTerminated !== undefined ? Boolean(isTerminated) : false,
         status: "ACTIVE",

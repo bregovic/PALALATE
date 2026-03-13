@@ -12,6 +12,8 @@ interface RegistryService {
   isShareable: boolean;
   billingCycle: string;
   pricingType: string;
+  usageMode?: string;
+  requiresBookingApproval?: boolean;
 }
 
 interface Category {
@@ -33,8 +35,6 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
   
   // Custom service form
   const [showAddForm, setShowAddForm] = useState(false);
-  const [isNewCategory, setIsNewCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
   
   const [customService, setCustomService] = useState({
     name: "",
@@ -44,7 +44,9 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
     billingCycle: "MONTHLY",
     pricingType: "PAID",
     pricingDetails: "",
-    description: ""
+    description: "",
+    usageMode: "PRIVATE",
+    requiresBookingApproval: false
   });
 
   useEffect(() => {
@@ -81,7 +83,7 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
     return registry.filter(s => {
       const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCat = selectedCategory === "Vše" || s.category === selectedCategory;
-      const shareable = s.isShareable !== false; // Default to true if missing
+      const shareable = s.isShareable !== false; 
       return matchesSearch && matchesCat && shareable;
     });
   }, [registry, searchTerm, selectedCategory]);
@@ -111,7 +113,9 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
             currency: item.currency || "CZK",
             category: item.category || "other",
             pricingType: item.pricingType || "PAID",
-            billingCycle: item.billingCycle || "MONTHLY"
+            billingCycle: item.billingCycle || "MONTHLY",
+            usageMode: item.usageMode || "PRIVATE",
+            requiresBookingApproval: item.requiresBookingApproval || false
           }),
         });
       }
@@ -285,7 +289,6 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
         </div>
       )}
 
-      {/* NEW SERVICE MODAL */}
       {showAddForm && (
         <div className="modal-overlay" style={{ zIndex: 1100 }}>
           <div className="modal" style={{ maxWidth: 550 }}>
@@ -295,7 +298,6 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
             </div>
             <div className="modal-body">
               <div className="grid-1" style={{ gap: 20 }}>
-                {/* Basic Info */}
                 <div className="form-group">
                   <label className="form-label">Název služby</label>
                   <input 
@@ -306,7 +308,6 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                   />
                 </div>
 
-                {/* Category Selection */}
                 <div className="form-group">
                   <label className="form-label">Kategorie</label>
                   <select 
@@ -321,7 +322,6 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                   </select>
                 </div>
 
-                {/* Pricing Type */}
                 <div className="form-group">
                   <label className="form-label">Typ platby</label>
                   <div className="grid-2" style={{ gap: 10 }}>
@@ -344,10 +344,31 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                   </div>
                 </div>
 
-                {/* Price (if paid) */}
+                <div className="form-group pb-4 border-b">
+                   <label className="form-label">Režim používání / Sdílení</label>
+                   <div className="flex flex-col gap-2">
+                     <select 
+                       className="form-select"
+                       value={customService.usageMode}
+                       onChange={e => setCustomService({...customService, usageMode: e.target.value as any})}
+                     >
+                       <option value="PRIVATE">🔒 Soukromé (nesdílím)</option>
+                       <option value="SHARED">👥 Sdílené (souběžný přístup)</option>
+                       <option value="SHARED_ROTATION">🕒 Sdílené (střídání / rezervace)</option>
+                       <option value="LICENSE">🔑 Licence / Slot</option>
+                     </select>
+                     {customService.usageMode === "SHARED_ROTATION" && (
+                        <label className="flex items-center gap-2 cursor-pointer mt-1">
+                          <input type="checkbox" checked={customService.requiresBookingApproval} onChange={e => setCustomService({...customService, requiresBookingApproval: e.target.checked})} />
+                          <span className="text-xs">Uživatelé mi musí poslat žádost o termín</span>
+                        </label>
+                     )}
+                   </div>
+                </div>
+
                 {customService.pricingType === "PAID" ? (
                   <div className="grid-3" style={{ gap: 12 }}>
-                    <div className="form-group" style={{ gridColumn: "span 1" }}>
+                    <div className="form-group">
                       <label className="form-label">Cena</label>
                       <input 
                         type="number"
@@ -378,7 +399,7 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                   </div>
                 ) : (
                   <div className="form-group">
-                    <label className="form-label">Detaily k "neplacení" (např. "V ceně Revolut Ultra")</label>
+                    <label className="form-label">Detaily k "neplacení"</label>
                     <input 
                       placeholder="Uveď důvod nebo deal..."
                       className="form-input"

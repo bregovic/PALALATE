@@ -122,4 +122,64 @@ export const emailTemplates = {
       </div>
     `,
   }),
+
+  friendRequestReceived: (
+    addresseeName: string,
+    requesterName: string,
+    contactsUrl: string
+  ) => ({
+    subject: `👋 Nová žádost o přátelství od ${requesterName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <img src="${APP_URL}/logo.png" alt="Palalate" style="height: 48px;" />
+        </div>
+        <h2 style="color: #a78bfa;">Nová žádost o přátelství</h2>
+        <p>Ahoj <strong>${addresseeName}</strong>,</p>
+        <p><strong>${requesterName}</strong> si tě chce přidat do kontaktů na Palalate.</p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${contactsUrl}" style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+            Zobrazit žádost
+          </a>
+        </div>
+        <p style="color: #6b7280; font-size: 12px; text-align: center;">Palalate – Tvá aplikace pro férové sdílení</p>
+      </div>
+    `,
+  }),
+
+  invitationReceived: (
+    inviterName: string,
+    registerUrl: string,
+    message?: string
+  ) => ({
+    subject: `🥑 Pozvánka do aplikace Palalate od ${inviterName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 40px; border-radius: 20px; border: 1px solid #2d2a3d;">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <img src="${APP_URL}/logo.png" alt="Palalate" style="height: 56px;" />
+        </div>
+        <h1 style="color: #a78bfa; text-align: center; font-size: 24px;">Pojď sdílet s námi!</h1>
+        <p style="font-size: 16px; line-height: 1.6;">Ahoj!</p>
+        <p style="font-size: 16px; line-height: 1.6;"><strong>${inviterName}</strong> tě zve do aplikace <strong>Palalate</strong> – nejlepšího místa pro správu a férové rozpočítání sdílených předplatných (Netflix, Spotify, HBO a další).</p>
+        
+        ${message ? `
+        <div style="background: #1a162e; border-left: 4px solid #7c3aed; padding: 16px; margin: 24px 0; font-style: italic;">
+          "${message}"
+        </div>
+        ` : ''}
+
+        <p style="font-size: 16px; line-height: 1.6;">Zaregistruj se a automaticky se propojíte jako přátelé.</p>
+        
+        <div style="text-align: center; margin: 40px 0;">
+          <a href="${registerUrl}" style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 18px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
+            Vytvořit účet
+          </a>
+        </div>
+        
+        <p style="color: #9ca3af; font-size: 14px; text-align: center; margin-top: 40px;">
+          Palalate – Tvá aplikace pro férové sdílení.
+        </p>
+      </div>
+    `,
+  }),
 };

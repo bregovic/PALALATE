@@ -71,7 +71,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       serviceName, providerName, periodicPrice, currency,
       billingCycle, pricingType, pricingDetails, renewalDate, startDate,
       description, category, maxSharedSlots,
-      allowConcurrentUse, requiresBookingApproval, isTerminated,
+      usageMode, requiresBookingApproval, isTerminated,
       priceIntervals
     } = body;
 
@@ -102,7 +102,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         description,
         category,
         maxSharedSlots: maxSharedSlots !== undefined ? parseInt(String(maxSharedSlots)) : undefined,
-        allowConcurrentUse: allowConcurrentUse !== undefined ? Boolean(allowConcurrentUse) : undefined,
+        usageMode: usageMode as any,
         requiresBookingApproval: requiresBookingApproval !== undefined ? Boolean(requiresBookingApproval) : undefined,
         isTerminated: isTerminated !== undefined ? Boolean(isTerminated) : undefined,
         priceIntervals: Array.isArray(priceIntervals) ? {
