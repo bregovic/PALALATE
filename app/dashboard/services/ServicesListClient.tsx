@@ -360,14 +360,32 @@ export function ServicesListClient({ initialServices }: Props) {
                     <td className="hidden-mobile">{statusBadge(svc.status)}</td>
                     <td>{sharingBadge((svc as any).usageMode)}</td>
                     <td className="hidden-mobile">
-                      <span className="text-xs text-muted">
-                        {svc._count.accessGrants} aktivních
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-primary">{svc._count.accessGrants}</span>
                         {svc._count.accessRequests > 0 && (
-                          <span className="badge badge-yellow ml-2">
+                          <div 
+                            title={`${svc._count.accessRequests} nových žádostí`}
+                            style={{ 
+                              background: "var(--brand-500)", 
+                              color: "white", 
+                              fontSize: "10px", 
+                              fontWeight: 800,
+                              minWidth: "18px",
+                              height: "18px",
+                              padding: "0 4px",
+                              borderRadius: "10px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                              animation: "pulseShadow 2s infinite"
+                            }}
+                          >
                             {svc._count.accessRequests}
-                          </span>
+                          </div>
                         )}
-                      </span>
+                      </div>
+                      <div className="text-[10px] text-muted uppercase tracking-tight">aktivních</div>
                     </td>
                     <td>
                       <Link

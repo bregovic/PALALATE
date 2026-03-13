@@ -44,12 +44,20 @@ export async function GET() {
       },
     });
 
-    // 3. Get my pending requests to show "Požádáno"
-    const myRequests = await prisma.accessRequest.findMany({
-      where: { requesterId: user.id, status: "PENDING" },
-      select: { serviceId: true }
-    });
+    // 3. Get my pending requests and active grants
+    const [myRequests, myGrants] = await Promise.all([
+      prisma.accessRequest.findMany({
+        where: { requesterId: user.id, status: "PENDING" },
+        select: { serviceId: true }
+      }),
+      prisma.accessGrant.findMany({
+        where: { granteeId: user.id, status: "ACTIVE" },
+        select: { serviceId: true }
+      })
+    ]);
+
     const requestedServiceIds = new Set(myRequests.map(r => r.serviceId));
+    const grantedServiceIds = new Set(myGrants.map(g => g.serviceId));
 
     // 4. Map to include free slots info and request status
     const enrichedServices = services.map(s => {
@@ -59,6 +67,7 @@ export async function GET() {
         ...s,
         freeSlots,
         hasPendingRequest: requestedServiceIds.has(s.id),
+        hasActiveGrant: grantedServiceIds.has(s.id),
       };
     });
 
