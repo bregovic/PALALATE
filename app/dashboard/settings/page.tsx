@@ -180,7 +180,15 @@ export default function SettingsPage() {
 function SystemTab({ user }: { user: any }) {
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [debug, setDebug] = useState<any>(null);
   const [genKey, setGenKey] = useState("");
+
+  useEffect(() => {
+    fetch("/api/system/config-check")
+      .then(res => res.json())
+      .then(data => setDebug(data.config))
+      .catch(() => {});
+  }, []);
 
   async function testEmail() {
     setTesting(true);
@@ -241,6 +249,7 @@ function SystemTab({ user }: { user: any }) {
                 <>
                   <div className="font-bold mb-1">❌ Chyba při odesílání</div>
                   <pre className="text-xs break-all whitespace-pre-wrap">{JSON.stringify(result.error, null, 2)}</pre>
+                  <p className="text-[10px] mt-2 italic text-muted">Zkontrolujte Railway logs pro více detailů.</p>
                 </>
               )}
             </div>
@@ -287,6 +296,12 @@ function SystemTab({ user }: { user: any }) {
             <div>User ID: {user?.id}</div>
             <div>Role: {user?.role}</div>
             <div>Node version: {typeof process !== 'undefined' ? process.version : 'unknown'}</div>
+            <div className="mt-2 pt-2 border-t border-subtle">
+              <div className="font-bold mb-1">Environment status:</div>
+              {debug ? Object.entries(debug).map(([k, v]: any) => (
+                <div key={k}>{k}: {v === true ? "✅ set" : (v === false ? "❌ missing" : v)}</div>
+              )) : "Loading config..."}
+            </div>
           </div>
         </div>
 

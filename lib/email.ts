@@ -7,11 +7,24 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 const smtpConfig = {
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: process.env.SMTP_PORT === "465", // Use SSL for port 465
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  connectionTimeout: 10000, // 10 seconds timeout
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
 };
+
+console.log("[Email] Config check:", {
+  hasResend: !!process.env.RESEND_API_KEY,
+  hasSmtp: !!process.env.SMTP_HOST,
+  smtpHost: process.env.SMTP_HOST,
+  smtpPort: smtpConfig.port,
+  smtpUser: process.env.SMTP_USER ? "set" : "missing",
+  from: process.env.SMTP_FROM || process.env.EMAIL_FROM || "Not set"
+});
 
 const transporter = smtpConfig.host ? nodemailer.createTransport(smtpConfig) : null;
 
