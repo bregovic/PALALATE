@@ -25,13 +25,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const secret = await prisma.credentialSecret.create({
       data: {
         serviceId,
-        secretType,
-        label,
+        secretType: secretType as any,
+        label: label || null,
         encryptedPayload: encrypted.encryptedPayload,
         iv: encrypted.iv,
-        visibilityRule: visibilityRule || "OWNER_ONLY",
-        note,
+        visibilityRule: (visibilityRule || "OWNER_ONLY") as any,
+        note: note || null,
       },
+    });
+
+    await prisma.auditLog.create({
+        data: {
+          actorId: user.id,
+          entityType: "CredentialSecret",
+          entityId: secret.id,
+          action: "CREATE",
+          metadata: { serviceId }
+        }
     });
 
     return NextResponse.json(secret);
@@ -40,6 +50,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("[POST /api/services/[id]/credentials]", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    // Return the error message to help the user debug if it's the encryption key
+    const message = err instanceof Error ? err.message : "Server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

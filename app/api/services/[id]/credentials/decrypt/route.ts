@@ -37,7 +37,6 @@ export async function GET(
 
     // Decrypt
     const data = decryptCredential(credential.encryptedPayload, credential.iv);
-    const value = data.value;
 
     // Audit view
     await prisma.auditLog.create({
@@ -65,7 +64,7 @@ export async function GET(
       });
     }
 
-    return NextResponse.json({ value });
+    return NextResponse.json(data);
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
