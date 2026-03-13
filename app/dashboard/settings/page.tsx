@@ -16,7 +16,7 @@ export default function SettingsPage() {
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [tab, setTab] = useState<"profile" | "security" | "services" | "categories">("profile");
+  const [tab, setTab] = useState<"profile" | "security" | "services" | "categories" | "system">("profile");
   const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   useEffect(() => {
@@ -66,6 +66,11 @@ export default function SettingsPage() {
         <button className={`tab ${tab === "categories" ? "active" : ""}`} onClick={() => setTab("categories")}>
           📁 Kategorie
         </button>
+        {user?.role === "ADMIN" && (
+          <button className={`tab ${tab === "system" ? "active" : ""}`} onClick={() => setTab("system")}>
+            ⚙️ Systém
+          </button>
+        )}
       </div>
 
       {tab === "profile" && (
@@ -167,6 +172,82 @@ export default function SettingsPage() {
 
       {tab === "services" && <ServicesTab />}
       {tab === "categories" && <CategoriesTab />}
+      {tab === "system" && <SystemTab user={user} />}
+    </div>
+  );
+}
+
+function SystemTab({ user }: { user: any }) {
+  const [testing, setTesting] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  async function testEmail() {
+    setTesting(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await res.json();
+      setResult(data);
+    } catch (err) {
+      setResult({ success: false, error: "Nepodařilo se spojit se serverem." });
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  return (
+    <div className="card animate-fade-in" style={{ maxWidth: 600 }}>
+      <div className="card-header"><h3>⚙️ Systémová nastavení</h3></div>
+      <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        
+        <div>
+          <h4 className="mb-2">📧 Test odesílání emailů</h4>
+          <p className="text-sm text-muted mb-4">
+            Tato funkce ověří, zda je správně nastaveno SMTP (Gmail) nebo Resend na Railway. 
+            Testovací email bude odeslán na adresu: <strong>{user?.email}</strong>.
+          </p>
+          
+          <button 
+            className="btn btn-primary" 
+            onClick={testEmail} 
+            disabled={testing}
+          >
+            {testing ? "Odesílám..." : "Odeslat testovací email"}
+          </button>
+
+          {result && (
+            <div className={`mt-4 p-4 rounded-xl border ${result.success ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
+              {result.success ? (
+                <>
+                  <div className="font-bold mb-1">✅ Email byl úspěšně odeslán!</div>
+                  <div className="text-xs">Zkontrolujte si schránku (včetně složky SPAM).</div>
+                </>
+              ) : (
+                <>
+                  <div className="font-bold mb-1">❌ Chyba při odesílání</div>
+                  <pre className="text-xs break-all whitespace-pre-wrap">{JSON.stringify(result.error, null, 2)}</pre>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        <hr style={{ border: 0, borderTop: "1px solid var(--border-subtle)" }} />
+
+        <div>
+          <h4 className="mb-2">🛠️ Debug informace</h4>
+          <div className="text-[10px] font-mono bg-muted p-4 rounded-xl border border-subtle">
+            <div>User ID: {user?.id}</div>
+            <div>Role: {user?.role}</div>
+            <div>Node version: {typeof process !== 'undefined' ? process.version : 'unknown'}</div>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

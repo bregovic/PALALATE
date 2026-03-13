@@ -1,7 +1,21 @@
 import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM = process.env.EMAIL_FROM || "Palalate <noreply@palalate.app>";
+
+// SMTP Configuration
+const smtpConfig = {
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+};
+
+const transporter = smtpConfig.host ? nodemailer.createTransport(smtpConfig) : null;
+
+const FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM || "Palalate <noreply@palalate.app>";
 
 interface SendEmailOptions {
   to: string;
@@ -11,23 +25,38 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   try {
-    if (!resend) {
-      console.warn("[Email] Resend is not initialized (missing API key)");
-      return { success: false, error: "Missing API key" };
-    }
-    const { data, error } = await resend.emails.send({
-      from: FROM,
-      to,
-      subject,
-      html,
-    });
+    // 1. Try Resend if fully configured
+    if (resend) {
+      console.log("[Email] Attempting to send via Resend...");
+      const { data, error } = await resend.emails.send({
+        from: FROM,
+        to,
+        subject,
+        html,
+      });
 
-    if (error) {
-      console.error("[Email] Send error:", error);
-      return { success: false, error };
+      if (!error) {
+        console.log("[Email] Resend success:", data?.id);
+        return { success: true, data };
+      }
+      console.warn("[Email] Resend failed, falling back to SMTP if available:", error);
     }
 
-    return { success: true, data };
+    // 2. Fallback to SMTP or use SMTP as primary if configured
+    if (transporter) {
+      console.log("[Email] Attempting to send via SMTP...");
+      const info = await transporter.sendMail({
+        from: FROM,
+        to,
+        subject,
+        html,
+      });
+      console.log("[Email] SMTP success:", info.messageId);
+      return { success: true, data: info };
+    }
+
+    console.warn("[Email] No email provider configured (missing RESEND_API_KEY or SMTP_HOST)");
+    return { success: false, error: "No email provider configured" };
   } catch (err) {
     console.error("[Email] Unexpected error:", err);
     return { success: false, error: err };
