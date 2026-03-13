@@ -87,6 +87,23 @@ enum FriendshipStatus {
   BLOCKED
 }
 
+// ─── SERVICE REGISTRY (Číselník) ──────────────────────────────────────────────
+model ServiceRegistry {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  category     String?
+  defaultPrice Decimal? @db.Decimal(10, 2)
+  currency     String   @default("CZK")
+  billingCycle BillingCycle @default(MONTHLY)
+  iconUrl      String?
+  websiteUrl   String?
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("service_registry")
+}
+
 // ─── SERVICE ──────────────────────────────────────────────────────────────────
 
 model Service {

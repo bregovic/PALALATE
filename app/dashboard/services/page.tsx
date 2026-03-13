@@ -2,6 +2,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ServiceGridPicker } from "@/components/services/ServiceGridPicker";
+import { ImportExportTools } from "@/components/services/ImportExportTools";
 
 export const metadata: Metadata = { title: "Mé služby" };
 
@@ -39,7 +41,7 @@ export default async function ServicesPage() {
 
   const totalMonthly = services
     .filter((s) => s.status === "ACTIVE")
-    .reduce((sum, s) => {
+    .reduce((sum: number, s: any) => {
       let monthly = Number(s.periodicPrice);
       if (s.billingCycle === "YEARLY") monthly /= 12;
       if (s.billingCycle === "QUARTERLY") monthly /= 3;
@@ -82,13 +84,18 @@ export default async function ServicesPage() {
             {totalMonthly > 2000 ? "Na tvém místě bychom začali škrtat. 💸" : "Pohoda! 😎"}
           </p>
         </div>
-        <Link href="/dashboard/services/new" className="btn btn-primary" id="add-service-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-            <line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" />
-          </svg>
-          Přidat službu
-        </Link>
+        <div style={{ display: "flex", gap: 12 }}>
+          <ImportExportTools />
+          <Link href="/dashboard/services/new" className="btn btn-primary" id="add-service-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+              <line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" />
+            </svg>
+            Textový formulář
+          </Link>
+        </div>
       </div>
+
+      <ServiceGridPicker activeServiceNames={services.map(s => s.serviceName)} />
 
       {services.length === 0 ? (
         <div className="card">
