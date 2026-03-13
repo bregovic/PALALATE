@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "💲 Palalate – Výkaz sdílení",
+    default: "Palalate – Výkaz sdílení",
     template: "%s | Palalate",
   },
   description:
