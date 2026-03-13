@@ -97,14 +97,14 @@ export default function DiscoverPage() {
               <Link href="/dashboard/contacts" className="btn btn-primary mt-6">Zvětšit okruh přátel</Link>
             </div>
           ) : (
-            <table>
+            <table style={{ borderCollapse: "collapse", width: "100%" }}>
               <thead>
                 <tr>
-                  <th>Služba</th>
-                  <th className="hidden-mobile">Kategorie</th>
-                  <th>Cena</th>
-                  <th className="hidden-mobile">Status</th>
-                  <th>Sdílí</th>
+                  <th style={{ textAlign: "left" }}>Služba</th>
+                  <th className="hidden-mobile" style={{ textAlign: "left" }}>Kategorie</th>
+                  <th style={{ textAlign: "left" }}>Cena</th>
+                  <th className="hidden-mobile" style={{ textAlign: "left" }}>Status</th>
+                  <th style={{ textAlign: "left" }}>Sdílí</th>
                   <th></th>
                 </tr>
               </thead>
@@ -112,30 +112,28 @@ export default function DiscoverPage() {
                 {services.map((svc) => {
                   const icon = CATEGORY_ICONS[svc.category?.toLowerCase() || "other"] || "📦";
                   return (
-                    <tr key={svc.id}>
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <div className="text-xl w-8 h-8 flex items-center justify-center bg-brand-50 rounded-lg text-brand-600 hidden-mobile">
-                            {icon}
-                          </div>
+                    <tr key={svc.id} style={{ verticalAlign: "middle" }}>
+                      <td style={{ verticalAlign: "middle" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span className="hidden-mobile" style={{ fontSize: "1.2rem", lineHeight: 1, width: 28, textAlign: "center", flexShrink: 0 }}>{icon}</span>
                           <div>
-                            <div className="font-bold text-primary">{svc.serviceName}</div>
-                            <div className="text-[11px] text-muted">{svc.providerName}</div>
+                            <div className="font-bold text-primary" style={{ fontSize: "0.875rem" }}>{svc.serviceName}</div>
+                            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{svc.providerName}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="hidden-mobile">
-                        <span className="text-xs font-medium bg-muted px-2 py-0.5 rounded-full text-muted">
-                           {svc.category || "Ostatní"}
+                      <td className="hidden-mobile" style={{ verticalAlign: "middle" }}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 500, background: "var(--bg-elevated)", padding: "2px 8px", borderRadius: "var(--radius-full)", color: "var(--text-muted)" }}>
+                          {svc.category || "Ostatní"}
                         </span>
                       </td>
-                      <td>
-                        <div className="font-bold text-primary">
+                      <td style={{ verticalAlign: "middle" }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--text-primary)" }}>
                           {Number(svc.periodicPrice).toLocaleString()} {svc.currency}
                         </div>
-                        <div className="text-[10px] text-muted uppercase">/ {svc.billingCycle}</div>
+                        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase" }}>/ {svc.billingCycle}</div>
                       </td>
-                      <td className="hidden-mobile">
+                      <td className="hidden-mobile" style={{ verticalAlign: "middle" }}>
                         {(svc.freeSlots === null || svc.freeSlots === Infinity) ? (
                           <span className="badge badge-green">Volno</span>
                         ) : (
@@ -144,15 +142,15 @@ export default function DiscoverPage() {
                           </span>
                         )}
                       </td>
-                      <td>
-                        <div className="flex items-center gap-2">
-                          <div className="user-avatar" style={{ width: 24, height: 24, fontSize: '0.6rem' }}>
+                      <td style={{ verticalAlign: "middle" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <div className="user-avatar" style={{ width: 26, height: 26, fontSize: '0.65rem', flexShrink: 0 }}>
                             {svc.owner.name[0].toUpperCase()}
                           </div>
-                          <span className="text-xs font-semibold text-muted hidden-mobile">{svc.owner.name}</span>
+                          <span className="hidden-mobile" style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)" }}>{svc.owner.name}</span>
                         </div>
                       </td>
-                      <td className="text-right">
+                      <td style={{ verticalAlign: "middle", textAlign: "right" }}>
                         <button
                           className="btn btn-primary btn-sm"
                           onClick={() => handleRequestAccess(svc.id)}
