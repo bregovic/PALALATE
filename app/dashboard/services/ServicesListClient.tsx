@@ -16,6 +16,7 @@ interface Service {
   sharingStatus: string;
   usageMode: string;
   isTerminated: boolean;
+  url: string | null;
   _count: {
     accessGrants: number;
     accessRequests: number;

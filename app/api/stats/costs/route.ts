@@ -16,6 +16,7 @@ interface ServiceWithIntervals {
   billingCycle: string;
   status: string;
   isTerminated: boolean;
+  url: string | null;
   createdAt: Date;
   startDate: Date | string | null;
   archivedAt: Date | null;
