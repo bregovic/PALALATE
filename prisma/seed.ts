@@ -2,14 +2,31 @@ import { PrismaClient, BillingCycle } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+const categories = [
+  { name: "AI", icon: "🤖" },
+  { name: "Streaming", icon: "🎬" },
+  { name: "Music", icon: "🎵" },
+  { name: "Cloud", icon: "☁️" },
+  { name: "Design", icon: "🎨" },
+  { name: "Productivity", icon: "🚀" },
+  { name: "Education", icon: "📚" },
+  { name: "Lifestyle", icon: "🏠" },
+  { name: "Podcast", icon: "🎙️" },
+  { name: "News", icon: "📰" },
+  { name: "Finance", icon: "💳" },
+  { name: "Retail", icon: "🛒" },
+  { name: "Banka", icon: "🏦" },
+  { name: "Work", icon: "💼" },
+];
+
 const services = [
   // AI
-  { name: "ChatGPT", category: "AI", websiteUrl: "openai.com" },
-  { name: "Claude", category: "AI", websiteUrl: "anthropic.com" },
-  { name: "Perplexity", category: "AI", websiteUrl: "perplexity.ai" },
+  { name: "ChatGPT", category: "AI", websiteUrl: "openai.com", defaultPrice: 20, currency: "USD" },
+  { name: "Claude", category: "AI", websiteUrl: "anthropic.com", defaultPrice: 20, currency: "USD" },
+  { name: "Perplexity", category: "AI", websiteUrl: "perplexity.ai", defaultPrice: 20, currency: "USD" },
   { name: "Suno", category: "AI", websiteUrl: "suno.ai" },
   { name: "Midjourney", category: "AI", websiteUrl: "midjourney.com" },
-  { name: "Canva", category: "AI", websiteUrl: "canva.com" },
+  { name: "Canva", category: "Design", websiteUrl: "canva.com" },
   
   // Streaming & Entertainment
   { name: "Netflix", category: "Streaming", defaultPrice: 239 },
@@ -44,17 +61,27 @@ const services = [
   { name: "DVTV", category: "News", defaultPrice: 199 },
   { name: "Mango zpěvník", category: "Lifestyle" },
   { name: "MyHeritage", category: "Lifestyle" },
+  { name: "Revolut Premium", category: "Finance" },
 ];
 
 async function main() {
-  console.log("Seeding expanded service registry...");
+  console.log("Seeding categories...");
+  for (const cat of categories) {
+    await prisma.serviceCategory.upsert({
+      where: { name: cat.name },
+      update: { icon: cat.icon },
+      create: cat,
+    });
+  }
+
+  console.log("Seeding service registry...");
   for (const s of services) {
     await prisma.serviceRegistry.upsert({
       where: { name: s.name },
       update: s,
       create: {
         ...s,
-        currency: "CZK",
+        currency: s.currency || "CZK",
         billingCycle: s.billingCycle || BillingCycle.MONTHLY,
       },
     });

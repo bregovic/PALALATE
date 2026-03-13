@@ -271,6 +271,10 @@ function CategoriesTab() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [catName, setCatName] = useState("");
+  const [catIcon, setCatIcon] = useState("📦");
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const EMOJI_GALLERY = ["🎬", "🎵", "☁️", "🎨", "🚀", "📚", "🏠", "🎙️", "📰", "💳", "🛒", "🏦", "💼", "🎮", "🍔", "💪", "✈️", "🤖", "👔", "🛠️"];
 
   const load = async () => {
     setLoading(true);
@@ -287,37 +291,88 @@ function CategoriesTab() {
     const res = await fetch("/api/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: catName }),
+      body: JSON.stringify({ name: catName, icon: catIcon }),
     });
     if (res.ok) {
       setCatName("");
+      setCatIcon("📦");
+      setEditingId(null);
       load();
     }
+  };
+
+  const startEdit = (c: any) => {
+    setCatName(c.name);
+    setCatIcon(c.icon || "📦");
+    setEditingId(c.id);
   };
 
   if (loading) return <div className="p-8">Načítám kategorie...</div>;
 
   return (
     <div className="card animate-fade-in" style={{ maxWidth: 600 }}>
-      <div className="card-header"><h3>📁 Správa kategorií</h3></div>
+      <div className="card-header flex justify-between items-center">
+        <h3>📁 Správa kategorií</h3>
+        <button 
+          className="btn btn-ghost btn-sm" 
+          onClick={async () => {
+             if (confirm("Chcete naplnit kategorie a číselník výchozími daty?")) {
+                const res = await fetch("/api/admin/seed");
+                if (res.ok) {
+                   alert("Hotovo! Číselníky byly naplněny.");
+                   load();
+                } else {
+                   alert("Chyba při plnění dat.");
+                }
+             }
+          }}
+        >
+          🔄 Naplnit výchozí
+        </button>
+      </div>
       <div className="card-body">
-        <form onSubmit={saveCategory} className="flex gap-2 mb-8">
-          <input 
-            className="form-input" 
-            placeholder="Název nové kategorie..." 
-            value={catName}
-            onChange={e => setCatName(e.target.value)}
-          />
-          <button className="btn btn-primary">Přidat kategorii</button>
+        <form onSubmit={saveCategory} className="flex flex-col gap-4 mb-8 p-4 bg-muted rounded-xl shadow-sm">
+          <div className="flex gap-2">
+            <input 
+              className="form-input" 
+              placeholder="Název kategorie..." 
+              value={catName}
+              onChange={e => setCatName(e.target.value)}
+            />
+            <button className="btn btn-primary">{editingId ? "Uložit změny" : "Přidat kategorii"}</button>
+          </div>
+          <div>
+            <label className="text-xs text-muted block mb-2 font-bold uppercase tracking-wider">Vyber piktogram:</label>
+            <div className="flex flex-wrap gap-2">
+              {EMOJI_GALLERY.map(e => (
+                <button 
+                  key={e}
+                  type="button"
+                  className={`btn btn-ghost p-2 text-xl hover:bg-white rounded-lg transition-transform hover:scale-110 ${catIcon === e ? "bg-white border-2 border-primary" : ""}`}
+                  onClick={() => setCatIcon(e)}
+                >
+                  {e}
+                </button>
+              ))}
+              <div className="flex items-center gap-2 ml-auto">
+                 <span className="text-xs text-muted italic">Vlastní:</span>
+                 <input className="form-input w-12 p-1 text-center" value={catIcon} onChange={e => setCatIcon(e.target.value)} />
+              </div>
+            </div>
+          </div>
         </form>
         
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
           {categories.map(c => (
-            <div key={c.id} className="p-4 rounded-lg border border-subtle bg-elevated flex justify-between items-center group">
-              <span className="font-medium">{c.name}</span>
-              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <button className="btn btn-ghost btn-icon btn-sm" title="Smazat (zatím neaktivní)" disabled>🗑️</button>
-              </div>
+            <div key={c.id} className="p-3 rounded-xl border border-subtle bg-elevated flex items-center gap-3 group hover:shadow-md transition-all">
+              <span className="text-2xl">{c.icon || "📦"}</span>
+              <span className="font-semibold text-sm">{c.name}</span>
+              <button 
+                className="btn btn-ghost btn-icon btn-sm ml-auto opacity-0 group-hover:opacity-100" 
+                onClick={() => startEdit(c)}
+              >
+                ✏️
+              </button>
             </div>
           ))}
         </div>
@@ -504,7 +559,14 @@ function ServicesTab() {
               {services.map(s => (
                 <tr key={s.id}>
                   <td className="font-bold">{s.name}</td>
-                  <td>{s.category || <span className="text-muted italic">není</span>}</td>
+                  <td>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">
+                        {categories.find(c => c.name === s.category)?.icon || "📦"}
+                      </span>
+                      {s.category || <span className="text-muted italic">není</span>}
+                    </div>
+                  </td>
                   <td>{Number(s.defaultPrice).toFixed(2)} {s.currency} / {s.billingCycle}</td>
                   <td>{s.isShareable ? <span className="badge badge-green">Povoleno</span> : <span className="badge badge-gray">Zakázáno</span>}</td>
                   <td>
