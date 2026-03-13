@@ -289,18 +289,18 @@ export function ServicesListClient({ initialServices }: Props) {
                 <th onClick={() => toggleSort("name")} className="cursor-pointer hover:text-brand-600">
                   Služba {sortCol === "name" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th onClick={() => toggleSort("category")} className="cursor-pointer hover:text-brand-600 hidden-mobile">
+                <th onClick={() => toggleSort("category")} className="cursor-pointer hover:text-brand-600">
                   Kategorie {sortCol === "category" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th onClick={() => toggleSort("price")} className="cursor-pointer hover:text-brand-600">
+                <th onClick={() => toggleSort("price")} className="cursor-pointer hover:text-brand-600 text-right">
                   Cena {sortCol === "price" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="hidden-mobile">Perioda</th>
-                <th className="hidden-mobile">Stav</th>
-                <th onClick={() => toggleSort("sharing")} className="cursor-pointer hover:text-brand-600">
+                <th className="text-center">Perioda</th>
+                <th className="text-center">Stav</th>
+                <th onClick={() => toggleSort("sharing")} className="cursor-pointer hover:text-brand-600 text-center">
                   Sdílení {sortCol === "sharing" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="hidden-mobile">Uživatelé</th>
+                <th className="text-center">Uživatelé</th>
                 <th></th>
               </tr>
             </thead>
@@ -321,59 +321,38 @@ export function ServicesListClient({ initialServices }: Props) {
                          onChange={() => toggleSelect(svc.id)}
                        />
                     </td>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <div className="text-xl w-8 text-center hidden-mobile">{icon}</div>
-                        <div>
-                          <div className="font-bold text-primary">{svc.serviceName}</div>
-                        </div>
-                      </div>
+                    <td className="font-bold text-primary">
+                      {svc.serviceName}
                     </td>
-                    <td className="hidden-mobile">
+                    <td className="text-center">
                        <span className="text-xs font-medium text-muted bg-muted px-2 py-0.5 rounded-full">
                          {svc.category || "Ostatní"}
                        </span>
                     </td>
-                    <td className="font-bold text-primary">
+                    <td className="font-bold text-primary text-right">
                       {Number(svc.periodicPrice).toFixed(2)} {svc.currency}
-                      <div className="show-mobile text-[10px] text-muted font-normal">{billingLabels[svc.billingCycle]}</div>
                     </td>
-                    <td className="text-sm hidden-mobile">{billingLabels[svc.billingCycle]}</td>
-                    <td className="hidden-mobile">
+                    <td className="text-sm text-center">{billingLabels[svc.billingCycle]}</td>
+                    <td className="text-center">
                       {svc.isTerminated ? (
                         <span className="badge badge-red">Ukončeno</span>
                       ) : (
                         statusBadge(svc.status)
                       )}
                     </td>
-                    <td>{sharingBadge((svc as any).usageMode)}</td>
-                    <td className="hidden-mobile">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-primary">{svc._count.accessGrants}</span>
+                    <td className="text-center">{sharingBadge((svc as any).usageMode)}</td>
+                    <td className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-sm font-bold text-primary">{svc._count.accessGrants}</span>
                         {svc._count.accessRequests > 0 && (
                           <div 
                             title={`${svc._count.accessRequests} nových žádostí`}
-                            style={{ 
-                              background: "var(--brand-500)", 
-                              color: "white", 
-                              fontSize: "10px", 
-                              fontWeight: 800,
-                              minWidth: "18px",
-                              height: "18px",
-                              padding: "0 4px",
-                              borderRadius: "10px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                              animation: "pulseShadow 2s infinite"
-                            }}
+                            className="w-5 h-5 bg-brand-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-sm animate-pulse"
                           >
                             {svc._count.accessRequests}
                           </div>
                         )}
                       </div>
-                      <div className="text-[10px] text-muted uppercase tracking-tight">aktivních</div>
                     </td>
                     <td>
                       <Link

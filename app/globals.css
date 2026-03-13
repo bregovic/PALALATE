@@ -1052,7 +1052,7 @@ tbody tr:hover { background: var(--bg-elevated); }
     border-right: none;
     /* Isolate horizontal touch scroll - don't let it bubble to page */
     overscroll-behavior-x: contain;
-    touch-action: pan-x;
+    touch-action: auto;
     -webkit-overflow-scrolling: touch;
   }
   
