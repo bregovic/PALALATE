@@ -31,38 +31,38 @@
   --danger-400:  #f87171;
   --danger-500:  #ef4444;
 
-  /* 🌑 Dark theme barvy */
-  --bg-base:       #09080f;
-  --bg-surface:    #0f0d1a;
-  --bg-elevated:   #161226;
-  --bg-card:       #1a1630;
-  --bg-input:      #1e1a35;
-  --bg-hover:      #241f3d;
-  --bg-glass:      rgba(22, 18, 38, 0.7);
+  /* ⚪ Light theme barvy */
+  --bg-base:       #f8fafc;
+  --bg-surface:    #ffffff;
+  --bg-elevated:   #f1f5f9;
+  --bg-card:       #ffffff;
+  --bg-input:      #ffffff;
+  --bg-hover:      #f1f5f9;
+  --bg-glass:      rgba(255, 255, 255, 0.8);
 
-  /* 📝 Text */
-  --text-primary:   #f0eeff;
-  --text-secondary: #a89cc8;
-  --text-muted:     #6a5f8a;
-  --text-disabled:  #3d3558;
+  /* 📝 Text (Light Mode) */
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --text-disabled:  #cbd5e1;
 
-  /* 🔲 Borders */
-  --border-subtle:  rgba(167, 139, 250, 0.08);
-  --border-default: rgba(167, 139, 250, 0.15);
-  --border-strong:  rgba(167, 139, 250, 0.3);
-  --border-focus:   rgba(139, 92, 246, 0.6);
+  /* 🔲 Borders (Light Mode) */
+  --border-subtle:  rgba(0, 0, 0, 0.05);
+  --border-default: rgba(0, 0, 0, 0.08);
+  --border-strong:  rgba(0, 0, 0, 0.15);
+  --border-focus:   rgba(139, 92, 246, 0.4);
 
   /* 📐 Layout */
   --sidebar-width: 260px;
   --topbar-height: 64px;
   --content-max:   1200px;
 
-  /* ✨ Efekty */
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg:   0 8px 32px rgba(0,0,0,0.5);
-  --shadow-glow: 0 0 24px rgba(139, 92, 246, 0.2);
-  --shadow-glow-strong: 0 0 40px rgba(139, 92, 246, 0.35);
+  /* ✨ Efekty (Light Mode optimized) */
+  --shadow-sm:   0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md:   0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg:   0 12px 24px rgba(0,0,0,0.12);
+  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.08);
+  --shadow-glow-strong: 0 0 30px rgba(139, 92, 246, 0.15);
 
   --radius-sm:   6px;
   --radius-md:   10px;
@@ -80,7 +80,7 @@
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
 }
