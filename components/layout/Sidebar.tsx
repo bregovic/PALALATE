@@ -104,7 +104,7 @@ export default function Sidebar({
     { href: "/dashboard", label: "Přehled", icon: <LayoutGridIcon /> },
     { href: "/dashboard/services", label: "Mé služby", icon: <CreditCardIcon /> },
     { href: "/dashboard/discover", label: "Služby přátel", icon: <GlobeIcon /> },
-    { href: "/dashboard/wishes", label: "Můj seznam přání", icon: <StarIcon /> },
+    { href: "/dashboard/wishes", label: "Přání", icon: <StarIcon /> },
     { href: "/dashboard/costs", label: "Náklady", icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" />

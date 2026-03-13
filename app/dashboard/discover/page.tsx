@@ -21,6 +21,21 @@ interface Service {
   };
 }
 
+const CATEGORY_ICONS: Record<string, string> = {
+  streaming: "🎬",
+  music: "🎵",
+  gaming: "🎮",
+  productivity: "💼",
+  cloud: "☁️",
+  design: "🎨",
+  ai: "🤖",
+  security: "🔐",
+  fitness: "💪",
+  education: "📚",
+  news: "📰",
+  other: "📦",
+};
+
 export default function DiscoverPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +45,7 @@ export default function DiscoverPage() {
     fetch("/api/services/available")
       .then(res => res.json())
       .then(data => {
-        setServices(data);
+        setServices(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -55,89 +70,105 @@ export default function DiscoverPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="page-content">
-        <div className="skeleton" style={{ height: 40, width: 200, marginBottom: 20 }} />
-        <div className="grid-auto">
-          {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 300, borderRadius: 16 }} />)}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="page-content animate-fade-in">
       <div className="page-header">
         <div>
-          <h1 className="page-title">🌍 Služby k dispozici</h1>
-          <p className="page-subtitle">Služby, které sdílejí tvoji přátelé a mají volná místa.</p>
+          <h1 className="page-title">🌍 Služby přátel</h1>
+          <p className="page-subtitle">Objev služby, které sdílejí tvoji přátelé a mají volná místa.</p>
         </div>
       </div>
 
-      {services.length === 0 ? (
-        <div className="card empty-state">
-          <div className="empty-icon">🌍</div>
-          <h3 className="empty-title">Zatím tu nic není</h3>
-          <p className="empty-desc">Tvoji přátelé zatím žádné služby nesdílejí, nebo jsou už všechny obsazené.</p>
-          <Link href="/dashboard/contacts" className="btn btn-primary mt-4">Pozvat další přátele</Link>
-        </div>
-      ) : (
-        <div className="grid-auto">
-          {services.map(service => (
-            <div key={service.id} className="card card-interactive overflow-hidden flex flex-col">
-              <div className="p-6 flex-1">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="user-avatar" style={{ width: 48, height: 48, borderRadius: 12 }}>
-                    {service.serviceName.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold">{Number(service.periodicPrice).toLocaleString()} {service.currency}</div>
-                    <div className="text-[10px] text-muted uppercase">/ {service.billingCycle}</div>
-                  </div>
-                </div>
-
-                <h3 className="mb-1">{service.serviceName}</h3>
-                <p className="text-xs text-muted mb-4">{service.providerName} • {service.category || "Ostatní"}</p>
-                
-                {service.description && (
-                  <p className="text-xs line-clamp-2 text-secondary mb-4 italic">"{service.description}"</p>
-                )}
-
-                <div className="divider" />
-
-                <div className="flex items-center gap-3">
-                  <div className="user-avatar" style={{ width: 24, height: 24, fontSize: '0.6rem' }}>
-                    {service.owner.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="text-xs">
-                    <span className="text-muted">Sdílí:</span> <span className="font-bold">{service.owner.name}</span>
-                  </div>
-                  <div className="ml-auto">
-                    {service.freeSlots === Infinity ? (
-                      <span className="badge badge-green">Volno</span>
-                    ) : (
-                      <span className={`badge ${service.freeSlots > 0 ? 'badge-blue' : 'badge-red'}`}>
-                        {service.freeSlots} volných míst
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="card-footer bg-muted/30 border-t border-subtle">
-                <button 
-                  className="btn btn-primary w-full btn-sm"
-                  onClick={() => handleRequestAccess(service.id)}
-                  disabled={requestingId === service.id || service.freeSlots === 0}
-                >
-                  {requestingId === service.id ? "Odesílám..." : "Požádat o přístup"}
-                </button>
-              </div>
+      <div className="card">
+        <div className="table-wrap">
+          {loading ? (
+            <div className="p-8">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="skeleton mb-4" style={{ height: 60, borderRadius: 12 }} />
+              ))}
             </div>
-          ))}
+          ) : services.length === 0 ? (
+            <div className="empty-state p-12">
+              <div className="empty-icon text-4xl mb-4">🌍</div>
+              <h3 className="empty-title">Zatím se nic nesdílí</h3>
+              <p className="empty-desc max-w-sm mx-auto">
+                Tvoji přátelé zatím žádné služby veřejně nesdílejí, nebo jsou už všechna místa obsazená. Skus jim napsat!
+              </p>
+              <Link href="/dashboard/contacts" className="btn btn-primary mt-6">Zvětšit okruh přátel</Link>
+            </div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Služba</th>
+                  <th className="hidden-mobile">Kategorie</th>
+                  <th>Cena</th>
+                  <th>Status</th>
+                  <th>Sdílí</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {services.map((svc) => {
+                  const icon = CATEGORY_ICONS[svc.category?.toLowerCase() || "other"] || "📦";
+                  return (
+                    <tr key={svc.id}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="text-xl w-8 h-8 flex items-center justify-center bg-brand-50 rounded-lg text-brand-600">
+                            {icon}
+                          </div>
+                          <div>
+                            <div className="font-bold text-primary">{svc.serviceName}</div>
+                            <div className="text-[11px] text-muted">{svc.providerName}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="hidden-mobile">
+                        <span className="text-xs font-medium bg-muted px-2 py-0.5 rounded-full text-muted">
+                           {svc.category || "Ostatní"}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="font-bold text-primary">
+                          {Number(svc.periodicPrice).toLocaleString()} {svc.currency}
+                        </div>
+                        <div className="text-[10px] text-muted uppercase">/ {svc.billingCycle}</div>
+                      </td>
+                      <td>
+                        {svc.freeSlots === Infinity ? (
+                          <span className="badge badge-green">Volno</span>
+                        ) : (
+                          <span className={`badge ${svc.freeSlots > 0 ? 'badge-blue' : 'badge-red'}`}>
+                            {svc.freeSlots > 0 ? `${svc.freeSlots} volných míst` : 'Obsazeno'}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <div className="user-avatar" style={{ width: 24, height: 24, fontSize: '0.6rem' }}>
+                            {svc.owner.name[0].toUpperCase()}
+                          </div>
+                          <span className="text-xs font-semibold text-muted">{svc.owner.name}</span>
+                        </div>
+                      </td>
+                      <td className="text-right">
+                        <button 
+                          className="btn btn-primary btn-sm"
+                          onClick={() => handleRequestAccess(svc.id)}
+                          disabled={requestingId === svc.id || svc.freeSlots === 0}
+                        >
+                          {requestingId === svc.id ? "..." : "Požádat"}
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
