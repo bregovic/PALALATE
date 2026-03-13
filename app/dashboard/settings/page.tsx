@@ -66,7 +66,7 @@ export default function SettingsPage() {
         <button className={`tab ${tab === "categories" ? "active" : ""}`} onClick={() => setTab("categories")}>
           📁 Kategorie
         </button>
-        {user?.role === "ADMIN" && (
+        {user && (
           <button className={`tab ${tab === "system" ? "active" : ""}`} onClick={() => setTab("system")}>
             ⚙️ Systém
           </button>
