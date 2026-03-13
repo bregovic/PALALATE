@@ -17,6 +17,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"profile" | "security" | "privacy" | "management">("profile");
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   useEffect(() => {
     fetch("/api/me").then((r) => r.json()).then((data) => {
@@ -146,15 +147,19 @@ export default function SettingsPage() {
         <div className="card" style={{ maxWidth: 600 }}>
           <div className="card-header"><h3>Bezpečnost účtu</h3></div>
           <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div style={{ padding: "16px 0" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Heslo</div>
-                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Naposled změněno: neznámo</div>
+            {!showPasswordForm ? (
+              <div style={{ padding: "16px 0" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Heslo</div>
+                    <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Změňte si své přístupové heslo</div>
+                  </div>
+                  <button className="btn btn-secondary btn-sm" onClick={() => setShowPasswordForm(true)}>Změnit heslo</button>
                 </div>
-                <button className="btn btn-secondary btn-sm" disabled>Změnit heslo</button>
               </div>
-            </div>
+            ) : (
+              <PasswordChangeForm onCancel={() => setShowPasswordForm(false)} />
+            )}
 
           </div>
         </div>
@@ -197,6 +202,64 @@ export default function SettingsPage() {
 
       {tab === "management" && <ManagementTab />}
     </div>
+  );
+}
+
+function PasswordChangeForm({ onCancel }: { onCancel: () => void }) {
+  const [current, setCurrent] = useState("");
+  const [newP, setNewP] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (newP !== confirm) return setError("Hesla se neshodují");
+    if (newP.length < 8) return setError("Heslo musí mít aspoň 8 znaků");
+
+    setSaving(true);
+    const res = await fetch("/api/me/password", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword: current, newPassword: newP }),
+    });
+
+    if (res.ok) {
+      setDone(true);
+      setTimeout(onCancel, 2000);
+    } else {
+      const data = await res.json();
+      setError(data.error || "Chyba při změně hesla");
+    }
+    setSaving(false);
+  }
+
+  if (done) return <div className="alert alert-success">✅ Heslo bylo změněno!</div>;
+
+  return (
+    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 16, padding: "16px 0" }}>
+      {error && <div className="alert alert-error">{error}</div>}
+      <div className="form-group">
+        <label className="form-label">Současné heslo</label>
+        <input type="password" dsa-label="Současné heslo" className="form-input" value={current} onChange={e => setCurrent(e.target.value)} required />
+      </div>
+      <div className="form-group">
+        <label className="form-label">Nové heslo</label>
+        <input type="password" dsa-label="Nové heslo" className="form-input" value={newP} onChange={e => setNewP(e.target.value)} required />
+      </div>
+      <div className="form-group">
+        <label className="form-label">Potvrzení nového hesla</label>
+        <input type="password" dsa-label="Potvrzení hesla" className="form-input" value={confirm} onChange={e => setConfirm(e.target.value)} required />
+      </div>
+      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+        <button type="button" className="btn btn-ghost" onClick={onCancel}>Zrušit</button>
+        <button type="submit" className="btn btn-primary" disabled={saving}>
+          {saving ? "Ukládám..." : "Uložit nové heslo"}
+        </button>
+      </div>
+    </form>
   );
 }
 

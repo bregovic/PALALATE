@@ -100,6 +100,11 @@ export default function LoginPage() {
                   autoComplete="current-password"
                 />
               </div>
+              <div style={{ textAlign: "right", marginTop: 4 }}>
+                <Link href="/forgot-password" style={{ fontSize: "0.8rem", color: "var(--brand-600)" }}>
+                  Zapomněli jste heslo?
+                </Link>
+              </div>
             </div>
 
             <button
