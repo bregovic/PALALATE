@@ -55,11 +55,15 @@ export function ServicesListClient({ initialServices }: Props) {
   const [sortCol, setSortCol] = useState<"name" | "price" | "renewal" | "category">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
+  const [showFilters, setShowFilters] = useState(false);
+
   const categories = useMemo(() => {
     const cats = new Set<string>();
     services.forEach(s => { if (s.category) cats.add(s.category); });
     return Array.from(cats).sort();
   }, [services]);
+
+  const hasActiveFilters = categoryFilter !== "" || sortCol !== "name" || sortDir !== "asc";
 
   const filteredAndSorted = useMemo(() => {
     let result = services.filter(s => {
@@ -143,8 +147,8 @@ export function ServicesListClient({ initialServices }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-4 mb-2">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="relative flex-1">
           <input 
             type="text" 
             placeholder="Hledat službu..." 
@@ -155,34 +159,67 @@ export function ServicesListClient({ initialServices }: Props) {
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">🔍</span>
         </div>
         
-        <select 
-          className="form-select w-auto min-w-[150px]"
-          value={categoryFilter}
-          onChange={e => setCategoryFilter(e.target.value)}
+        <button 
+          onClick={() => setShowFilters(!showFilters)}
+          className={`btn ${showFilters ? 'btn-secondary' : 'btn-ghost'} flex items-center gap-2 px-4`}
         >
-          <option value="">Všechny kategorie</option>
-          {categories.map(c => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-
-        <div className="flex gap-2 ml-auto">
-           <button 
-             onClick={() => { setSortCol("name"); setSortDir("asc"); }}
-             className={`btn btn-sm ${sortCol === "name" && sortDir === "asc" ? 'btn-secondary' : 'btn-ghost'}`}
-             title="Řadit A-Z"
-           >
-             A-Z
-           </button>
-           <button 
-             onClick={() => { setSortCol("name"); setSortDir("desc"); }}
-             className={`btn btn-sm ${sortCol === "name" && sortDir === "desc" ? 'btn-secondary' : 'btn-ghost'}`}
-             title="Řadit Z-A"
-           >
-             Z-A
-           </button>
-        </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+          <span className="font-bold">Filtr</span>
+          {hasActiveFilters && (
+             <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse"></span>
+          )}
+        </button>
       </div>
+
+      {showFilters && (
+        <div className="p-4 bg-elevated rounded-2xl border border-subtle flex flex-wrap items-end gap-6 animate-fade-in shadow-sm">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted ml-1">Kategorie</label>
+            <select 
+              className="form-select w-auto min-w-[200px] h-10"
+              value={categoryFilter}
+              onChange={e => setCategoryFilter(e.target.value)}
+            >
+              <option value="">Všechny kategorie</option>
+              {categories.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted ml-1">Abecedně</label>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => { setSortCol("name"); setSortDir("asc"); }}
+                className={`btn btn-sm h-10 px-4 ${sortCol === "name" && sortDir === "asc" ? 'btn-secondary' : 'btn-ghost border border-subtle'}`}
+              >
+                A-Z
+              </button>
+              <button 
+                onClick={() => { setSortCol("name"); setSortDir("desc"); }}
+                className={`btn btn-sm h-10 px-4 ${sortCol === "name" && sortDir === "desc" ? 'btn-secondary' : 'btn-ghost border border-subtle'}`}
+              >
+                Z-A
+              </button>
+            </div>
+          </div>
+          
+          <button 
+            className="btn btn-ghost btn-sm h-10 text-muted ml-auto"
+            onClick={() => {
+              setCategoryFilter("");
+              setSortCol("name");
+              setSortDir("asc");
+              setSearch("");
+            }}
+          >
+            Resetovat
+          </button>
+        </div>
+      )}
 
       <div className="card">
         <div className="table-wrap">
