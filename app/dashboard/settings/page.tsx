@@ -148,14 +148,7 @@ export default function SettingsPage() {
         <div className="card" style={{ maxWidth: 600 }}>
           <div className="card-header"><h3>Bezpečnost účtu</h3></div>
           <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div className="alert alert-info">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-              </svg>
-              <span>Změna hesla a 2FA bude dostupná v příští verzi. Pracujeme na tom! 🔨</span>
-            </div>
-
-            <div style={{ padding: "16px 0", borderBottom: "1px solid var(--border-subtle)" }}>
+            <div style={{ padding: "16px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={{ fontWeight: 600, marginBottom: 4 }}>Heslo</div>
@@ -165,23 +158,39 @@ export default function SettingsPage() {
               </div>
             </div>
 
+          </div>
+        </div>
+      )}
+      {tab === "privacy" && (
+        <div className="card" style={{ maxWidth: 600 }}>
+          <div className="card-header"><h3>Soukromí a GDPR</h3></div>
+          <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div className="alert alert-info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>Tvá data jsou chráněna a nikdy nejsou sdílena třetím stranám bez tvého souhlasu.</span>
+            </div>
+
             <div style={{ padding: "16px 0", borderBottom: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Dvoufaktorové ověření (2FA)</div>
-                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Zvýší bezpečnost tvého účtu</div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Export mých dat</div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Stáhni všechna svá data (GDPR)</div>
                 </div>
-                <span className="badge badge-yellow">Brzy</span>
+                <button className="btn btn-secondary btn-sm" disabled>Exportovat</button>
               </div>
             </div>
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Aktivní relace</div>
-                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Spravuj kde jsi přihlášen</div>
+                  <div style={{ fontWeight: 600, color: "var(--danger-400)", marginBottom: 4 }}>Smazat účet</div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                    Nevratná akce – smaže všechna tvá data
+                  </div>
                 </div>
-                <button className="btn btn-secondary btn-sm" disabled>Zobrazit</button>
+                <button className="btn btn-danger btn-sm" disabled>Smazat účet</button>
               </div>
             </div>
           </div>

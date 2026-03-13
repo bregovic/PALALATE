@@ -114,8 +114,7 @@ export default function Sidebar({
     <aside className="sidebar" id="sidebar">
       {/* Logo */}
       <div className="sidebar-logo">
-        <Image src="/logo.png" alt="Palalate" width={36} height={36} />
-        <span className="sidebar-logo-text">Palalate</span>
+        <Image src="/logo.png" alt="PalalateLogo" width={64} height={64} style={{ objectFit: 'contain' }} />
       </div>
 
       {/* Navigation */}

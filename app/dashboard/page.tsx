@@ -91,12 +91,9 @@ export default async function DashboardPage() {
       <div className="dashboard-hero mb-6">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <div>
-            <h1 style={{ fontSize: "1.6rem", marginBottom: 6 }}>
+            <h1 style={{ fontSize: "1.6rem", marginBottom: 0 }}>
               {greeting}, <span className="gradient-text">{user.name.split(" ")[0]}</span> 👋
             </h1>
-            <p className="text-secondary">
-              Tady je přehled tvých předplatných. Doufáme, že Spotify playlist byl dnes ok. 🎵
-            </p>
           </div>
           <Link href="/dashboard/services/new" className="btn btn-primary" id="add-service-hero-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
@@ -168,7 +165,7 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {myServices.map((svc) => (
+                {myServices.map((svc: any) => (
                   <Link
                     key={svc.id}
                     href={`/dashboard/services/${svc.id}`}
@@ -206,10 +203,10 @@ export default async function DashboardPage() {
             </div>
             <div className="card-body">
               {renewals.length === 0 ? (
-                <p className="text-muted text-sm">Žádná obnova v příštích 14 dnech. Pohoda! ✌️</p>
+                <p className="text-muted text-sm">Žádná obnova v příštích 14 dnech.</p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {renewals.map((r) => {
+                  {renewals.map((r: any) => {
                     const days = daysTo(r.renewalDate!);
                     return (
                       <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border-subtle)" }}>
@@ -238,10 +235,10 @@ export default async function DashboardPage() {
             </div>
             <div className="card-body">
               {sharedWithMe.length === 0 ? (
-                <p className="text-muted text-sm">Nikdo ti zatím nic nesdílí. Zkus se zeptat kamarádů! 😅</p>
+                <p className="text-muted text-sm">Zatím se s tebou nic nesdílí.</p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {sharedWithMe.map((g) => (
+                  {sharedWithMe.map((g: any) => (
                     <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: "0.85rem" }}>{g.service.serviceName}</div>
