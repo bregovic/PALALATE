@@ -8,21 +8,21 @@
 }
 
 :root {
-  /* 🎨 Brand paleta – fialová, modrá, azurová */
-  --brand-50:  #f5f3ff;
-  --brand-100: #ede9fe;
-  --brand-200: #ddd6fe;
-  --brand-300: #c4b5fd;
-  --brand-400: #a78bfa;
-  --brand-500: #8b5cf6;
-  --brand-600: #7c3aed;
-  --brand-700: #6d28d9;
-  --brand-800: #5b21b6;
-  --brand-900: #4c1d95;
+  /* 🎨 Brand paleta – Modrá (Sapphire) */
+  --brand-50:  #eff6ff;
+  --brand-100: #dbeafe;
+  --brand-200: #bfdbfe;
+  --brand-300: #93c5fd;
+  --brand-400: #60a5fa;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+  --brand-800: #1e40af;
+  --brand-900: #1e3a8a;
 
-  --accent-500: #06b6d4;
-  --accent-400: #22d3ee;
-  --accent-600: #0891b2;
+  --accent-500: #10b981;
+  --accent-400: #34d399;
+  --accent-600: #059669;
 
   --success-400: #34d399;
   --success-500: #10b981;
@@ -61,8 +61,8 @@
   --shadow-sm:   0 1px 2px rgba(0,0,0,0.05);
   --shadow-md:   0 4px 12px rgba(0,0,0,0.08);
   --shadow-lg:   0 12px 24px rgba(0,0,0,0.12);
-  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.08);
-  --shadow-glow-strong: 0 0 30px rgba(139, 92, 246, 0.15);
+  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.08); /* Blue glow */
+  --shadow-glow-strong: 0 0 30px rgba(59, 130, 246, 0.15);
 
   --radius-sm:   6px;
   --radius-md:   10px;

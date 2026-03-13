@@ -43,15 +43,11 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card animate-slide-up">
-        <div className="auth-logo">
-          <Image src="/logo.png" alt="Palalate" width={52} height={52} />
-          <div className="auth-logo-title">Palalate</div>
-          <div className="auth-logo-tagline">
-            Správa sdílených předplatných 🎯
-          </div>
+        <div className="auth-logo" style={{ marginBottom: 40 }}>
+          <Image src="/logo.png" alt="Palalate" width={120} height={120} style={{ margin: "0 auto" }} />
         </div>
 
-        <h2 style={{ marginBottom: 24 }}>Přihlásit se</h2>
+        <h2 style={{ marginBottom: 24, textAlign: "center" }}>Přihlásit se</h2>
 
         {error && (
           <div className="alert alert-error mb-4">

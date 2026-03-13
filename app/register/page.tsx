@@ -57,19 +57,11 @@ export default function RegisterPage() {
   return (
     <div className="auth-page">
       <div className="auth-card animate-slide-up">
-        <div className="auth-logo">
-          <Image src="/logo.png" alt="Palalate" width={52} height={52} />
-          <div className="auth-logo-title">Palalate</div>
-          <div className="auth-logo-tagline">
-            Tvé předplatné, tvé pravidla 👑
-          </div>
+        <div className="auth-logo" style={{ marginBottom: 40 }}>
+          <Image src="/logo.png" alt="Palalate" width={120} height={120} style={{ margin: "0 auto" }} />
         </div>
 
-        <h2 style={{ marginBottom: 6 }}>Vytvořit účet</h2>
-        <p className="text-sm text-muted mb-6">
-          Zdarma. Žádná kreditní karta.{" "}
-          <span style={{ fontSize: "1rem" }}>🥑</span>
-        </p>
+        <h2 style={{ marginBottom: 24, textAlign: "center" }}>Vytvořit účet</h2>
 
         {error && (
           <div className="alert alert-error mb-4">
