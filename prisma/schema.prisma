@@ -1,0 +1,426 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USER ────────────────────────────────────────────────────────────────────
+
+model User {
+  id                String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  passwordHash      String
+  emailVerifiedAt   DateTime?
+  role              Role      @default(USER)
+  status            UserStatus @default(ACTIVE)
+  avatar            String?
+  bio               String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  ownedServices     Service[]         @relation("ServiceOwner")
+  friendshipsAsRequester Friendship[] @relation("FriendshipRequester")
+  friendshipsAsAddressee Friendship[] @relation("FriendshipAddressee")
+  accessRequests    AccessRequest[]   @relation("AccessRequester")
+  accessGrants      AccessGrant[]     @relation("AccessGrantee")
+  grantsGiven       AccessGrant[]     @relation("AccessGrantor")
+  usageRecords      UsageRecord[]
+  settlementItems   SettlementItem[]
+  transactionsPayed Transaction[]     @relation("Payer")
+  transactionsReceived Transaction[]  @relation("Receiver")
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  sessions          Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+// ─── FRIENDSHIP ───────────────────────────────────────────────────────────────
+
+model Friendship {
+  id              String           @id @default(cuid())
+  requesterId     String
+  addresseeId     String
+  status          FriendshipStatus @default(PENDING)
+  createdAt       DateTime         @default(now())
+  acceptedAt      DateTime?
+  message         String?
+
+  requester       User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee       User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@map("friendships")
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
+}
+
+// ─── SERVICE ──────────────────────────────────────────────────────────────────
+
+model Service {
+  id               String          @id @default(cuid())
+  ownerId          String
+  providerName     String
+  serviceName      String
+  category         String?
+  description      String?
+  iconUrl          String?
+  websiteUrl       String?
+  periodicPrice    Decimal         @db.Decimal(10, 2)
+  currency         String          @default("CZK")
+  billingCycle     BillingCycle    @default(MONTHLY)
+  renewalDate      DateTime?
+  status           ServiceStatus   @default(ACTIVE)
+  sharingStatus    SharingStatus   @default(SHARING_DISABLED)
+  sharingVisibility SharingVisibility @default(FRIENDS_ONLY)
+  maxSharedSlots   Int             @default(0)
+  legalNote        String?
+  tags             String[]
+  internalNote     String?
+  licenseType      String?
+  sharingConditions String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  archivedAt       DateTime?
+
+  owner            User            @relation("ServiceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  credentials      CredentialSecret[]
+  accessRequests   AccessRequest[]
+  accessGrants     AccessGrant[]
+  settlementPeriods SettlementPeriod[]
+  auditLogs        AuditLog[]
+
+  @@map("services")
+}
+
+enum ServiceStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CANCELLED
+  ARCHIVED
+}
+
+enum SharingStatus {
+  SHARING_ENABLED
+  SHARING_DISABLED
+  SHARING_PAUSED
+}
+
+enum SharingVisibility {
+  PUBLIC
+  FRIENDS_ONLY
+  INVITE_ONLY
+}
+
+enum BillingCycle {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  CUSTOM
+}
+
+// ─── CREDENTIAL SECRET ────────────────────────────────────────────────────────
+
+model CredentialSecret {
+  id               String         @id @default(cuid())
+  serviceId        String
+  secretType       SecretType
+  encryptedPayload String         // AES-256-GCM encrypted
+  iv               String         // Initialization vector
+  label            String?
+  visibilityRule   VisibilityRule @default(OWNER_ONLY)
+  note             String?
+  createdAt        DateTime       @default(now())
+  rotatedAt        DateTime?
+
+  service          Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  auditLogs        AuditLog[]
+
+  @@map("credential_secrets")
+}
+
+enum SecretType {
+  EMAIL_PASSWORD
+  API_KEY
+  INVITE_LINK
+  NOTE
+  EXTERNAL_LINK
+  PASSED_EXTERNALLY
+  TOKEN
+}
+
+enum VisibilityRule {
+  OWNER_ONLY
+  GRANTED_USERS
+  TIME_LIMITED
+}
+
+// ─── ACCESS REQUEST ───────────────────────────────────────────────────────────
+
+model AccessRequest {
+  id            String              @id @default(cuid())
+  serviceId     String
+  requesterId   String
+  ownerId       String
+  message       String?
+  requestedFrom DateTime?
+  requestedTo   DateTime?
+  requestedMode AccessMode          @default(STANDARD)
+  status        AccessRequestStatus @default(PENDING)
+  decisionNote  String?
+  decidedAt     DateTime?
+  createdAt     DateTime            @default(now())
+
+  service       Service             @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  requester     User                @relation("AccessRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@map("access_requests")
+}
+
+enum AccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  EXPIRED
+}
+
+enum AccessMode {
+  STANDARD
+  VIEW_ONLY
+  FULL_ACCESS
+}
+
+// ─── ACCESS GRANT ─────────────────────────────────────────────────────────────
+
+model AccessGrant {
+  id                  String      @id @default(cuid())
+  serviceId           String
+  granteeId           String
+  grantedById         String
+  startsAt            DateTime    @default(now())
+  endsAt              DateTime?
+  status              GrantStatus @default(ACTIVE)
+  pricingModel        PricingModel @default(EQUAL_SPLIT)
+  fixedAmount         Decimal?    @db.Decimal(10, 2)
+  weight              Float?
+  credentialVisibility VisibilityRule @default(GRANTED_USERS)
+  revokedAt           DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  service             Service     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  grantee             User        @relation("AccessGrantee", fields: [granteeId], references: [id], onDelete: Cascade)
+  grantedBy           User        @relation("AccessGrantor", fields: [grantedById], references: [id])
+  usageRecords        UsageRecord[]
+  settlementItems     SettlementItem[]
+
+  @@map("access_grants")
+}
+
+enum GrantStatus {
+  SCHEDULED
+  ACTIVE
+  EXPIRED
+  REVOKED
+  SUSPENDED
+}
+
+enum PricingModel {
+  EQUAL_SPLIT
+  BY_DAYS
+  BY_WEIGHT
+  FIXED
+}
+
+// ─── USAGE RECORD ─────────────────────────────────────────────────────────────
+
+model UsageRecord {
+  id            String      @id @default(cuid())
+  accessGrantId String
+  userId        String
+  periodFrom    DateTime
+  periodTo      DateTime
+  usageState    UsageState  @default(USING)
+  usageWeight   Float?
+  note          String?
+  createdAt     DateTime    @default(now())
+
+  accessGrant   AccessGrant @relation(fields: [accessGrantId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id])
+
+  @@map("usage_records")
+}
+
+enum UsageState {
+  USING
+  NOT_USING
+  PAUSED
+  UNKNOWN
+}
+
+// ─── SETTLEMENT ───────────────────────────────────────────────────────────────
+
+model SettlementPeriod {
+  id               String           @id @default(cuid())
+  serviceId        String
+  periodFrom       DateTime
+  periodTo         DateTime
+  totalCost        Decimal          @db.Decimal(10, 2)
+  currency         String           @default("CZK")
+  calculationModel PricingModel     @default(EQUAL_SPLIT)
+  status           SettlementStatus @default(OPEN)
+  createdAt        DateTime         @default(now())
+
+  service          Service          @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  items            SettlementItem[]
+
+  @@map("settlement_periods")
+}
+
+model SettlementItem {
+  id                 String          @id @default(cuid())
+  settlementPeriodId String
+  userId             String
+  accessGrantId      String?
+  amountDue          Decimal         @db.Decimal(10, 2)
+  explanation        String?
+  status             SettlementItemStatus @default(PROPOSED)
+  createdAt          DateTime        @default(now())
+
+  period             SettlementPeriod @relation(fields: [settlementPeriodId], references: [id], onDelete: Cascade)
+  user               User            @relation(fields: [userId], references: [id])
+  accessGrant        AccessGrant?    @relation(fields: [accessGrantId], references: [id])
+  transactions       Transaction[]
+
+  @@map("settlement_items")
+}
+
+enum SettlementStatus {
+  OPEN
+  CLOSED
+  DISPUTED
+}
+
+enum SettlementItemStatus {
+  PROPOSED
+  CONFIRMED
+  PAID
+  OVERDUE
+  DISPUTED
+}
+
+// ─── TRANSACTION ──────────────────────────────────────────────────────────────
+
+model Transaction {
+  id                String            @id @default(cuid())
+  payerId           String
+  receiverId        String
+  settlementItemId  String?
+  amount            Decimal           @db.Decimal(10, 2)
+  currency          String            @default("CZK")
+  status            TransactionStatus @default(PROPOSED)
+  paidAt            DateTime?
+  externalReference String?
+  note              String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  payer             User              @relation("Payer", fields: [payerId], references: [id])
+  receiver          User              @relation("Receiver", fields: [receiverId], references: [id])
+  settlementItem    SettlementItem?   @relation(fields: [settlementItemId], references: [id])
+
+  @@map("transactions")
+}
+
+enum TransactionStatus {
+  PROPOSED
+  CONFIRMED
+  PAID
+  OVERDUE
+  DISPUTED
+  CANCELLED
+}
+
+// ─── NOTIFICATION ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  channel   String           @default("IN_APP")
+  payload   Json
+  sentAt    DateTime?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  ACCESS_REQUEST_RECEIVED
+  ACCESS_REQUEST_APPROVED
+  ACCESS_REQUEST_REJECTED
+  ACCESS_EXPIRING_SOON
+  SERVICE_RENEWAL_SOON
+  SETTLEMENT_CREATED
+  TRANSACTION_OVERDUE
+  FRIEND_REQUEST_RECEIVED
+  FRIEND_REQUEST_ACCEPTED
+  CREDENTIAL_VIEWED
+}
+
+// ─── AUDIT LOG ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id           String    @id @default(cuid())
+  actorId      String?
+  entityType   String
+  entityId     String
+  action       String
+  metadata     Json?
+  ipAddress    String?
+  createdAt    DateTime  @default(now())
+
+  actor        User?     @relation(fields: [actorId], references: [id])
+  service      Service?  @relation(fields: [entityId], references: [id], map: "audit_service_fk")
+  credential   CredentialSecret? @relation(fields: [entityId], references: [id], map: "audit_credential_fk")
+
+  @@map("audit_logs")
+}
