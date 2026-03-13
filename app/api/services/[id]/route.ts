@@ -59,15 +59,26 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!service) return NextResponse.json({ error: "Not found" }, { status: 404 });
     if (service.ownerId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    const {
+      serviceName, providerName, periodicPrice, currency,
+      billingCycle, pricingType, pricingDetails, renewalDate,
+      description, category, maxSharedSlots
+    } = body;
+
     const updated = await prisma.service.update({
       where: { id },
       data: {
-        ...body,
-        periodicPrice: body.periodicPrice != null ? parseFloat(body.periodicPrice) : undefined,
-        renewalDate: body.renewalDate ? new Date(body.renewalDate) : undefined,
-        maxSharedSlots: body.maxSharedSlots != null ? parseInt(body.maxSharedSlots) : undefined,
-        pricingType: body.pricingType,
-        pricingDetails: body.pricingDetails,
+        serviceName,
+        providerName,
+        periodicPrice: periodicPrice != null ? parseFloat(periodicPrice) : undefined,
+        currency,
+        billingCycle,
+        pricingType,
+        pricingDetails,
+        renewalDate: renewalDate ? new Date(renewalDate) : null,
+        description,
+        category,
+        maxSharedSlots: maxSharedSlots != null ? parseInt(maxSharedSlots) : undefined,
         updatedAt: new Date(),
       },
     });

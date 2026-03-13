@@ -9,6 +9,7 @@ interface RegistryService {
   category: string | null;
   defaultPrice: number | null;
   currency: string;
+  isShareable: boolean;
 }
 
 interface Category {
@@ -78,7 +79,8 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
     return registry.filter(s => {
       const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCat = selectedCategory === "Vše" || s.category === selectedCategory;
-      return matchesSearch && matchesCat;
+      const shareable = s.isShareable !== false; // Default to true if missing
+      return matchesSearch && matchesCat && shareable;
     });
   }, [registry, searchTerm, selectedCategory]);
 
@@ -121,54 +123,24 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
     }
   };
 
-  const addNewToRegistry = async () => {
+  const addCustomService = async () => {
     if (!customService.name) return;
-    setLoading(true);
+    setIsAdding(true);
 
     try {
-      let finalCategory = customService.category;
-
-      if (isNewCategory && newCategoryName) {
-        const catRes = await fetch("/api/categories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: newCategoryName }),
-        });
-        if (catRes.ok) {
-          const newCat = await catRes.json();
-          setCategories(prev => [...prev, newCat]);
-          finalCategory = newCat.name;
-        }
-      }
-
-      const res = await fetch("/api/service-registry", {
+      const res = await fetch("/api/services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...customService, category: finalCategory }),
+        body: JSON.stringify({ ...customService, periodicPrice: customService.defaultPrice }),
       });
 
       if (res.ok) {
-        const newItem = await res.json();
-        setRegistry(prev => [...prev, newItem].sort((a,b) => a.name.localeCompare(b.name)));
-        setShowAddForm(false);
-        setCustomService({
-          name: "",
-          category: "",
-          defaultPrice: 0,
-          currency: "CZK",
-          billingCycle: "MONTHLY",
-          pricingType: "PAID",
-          pricingDetails: "",
-          description: ""
-        });
-        setIsNewCategory(false);
-        setNewCategoryName("");
-        toggleSelection(newItem.id, false);
+        window.location.reload();
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      setIsAdding(false);
     }
   };
 
@@ -317,37 +289,16 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                 {/* Category Selection */}
                 <div className="form-group">
                   <label className="form-label">Kategorie</label>
-                  {!isNewCategory ? (
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <select 
-                        className="form-select"
-                        value={customService.category}
-                        onChange={e => setCustomService({...customService, category: e.target.value})}
-                      >
-                        <option value="">-- Vyber kategorii --</option>
-                        {availableCategories.filter(c => c !== "Vše").map(c => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                      <button 
-                        onClick={() => setIsNewCategory(true)}
-                        className="btn btn-secondary btn-sm"
-                      >➕</button>
-                    </div>
-                  ) : (
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <input 
-                        placeholder="Název nové kategorie"
-                        className="form-input"
-                        value={newCategoryName}
-                        onChange={e => setNewCategoryName(e.target.value)}
-                      />
-                      <button 
-                        onClick={() => { setIsNewCategory(false); setNewCategoryName(""); }}
-                        className="btn btn-ghost btn-sm"
-                      >✕</button>
-                    </div>
-                  )}
+                  <select 
+                    className="form-select"
+                    value={customService.category}
+                    onChange={e => setCustomService({...customService, category: e.target.value})}
+                  >
+                    <option value="">-- Vyber kategorii --</option>
+                    {availableCategories.filter(c => c !== "Vše").map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Pricing Type */}
@@ -428,11 +379,11 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
             <div className="modal-footer">
               <button onClick={() => setShowAddForm(false)} className="btn btn-secondary">Zrušit</button>
               <button 
-                onClick={addNewToRegistry} 
+                onClick={addCustomService} 
                 className="btn btn-primary"
-                disabled={!customService.name || loading}
+                disabled={!customService.name || isAdding}
               >
-                Uložit a přidat
+                {isAdding ? "Přidávám..." : "Přidat službu"}
               </button>
             </div>
           </div>

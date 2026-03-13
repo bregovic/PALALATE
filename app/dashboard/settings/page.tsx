@@ -16,7 +16,7 @@ export default function SettingsPage() {
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [tab, setTab] = useState<"profile" | "security" | "privacy">("profile");
+  const [tab, setTab] = useState<"profile" | "security" | "privacy" | "management">("profile");
 
   useEffect(() => {
     fetch("/api/me").then((r) => r.json()).then((data) => {
@@ -62,6 +62,11 @@ export default function SettingsPage() {
         <button className={`tab ${tab === "privacy" ? "active" : ""}`} onClick={() => setTab("privacy")}>
           🛡️ Soukromí
         </button>
+        {user?.role === "ADMIN" && (
+          <button className={`tab ${tab === "management" ? "active" : ""}`} onClick={() => setTab("management")}>
+            ⚙️ Správa
+          </button>
+        )}
       </div>
 
       {tab === "profile" && (
@@ -183,41 +188,183 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {tab === "privacy" && (
-        <div className="card" style={{ maxWidth: 600 }}>
-          <div className="card-header"><h3>Soukromí a GDPR</h3></div>
-          <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div className="alert alert-info">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-              <span>Tvá data jsou chráněna a nikdy nejsou sdílena třetím stranám bez tvého souhlasu.</span>
-            </div>
+      {tab === "management" && <ManagementTab />}
+    </div>
+  );
+}
 
-            <div style={{ padding: "16px 0", borderBottom: "1px solid var(--border-subtle)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Export mých dat</div>
-                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Stáhni všechna svá data (GDPR)</div>
-                </div>
-                <button className="btn btn-secondary btn-sm" disabled>Exportovat</button>
-              </div>
-            </div>
+function ManagementTab() {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Category Form
+  const [catName, setCatName] = useState("");
+  
+  // Service Form
+  const [svcForm, setSvcForm] = useState({
+    name: "",
+    category: "",
+    defaultPrice: 0,
+    currency: "CZK",
+    billingCycle: "MONTHLY",
+    pricingType: "PAID",
+    isShareable: true,
+    description: ""
+  });
 
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontWeight: 600, color: "var(--danger-400)", marginBottom: 4 }}>Smazat účet</div>
-                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                    Nevratná akce – smaže všechna tvá data
-                  </div>
-                </div>
-                <button className="btn btn-danger btn-sm" disabled>Smazat účet</button>
-              </div>
-            </div>
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [cr, sr] = await Promise.all([
+        fetch("/api/categories"),
+        fetch("/api/service-registry")
+      ]);
+      setCategories(await cr.json());
+      setServices(await sr.json());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const saveCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!catName) return;
+    const res = await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: catName }),
+    });
+    if (res.ok) {
+      setCatName("");
+      load();
+    }
+  };
+
+  const saveService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!svcForm.name) return;
+    const res = await fetch("/api/service-registry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(svcForm),
+    });
+    if (res.ok) {
+      setSvcForm({
+        name: "", category: "", defaultPrice: 0, currency: "CZK",
+        billingCycle: "MONTHLY", pricingType: "PAID", isShareable: true, description: ""
+      });
+      load();
+    }
+  };
+
+  if (loading) return <div>Načítám číselníky...</div>;
+
+  return (
+    <div className="grid-2" style={{ gridTemplateColumns: "1fr 1.5fr", gap: 24, alignItems: "start" }}>
+      {/* Categories */}
+      <div className="card">
+        <div className="card-header"><h3>📁 Kategorie</h3></div>
+        <div className="card-body">
+          <form onSubmit={saveCategory} className="flex gap-2 mb-4">
+            <input 
+              className="form-input" 
+              placeholder="Nová kategorie..." 
+              value={catName}
+              onChange={e => setCatName(e.target.value)}
+            />
+            <button className="btn btn-secondary">Přidat</button>
+          </form>
+          <div className="flex flex-wrap gap-2">
+            {categories.map(c => (
+              <span key={c.id} className="badge badge-blue">{c.name}</span>
+            ))}
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Services Registry */}
+      <div className="card">
+        <div className="card-header"><h3>📋 Číselník služeb</h3></div>
+        <div className="card-body">
+          <form onSubmit={saveService} className="grid-1 gap-4 mb-8 p-4 bg-muted rounded-lg">
+            <div className="grid-2 gap-4">
+              <div className="form-group">
+                <label className="form-label">Název</label>
+                <input className="form-input" value={svcForm.name} onChange={e => setSvcForm({...svcForm, name: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Kategorie</label>
+                <select className="form-select" value={svcForm.category} onChange={e => setSvcForm({...svcForm, category: e.target.value})}>
+                  <option value="">-- Vyber --</option>
+                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="grid-3 gap-4">
+              <div className="form-group">
+                <label className="form-label">Výchozí cena</label>
+                <input type="number" className="form-input" value={svcForm.defaultPrice} onChange={e => setSvcForm({...svcForm, defaultPrice: parseFloat(e.target.value)})} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Měna</label>
+                <select className="form-select" value={svcForm.currency} onChange={e => setSvcForm({...svcForm, currency: e.target.value})}>
+                  <option value="CZK">CZK</option>
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Frekvence</label>
+                <select className="form-select" value={svcForm.billingCycle} onChange={e => setSvcForm({...svcForm, billingCycle: e.target.value})}>
+                  <option value="MONTHLY">Měsíčně</option>
+                  <option value="YEARLY">Ročně</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-6 items-center">
+               <label className="flex items-center gap-2 cursor-pointer">
+                 <input type="checkbox" checked={svcForm.isShareable} onChange={e => setSvcForm({...svcForm, isShareable: e.target.checked})} />
+                 <span className="text-sm">Lze sdílet?</span>
+               </label>
+               <div className="flex gap-2">
+                 <label className="text-sm">Typ:</label>
+                 <select className="form-select btn-sm" value={svcForm.pricingType} onChange={e => setSvcForm({...svcForm, pricingType: e.target.value})}>
+                   <option value="PAID">Placené</option>
+                   <option value="AFFILIATE">Affiliate</option>
+                   <option value="INCLUDED">V ceně</option>
+                 </select>
+               </div>
+            </div>
+            <button className="btn btn-primary w-full">Uložit do číselníku</button>
+          </form>
+
+          <div className="table-wrap">
+            <table className="text-xs">
+              <thead>
+                <tr>
+                  <th>Název</th>
+                  <th>Kategorie</th>
+                  <th>Cena</th>
+                  <th>Sdílet?</th>
+                </tr>
+              </thead>
+              <tbody>
+                {services.map(s => (
+                  <tr key={s.id}>
+                    <td className="font-bold">{s.name}</td>
+                    <td>{s.category}</td>
+                    <td>{s.defaultPrice} {s.currency}</td>
+                    <td>{s.isShareable ? "✅" : "❌"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

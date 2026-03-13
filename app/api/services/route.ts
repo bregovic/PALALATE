@@ -69,6 +69,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const price = periodicPrice != null ? parseFloat(periodicPrice.toString()) : 0;
+    const slots = maxSharedSlots != null ? parseInt(maxSharedSlots.toString()) : 0;
+
     const service = await prisma.service.create({
       data: {
         ownerId: user.id,
@@ -76,7 +79,7 @@ export async function POST(req: NextRequest) {
         providerName,
         category: category || null,
         description: description || null,
-        periodicPrice: parseFloat(periodicPrice),
+        periodicPrice: isNaN(price) ? 0 : price,
         currency: currency || "CZK",
         billingCycle: billingCycle || "MONTHLY",
         pricingType: body.pricingType || "PAID",
@@ -84,7 +87,7 @@ export async function POST(req: NextRequest) {
         renewalDate: renewalDate ? new Date(renewalDate) : null,
         sharingStatus: sharingStatus || "SHARING_DISABLED",
         sharingVisibility: sharingVisibility || "FRIENDS_ONLY",
-        maxSharedSlots: parseInt(maxSharedSlots) || 0,
+        maxSharedSlots: isNaN(slots) ? 0 : slots,
         legalNote: legalNote || null,
         tags: tags || [],
         iconUrl: iconUrl || null,

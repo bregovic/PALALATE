@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, category, defaultPrice, currency, billingCycle, description } = body;
+    const { name, category, defaultPrice, currency, billingCycle, description, isShareable } = body;
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -24,8 +24,8 @@ export async function POST(req: Request) {
 
     const service = await prisma.serviceRegistry.upsert({
       where: { name },
-      update: { category, defaultPrice, currency, billingCycle, description, pricingType: body.pricingType },
-      create: { name, category, defaultPrice, currency, billingCycle, description, pricingType: body.pricingType },
+      update: { category, defaultPrice, currency, billingCycle, description, isShareable, pricingType: body.pricingType },
+      create: { name, category, defaultPrice, currency, billingCycle, description, isShareable, pricingType: body.pricingType },
     });
 
     return NextResponse.json(service, { status: 201 });

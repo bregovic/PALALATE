@@ -99,19 +99,27 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
   async function handleUpdateService() {
     setSavingEdit(true);
     try {
+      const cleanForm = {
+        ...editForm,
+        periodicPrice: isNaN(editForm.periodicPrice) ? 0 : editForm.periodicPrice,
+        maxSharedSlots: isNaN(editForm.maxSharedSlots) ? 0 : editForm.maxSharedSlots,
+        renewalDate: editForm.renewalDate || null,
+      };
+
       const res = await fetch(`/api/services/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(cleanForm),
       });
       if (res.ok) {
         setShowEditModal(false);
         await load();
       } else {
-        alert("Chyba při ukládání změn.");
+        const err = await res.json();
+        alert(`Chyba při ukládání: ${err.error || "Neznámá chyba"}`);
       }
     } catch (err) {
-      alert("Nepodařilo se uložit změny.");
+      alert("Nepodařilo se spojit se serverem.");
     } finally {
       setSavingEdit(false);
     }
@@ -438,7 +446,10 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                     type="number"
                     className="form-input"
                     value={editForm.periodicPrice}
-                    onChange={e => setEditForm({...editForm, periodicPrice: parseFloat(e.target.value)})}
+                    onChange={e => {
+                      const val = parseFloat(e.target.value);
+                      setEditForm({...editForm, periodicPrice: isNaN(val) ? 0 : val});
+                    }}
                   />
                 </div>
                 <div className="form-group">
