@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = process.env.EMAIL_FROM || "Palalate <noreply@palalate.app>";
 
 interface SendEmailOptions {
@@ -11,6 +11,10 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   try {
+    if (!resend) {
+      console.warn("[Email] Resend is not initialized (missing API key)");
+      return { success: false, error: "Missing API key" };
+    }
     const { data, error } = await resend.emails.send({
       from: FROM,
       to,
