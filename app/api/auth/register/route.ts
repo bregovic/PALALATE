@@ -6,11 +6,18 @@ import { SESSION_DURATION_DAYS, SESSION_COOKIE } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password } = await req.json();
+    const { name, email, password, consent } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Jméno, email a heslo jsou povinné" },
+        { status: 400 }
+      );
+    }
+
+    if (!consent) {
+      return NextResponse.json(
+        { error: "Musíte souhlasit s obchodními podmínkami" },
         { status: 400 }
       );
     }
@@ -20,6 +27,14 @@ export async function POST(req: NextRequest) {
         { error: "Heslo musí mít alespoň 8 znaků" },
         { status: 400 }
       );
+    }
+
+    // Diagnostic log for DB connection
+    try {
+      await prisma.$connect();
+    } catch (dbErr) {
+      console.error("[Register DB Connection Error]", dbErr);
+      return NextResponse.json({ error: "Chyba připojení k databázi" }, { status: 500 });
     }
 
     const existing = await prisma.user.findUnique({
@@ -33,7 +48,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
       data: {
@@ -66,7 +81,10 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (err) {
-    console.error("[Register]", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("[Register Error Detailed]", err);
+    return NextResponse.json({ 
+      error: "Vnitřní chyba serveru", 
+      details: err instanceof Error ? err.message : String(err) 
+    }, { status: 500 });
   }
 }

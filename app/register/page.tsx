@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [password2, setPassword2] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [consent, setConsent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,13 +35,13 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, consent }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Registrace se nezdařila");
+        setError(data.details ? `${data.error}: ${data.details}` : (data.error || "Registrace se nezdařila"));
         return;
       }
 
@@ -166,11 +167,25 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+              <input 
+                type="checkbox" 
+                id="reg-consent"
+                checked={consent}
+                onChange={e => setConsent(e.target.checked)}
+                required
+                style={{ marginTop: 4, width: 18, height: 18, flexShrink: 0 }}
+              />
+              <label htmlFor="reg-consent" className="text-xs text-secondary leading-relaxed cursor-pointer">
+                <strong>Souhlasím s provozními podmínkami.</strong> Rozumím, že platforma slouží pouze pro sdílení přístupů, u kterých vím, že je to legislativně možné. Potvrzuji, že u služeb, kde si nejsem jistý/á, nejsem oprávněn/a je zde zveřejňovat. Provozovatel nenese odpovědnost za zveřejněné služby a jejich sdílení.
+              </label>
+            </div>
+
             <button
               id="register-submit"
               type="submit"
               className="btn btn-primary w-full btn-lg"
-              disabled={loading}
+              disabled={loading || !consent}
               style={{ marginTop: 8 }}
             >
               {loading ? (
@@ -182,11 +197,6 @@ export default function RegisterPage() {
                 "Vytvořit účet →"
               )}
             </button>
-
-            <p className="text-xs text-muted text-center">
-              Registrací souhlasíš s podmínkami použití a zodpovídáš za soulad
-              sdílených služeb s podmínkami jejich poskytovatele.
-            </p>
           </div>
         </form>
 
