@@ -128,46 +128,40 @@ export default function DiscoverPage() {
               <Link href="/dashboard/contacts" className="btn btn-primary mt-6">Zvětšit okruh přátel</Link>
             </div>
           ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table>
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                  <th style={{ textAlign: "left", padding: "12px 16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Služba</th>
-                  <th className="hidden-mobile" style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "120px" }}>Kategorie</th>
-                  <th style={{ textAlign: "left", padding: "12px 16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "100px" }}>Cena</th>
-                  <th className="hidden-mobile" style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "130px" }}>Status</th>
-                  <th style={{ textAlign: "left", padding: "12px 16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "60px" }}>Sdílí</th>
-                  <th style={{ width: "100px", padding: "12px 16px" }}></th>
+                <tr>
+                  <th style={{ textAlign: "left" }}>Služba</th>
+                  <th className="hidden-mobile">Kategorie</th>
+                  <th className="text-right" style={{ width: "100px" }}>Cena</th>
+                  <th className="hidden-mobile text-center" style={{ width: "120px" }}>Stav</th>
+                  <th className="text-center" style={{ width: "60px" }}>Sdílí</th>
+                  <th style={{ width: "100px" }}></th>
                 </tr>
               </thead>
               <tbody>
                 {services.map((svc: any) => {
-                  const icon = CATEGORY_ICONS[svc.category?.toLowerCase() || "other"] || "📦";
                   const hasRequested = svc.hasPendingRequest;
                   const hasAccess = svc.hasActiveGrant;
 
                   return (
-                    <tr key={svc.id} style={{ borderBottom: "1px solid var(--border-subtle)", verticalAlign: "middle" }}>
-                      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span className="hidden-mobile" style={{ fontSize: "1.4rem", width: 32, flexShrink: 0, textAlign: "center" }}>{icon}</span>
-                          <div style={{ overflow: "hidden" }}>
-                            <div className="font-bold text-primary" style={{ fontSize: "0.9rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{svc.serviceName}</div>
-                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{svc.providerName}</div>
-                          </div>
-                        </div>
+                    <tr key={svc.id}>
+                      <td>
+                        <div className="font-bold text-primary">{svc.serviceName}</div>
+                        <div className="text-xs text-muted">{svc.providerName}</div>
                       </td>
-                      <td className="hidden-mobile" style={{ padding: "16px", verticalAlign: "middle" }}>
-                        <span style={{ fontSize: "0.7rem", fontWeight: 600, background: "var(--bg-elevated)", padding: "4px 8px", borderRadius: "6px", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                      <td className="hidden-mobile text-center">
+                        <span className="badge badge-gray">
                           {svc.category || "Ostatní"}
                         </span>
                       </td>
-                      <td style={{ padding: "16px", verticalAlign: "middle" }}>
-                        <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--text-primary)" }}>
+                      <td className="text-right">
+                        <div className="font-bold text-primary">
                           {Number(svc.periodicPrice).toLocaleString()} {svc.currency}
                         </div>
-                        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase" }}>/ {svc.billingCycle}</div>
+                        <div className="text-[10px] text-muted text-uppercase">/ {svc.billingCycle}</div>
                       </td>
-                      <td className="hidden-mobile" style={{ padding: "16px", verticalAlign: "middle" }}>
+                      <td className="hidden-mobile text-center">
                         {hasAccess ? (
                            <span className="badge badge-green">Schváleno</span>
                         ) : (
@@ -180,24 +174,22 @@ export default function DiscoverPage() {
                           )
                         )}
                       </td>
-                      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
-                        <div className="user-avatar" style={{ width: 24, height: 24, fontSize: '0.65rem', flexShrink: 0 }} title={svc.owner.name}>
+                      <td className="text-center">
+                        <div className="user-avatar mx-auto" style={{ width: 24, height: 24, fontSize: '0.65rem' }} title={svc.owner.name}>
                           {svc.owner.name[0].toUpperCase()}
                         </div>
                       </td>
-                      <td style={{ padding: "16px", verticalAlign: "middle", textAlign: "right" }}>
+                      <td className="text-right">
                         {hasAccess ? (
                           <button
-                            className="btn btn-secondary btn-sm"
-                            style={{ width: "100%" }}
+                            className="btn btn-secondary btn-sm w-full"
                             onClick={() => handleViewCredentials(svc)}
                           >
                             🔐 Údaje
                           </button>
                         ) : (
                           <button
-                            className={`btn ${hasRequested ? 'btn-glow' : 'btn-primary'} btn-sm`}
-                            style={{ width: "100%" }}
+                            className={`btn ${hasRequested ? 'btn-glow' : 'btn-primary'} btn-sm w-full`}
                             onClick={() => !hasRequested && handleRequestAccess(svc.id)}
                             disabled={requestingId === svc.id || svc.freeSlots === 0 || hasRequested}
                           >

@@ -640,13 +640,10 @@ code {
 /* ─── TABLES ───────────────────────────────────────────────────────────────── */
 .table-wrap {
   overflow-x: auto;
-  overflow-y: visible;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
-  overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
-  /* isolate horizontal scroll but allow page vertical scroll */
-  touch-action: auto;
+  position: relative;
 }
 
 table {
@@ -1050,10 +1047,12 @@ tbody tr:hover { background: var(--bg-elevated); }
     border-radius: 0;
     border-left: none;
     border-right: none;
-    /* Isolate horizontal touch scroll - don't let it bubble to page */
-    overscroll-behavior-x: contain;
-    touch-action: auto;
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .table-wrap table {
+    min-width: 600px; /* Force minimum width to enable horizontal scroll */
   }
   
   /* Alternative table style for mobile if needed, but horizontal scroll is often enough */
