@@ -36,6 +36,7 @@ interface Service {
   usageMode: "PRIVATE" | "SHARED_ROTATION" | "SHARED" | "LICENSE";
   requiresBookingApproval: boolean;
   isTerminated: boolean;
+  url: string | null;
   priceIntervals: PriceInterval[];
   manualSlots: any[];
   _count: { accessGrants: number; manualSlots: number };

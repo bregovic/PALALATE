@@ -19,6 +19,7 @@ interface Service {
     name: string;
     avatar?: string | null;
   };
+  url?: string | null;
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
