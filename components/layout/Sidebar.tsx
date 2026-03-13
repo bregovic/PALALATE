@@ -90,6 +90,12 @@ export default function Sidebar({
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Přehled", icon: <LayoutGridIcon /> },
     { href: "/dashboard/services", label: "Mé služby", icon: <CreditCardIcon /> },
+    { href: "/dashboard/costs", label: "Náklady", icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ) },
     { href: "/dashboard/contacts", label: "Kontakty", icon: <UsersIcon /> },
     { href: "/dashboard/requests", label: "Žádosti", icon: <InboxIcon />, badge: pendingRequests },
     { href: "/dashboard/settlements", label: "Vyúčtování", icon: <WalletIcon /> },
