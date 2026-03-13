@@ -498,6 +498,7 @@ function ServicesTab() {
     description: "",
     usageMode: "PRIVATE",
     requiresBookingApproval: false,
+    url: "",
   });
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
 
@@ -547,6 +548,7 @@ function ServicesTab() {
       description: service.description || "",
       usageMode: service.usageMode || "PRIVATE",
       requiresBookingApproval: service.requiresBookingApproval ?? false,
+      url: service.url || "",
     });
     setEditingServiceId(service.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -556,7 +558,7 @@ function ServicesTab() {
     setSvcForm({
       name: "", category: "", defaultPrice: 0, currency: "CZK",
       billingCycle: "MONTHLY", pricingType: "PAID", isShareable: true, description: "",
-      usageMode: "PRIVATE", requiresBookingApproval: false
+      usageMode: "PRIVATE", requiresBookingApproval: false, url: ""
     });
     setEditingServiceId(null);
   };
@@ -586,6 +588,16 @@ function ServicesTab() {
                   {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Webová adresa (URL)</label>
+              <input 
+                className="form-input" 
+                value={svcForm.url} 
+                onChange={e => setSvcForm({...svcForm, url: e.target.value})} 
+                placeholder="https://www.netflix.com" 
+              />
             </div>
             
             <div className="grid-3 gap-4">
@@ -712,7 +724,8 @@ function ServicesTab() {
                               pricingType: s.pricingType || "PAID",
                               billingCycle: s.billingCycle || "MONTHLY",
                               usageMode: s.usageMode || "PRIVATE",
-                              requiresBookingApproval: s.requiresBookingApproval || false
+                              requiresBookingApproval: s.requiresBookingApproval || false,
+                              url: s.url
                             }),
                           });
                           if (res.ok) alert(`Služba ${s.name} byla přidána do tvého seznamu!`);

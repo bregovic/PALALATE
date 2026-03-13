@@ -115,6 +115,7 @@ model ServiceRegistry {
   iconUrl       String?
   websiteUrl    String?
   description   String?
+  url           String?
   usageMode     UsageMode    @default(PRIVATE)
   requiresBookingApproval Boolean @default(false)
   createdAt     DateTime @default(now())
@@ -156,6 +157,7 @@ model Service {
   updatedAt        DateTime        @updatedAt
   archivedAt       DateTime?
   isTerminated     Boolean @default(false)
+  url              String?
 
   owner            User            @relation("ServiceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   credentials      CredentialSecret[]

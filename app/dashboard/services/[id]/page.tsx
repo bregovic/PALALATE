@@ -97,6 +97,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     usageMode: "PRIVATE" as "PRIVATE" | "SHARED_ROTATION" | "SHARED" | "LICENSE",
     requiresBookingApproval: false,
     isTerminated: false,
+    url: "",
     priceIntervals: [] as PriceInterval[],
   });
   const [priceInput, setPriceInput] = useState("");
@@ -140,6 +141,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         usageMode: data.usageMode ?? "PRIVATE",
         requiresBookingApproval: data.requiresBookingApproval ?? false,
         isTerminated: data.isTerminated ?? false,
+        url: data.url || "",
         priceIntervals: (data.priceIntervals || []).map((pi: any) => ({
           ...pi,
           startDate: pi.startDate ? pi.startDate.split("T")[0] : "",
@@ -561,6 +563,19 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                     {service.usageMode === "LICENSE" && <span className="text-blue-600">🔑 Licence</span>}
                   </div>
                 </div>
+                {service.url && (
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <label className="text-muted text-xs block mb-1">PŘÍSTUP / URL</label>
+                    <a 
+                      href={service.url.startsWith('http') ? service.url : `https://${service.url}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-brand-600 font-bold hover:underline break-all"
+                    >
+                      🔗 {service.url}
+                    </a>
+                  </div>
+                )}
               </div>
               {service.description && (
                 <div className="mt-6 p-4 bg-elevated rounded-md border border-subtle">
@@ -938,6 +953,16 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                       <option key={c.id} value={c.name}>{c.name}</option>
                     ))}
                   </select>
+                </div>
+
+                <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                   <label className="form-label font-bold">Webová adresa (URL)</label>
+                   <input 
+                     className="form-input"
+                     placeholder="https://www.google.com"
+                     value={editForm.url}
+                     onChange={e => setEditForm({...editForm, url: e.target.value})}
+                   />
                 </div>
               </div>
 

@@ -225,6 +225,18 @@ export default function DiscoverPage() {
               <div className="p-4 bg-muted rounded-xl mb-4 text-center">
                 <div className="font-bold text-lg mb-1">{showCreds.serviceName}</div>
                 <div className="text-xs text-muted uppercase">Sdílí {showCreds.owner.name}</div>
+                {showCreds.url && (
+                  <div className="mt-2 text-xs">
+                    <a 
+                      href={showCreds.url.startsWith('http') ? showCreds.url : `https://${showCreds.url}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-brand-600 font-bold hover:underline break-all"
+                    >
+                      🔗 Otevřít službu
+                    </a>
+                  </div>
+                )}
               </div>
 
               {credsLoading ? (

@@ -54,14 +54,28 @@ export async function POST(req: NextRequest) {
   try {
     const user = await requireAuth();
     const body = await req.json();
-
     const {
-      serviceName, providerName, category, description,
-      periodicPrice, currency, billingCycle, renewalDate,
-      sharingStatus, sharingVisibility, maxSharedSlots,
-      legalNote, tags, iconUrl, websiteUrl,
-      licenseType, sharingConditions, internalNote, startDate,
-      usageMode, requiresBookingApproval, isTerminated
+      serviceName,
+      providerName,
+      periodicPrice,
+      currency,
+      billingCycle,
+      renewalDate,
+      startDate,
+      category,
+      description,
+      maxSharedSlots,
+      sharingStatus,
+      sharingVisibility,
+      legalNote,
+      tags,
+      iconUrl,
+      websiteUrl,
+      licenseType,
+      sharingConditions,
+      internalNote,
+      usageMode, requiresBookingApproval, isTerminated, url,
+      priceIntervals
     } = body;
 
     if (!serviceName || !providerName || periodicPrice == null) {
@@ -106,6 +120,7 @@ export async function POST(req: NextRequest) {
         usageMode: (usageMode || "PRIVATE") as any,
         requiresBookingApproval: requiresBookingApproval !== undefined ? Boolean(requiresBookingApproval) : false,
         isTerminated: isTerminated !== undefined ? Boolean(isTerminated) : false,
+        url: url || null,
         status: "ACTIVE",
       },
     });
