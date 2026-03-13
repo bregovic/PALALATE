@@ -27,7 +27,7 @@ export default async function ServicesPage() {
 
   const totalMonthly = services
     .filter((s) => s.status === "ACTIVE")
-    .reduce((sum: number, s: any) => {
+    .reduce((sum: number, s: import("@prisma/client").Service) => {
       let monthly = Number(s.periodicPrice);
       if (s.billingCycle === "YEARLY") monthly /= 12;
       if (s.billingCycle === "SEMI_ANNUALLY") monthly /= 6;
@@ -57,12 +57,13 @@ export default async function ServicesPage() {
         </div>
       </div>
 
-      <ServiceGridPicker activeServiceNames={services.map(s => s.serviceName)} />
+      <ServiceGridPicker activeServiceNames={services.map((s: import("@prisma/client").Service) => s.serviceName)} />
 
-      <ServicesListClient initialServices={services.map(s => ({
+      <ServicesListClient initialServices={services.map((s: import("@prisma/client").Service) => ({
         ...s,
         periodicPrice: s.periodicPrice.toString(),
-        renewalDate: s.renewalDate?.toISOString() || null
+        renewalDate: s.renewalDate?.toISOString() || null,
+        isTerminated: s.isTerminated
       })) as any} />
     </div>
   );

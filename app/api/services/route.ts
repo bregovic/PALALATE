@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { calculateNextRenewal } from "@/lib/billing";
 
 // GET /api/services
 export async function GET(req: NextRequest) {
@@ -73,6 +74,11 @@ export async function POST(req: NextRequest) {
     const price = periodicPrice != null ? parseFloat(periodicPrice.toString()) : 0;
     const slots = maxSharedSlots != null ? parseInt(maxSharedSlots.toString()) : 0;
 
+    let finalRenewalDate = (renewalDate && !isNaN(Date.parse(renewalDate))) ? new Date(renewalDate) : null;
+    if (!finalRenewalDate && startDate && !isNaN(Date.parse(startDate)) && billingCycle) {
+      finalRenewalDate = calculateNextRenewal(startDate, billingCycle);
+    }
+
     const service = await prisma.service.create({
       data: {
         ownerId: user.id,
@@ -85,7 +91,7 @@ export async function POST(req: NextRequest) {
         billingCycle: (billingCycle || "MONTHLY") as any,
         pricingType: (body.pricingType || "PAID") as any,
         pricingDetails: body.pricingDetails || null,
-        renewalDate: (renewalDate && !isNaN(Date.parse(renewalDate))) ? new Date(renewalDate) : null,
+        renewalDate: finalRenewalDate,
         startDate: (startDate && !isNaN(Date.parse(startDate))) ? new Date(startDate) : null,
         sharingStatus: (sharingStatus || "SHARING_DISABLED") as any,
         sharingVisibility: (sharingVisibility || "FRIENDS_ONLY") as any,

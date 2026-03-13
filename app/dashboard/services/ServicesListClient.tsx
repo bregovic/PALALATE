@@ -14,6 +14,7 @@ interface Service {
   renewalDate: string | null;
   status: string;
   sharingStatus: string;
+  isTerminated: boolean;
   _count: {
     accessGrants: number;
     accessRequests: number;
@@ -274,12 +275,18 @@ export function ServicesListClient({ initialServices }: Props) {
                     </td>
                     <td className="text-sm">{billingLabels[svc.billingCycle]}</td>
                     <td>
-                      {days !== null ? (
-                        <span className={`text-sm ${days <= 7 ? "text-amber-500 font-bold" : "text-muted"}`}>
-                          {days <= 0 ? "Dnes!" : `za ${days} dní`}
+                      {svc.isTerminated ? (
+                        <span className="text-[10px] font-bold uppercase text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded-full">
+                          Ukončeno
                         </span>
                       ) : (
-                        <span className="text-muted">–</span>
+                        days !== null ? (
+                          <span className={`text-sm ${days <= 7 ? "text-amber-500 font-bold" : "text-muted"}`}>
+                            {days < 0 ? "Expirováno" : (days === 0 ? "Dnes!" : `za ${days} dní`)}
+                          </span>
+                        ) : (
+                          <span className="text-muted">–</span>
+                        )
                       )}
                     </td>
                     <td>{statusBadge(svc.status)}</td>

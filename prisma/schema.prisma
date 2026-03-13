@@ -100,13 +100,6 @@ model ServiceCategory {
   @@map("service_categories")
 }
 
-enum PricingType {
-  PAID
-  AFFILIATE
-  INCLUDED
-  FREE
-}
-
 // ─── SERVICE REGISTRY (Číselník) ──────────────────────────────────────────────
 model ServiceRegistry {
   id           String   @id @default(cuid())
@@ -209,6 +202,14 @@ enum SharingStatus {
   SHARING_ENABLED
   SHARING_DISABLED
   SHARING_PAUSED
+}
+
+enum PricingType {
+  PAID
+  FREE
+  TRIAL
+  AFFILIATE
+  INCLUDED
 }
 
 enum SharingVisibility {

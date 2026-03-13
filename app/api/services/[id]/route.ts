@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { calculateNextRenewal } from "@/lib/billing";
 
 // GET /api/services/[id]
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -68,6 +69,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       priceIntervals
     } = body;
 
+    let finalRenewalDate = (renewalDate && !isNaN(Date.parse(renewalDate))) ? new Date(renewalDate) : (renewalDate === null ? null : undefined);
+    
+    // Auto-calculate if renewal date is explicitly cleared OR if it's missing but we have startDate and billingCycle
+    // We only auto-calculate if finalRenewalDate is null (meaning user cleared it or didn't provide it)
+    if (finalRenewalDate === null || (finalRenewalDate === undefined && !service.renewalDate)) {
+       const effectiveStartDate = startDate || service.startDate;
+       const effectiveBillingCycle = billingCycle || service.billingCycle;
+       if (effectiveStartDate && effectiveBillingCycle) {
+          finalRenewalDate = calculateNextRenewal(effectiveStartDate, effectiveBillingCycle) || null;
+       }
+    }
+
     const updated = await prisma.service.update({
       where: { id },
       data: {
@@ -78,7 +91,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         billingCycle: billingCycle as any,
         pricingType: pricingType as any,
         pricingDetails,
-        renewalDate: (renewalDate && !isNaN(Date.parse(renewalDate))) ? new Date(renewalDate) : (renewalDate === null ? null : undefined),
+        renewalDate: finalRenewalDate,
         startDate: (startDate && !isNaN(Date.parse(startDate))) ? new Date(startDate) : (startDate === null ? null : undefined),
         description,
         category,
