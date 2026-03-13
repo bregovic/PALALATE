@@ -13,7 +13,7 @@ interface Service {
   periodicPrice: number;
   currency: string;
   billingCycle: string;
-  freeSlots: number;
+  freeSlots: number | null;
   owner: {
     id: string;
     name: string;
@@ -103,7 +103,7 @@ export default function DiscoverPage() {
                   <th>Služba</th>
                   <th className="hidden-mobile">Kategorie</th>
                   <th>Cena</th>
-                  <th>Status</th>
+                  <th className="hidden-mobile">Status</th>
                   <th>Sdílí</th>
                   <th></th>
                 </tr>
@@ -115,7 +115,7 @@ export default function DiscoverPage() {
                     <tr key={svc.id}>
                       <td>
                         <div className="flex items-center gap-3">
-                          <div className="text-xl w-8 h-8 flex items-center justify-center bg-brand-50 rounded-lg text-brand-600">
+                          <div className="text-xl w-8 h-8 flex items-center justify-center bg-brand-50 rounded-lg text-brand-600 hidden-mobile">
                             {icon}
                           </div>
                           <div>
@@ -135,8 +135,8 @@ export default function DiscoverPage() {
                         </div>
                         <div className="text-[10px] text-muted uppercase">/ {svc.billingCycle}</div>
                       </td>
-                      <td>
-                        {svc.freeSlots === Infinity ? (
+                      <td className="hidden-mobile">
+                        {(svc.freeSlots === null || svc.freeSlots === Infinity) ? (
                           <span className="badge badge-green">Volno</span>
                         ) : (
                           <span className={`badge ${svc.freeSlots > 0 ? 'badge-blue' : 'badge-red'}`}>
@@ -149,11 +149,11 @@ export default function DiscoverPage() {
                           <div className="user-avatar" style={{ width: 24, height: 24, fontSize: '0.6rem' }}>
                             {svc.owner.name[0].toUpperCase()}
                           </div>
-                          <span className="text-xs font-semibold text-muted">{svc.owner.name}</span>
+                          <span className="text-xs font-semibold text-muted hidden-mobile">{svc.owner.name}</span>
                         </div>
                       </td>
                       <td className="text-right">
-                        <button 
+                        <button
                           className="btn btn-primary btn-sm"
                           onClick={() => handleRequestAccess(svc.id)}
                           disabled={requestingId === svc.id || svc.freeSlots === 0}

@@ -99,7 +99,21 @@ export default function WishesPage() {
           <p className="page-subtitle">Služby, které si {viewScope === 'me' ? 'přeješ ty' : 'přejí ostatní'}. Společně to vyjde levněji!</p>
         </div>
         
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          {viewScope === "me" && (
+            <button 
+              className="btn btn-primary"
+              onClick={() => {
+                // We'll toggle the picker which is now just below
+                const picker = document.getElementById('wish-picker-container');
+                if (picker) picker.scrollIntoView({ behavior: 'smooth' });
+                // If it's a modal or similar, we'd trigger it here. 
+                // For now, I'll just keep the picker below the header but hidden/visible.
+              }}
+            >
+              ＋ Přidat přání
+            </button>
+          )}
           <select 
             className="form-select w-auto" 
             style={{ minWidth: 200 }}
@@ -118,7 +132,9 @@ export default function WishesPage() {
       </div>
 
       {viewScope === "me" && (
-        <WishGridPicker activeWishNames={activeWishNames} onWishAdded={loadWishes} />
+        <div id="wish-picker-container">
+          <WishGridPicker activeWishNames={activeWishNames} onWishAdded={loadWishes} />
+        </div>
       )}
 
       {loading ? (
@@ -136,70 +152,88 @@ export default function WishesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid-auto" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}>
-          {wishes.map((wish) => (
-            <div key={wish.id} className="card p-6 flex flex-col gap-4 group hover:shadow-lg transition-all relative overflow-hidden">
-              {viewScope === "me" && (
-                <button 
-                  className="absolute top-4 right-4 text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-red-50 rounded-full"
-                  onClick={() => handleDeleteWish(wish.id)}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                    <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  </svg>
-                </button>
-              )}
-              
-              <div className="flex items-center gap-3">
-                <div className="user-avatar" style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--brand-50)', color: 'var(--brand-600)', fontSize: '1.2rem' }}>
-                  {wish.serviceName[0].toUpperCase()}
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>{wish.serviceName}</h3>
-                  <div className="flex items-center gap-2">
-                    {wish.priority === 3 && <span className="badge badge-red text-[9px]">🔥 Priorita</span>}
-                    {wish.priority === 2 && <span className="badge badge-yellow text-[9px]">⭐ Důležité</span>}
-                    <span className="text-[10px] text-muted uppercase tracking-tighter">Přidáno: {new Date(wish.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              {wish.description && (
-                <div className="p-3 bg-slate-50 rounded-xl text-sm text-secondary border border-slate-100 italic">
-                  "{wish.description}"
-                </div>
-              )}
-
-              {wish.link && (
-                <a href={wish.link} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm text-brand-600 self-start px-0">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                  </svg>
-                  Více o službě
-                </a>
-              )}
-
-              {(viewScope === "friends" || viewScope !== "me") && wish.user && (
-                <div className="mt-2 pt-4 border-t border-subtle flex items-center gap-2">
-                  <div className="user-avatar" style={{ width: 24, height: 24, fontSize: '0.6rem' }}>
-                    {wish.user.name[0].toUpperCase()}
-                  </div>
-                  <span className="text-xs font-semibold text-muted">
-                    Přeje si: <span className="text-primary">{wish.user.name}</span>
-                  </span>
-                </div>
-              )}
-              
-              {viewScope !== "me" && (
-                <button 
-                  className="btn btn-primary btn-sm mt-2" 
-                  onClick={() => alert("Tahle funkce bude v další verzi! Můžeš pak uživateli rovnou poslat nabídku sdílení. 😉")}
-                >
-                  🤝 Nabídnout sdílení
-                </button>
-              )}
-            </div>
-          ))}
+        <div className="card">
+          <div className="table-wrap">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th>Služba</th>
+                  <th className="hidden-mobile">Priorita</th>
+                  <th>Poznámka / Odkaz</th>
+                  {viewScope !== "me" && <th>Přeje si</th>}
+                  <th>Akce</th>
+                </tr>
+              </thead>
+              <tbody>
+                {wishes.map((wish) => (
+                  <tr key={wish.id}>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="user-avatar" style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--brand-50)', color: 'var(--brand-600)', fontSize: '0.9rem' }}>
+                          {wish.serviceName[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm">{wish.serviceName}</div>
+                          <div className="text-[9px] text-muted uppercase">Přidáno: {new Date(wish.createdAt).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="hidden-mobile">
+                      {wish.priority === 3 && <span className="badge badge-red">🔥 Vysoká</span>}
+                      {wish.priority === 2 && <span className="badge badge-yellow">⭐ Střední</span>}
+                      {wish.priority <= 1 && <span className="badge badge-gray">Nízká</span>}
+                    </td>
+                    <td>
+                      <div className="flex flex-col gap-1">
+                        {wish.description && <div className="text-sm italic text-secondary">"{wish.description}"</div>}
+                        {wish.link && (
+                          <a href={wish.link} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-600 hover:underline flex items-center gap-1">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="10" height="10">
+                              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                            </svg>
+                            Odkaz
+                          </a>
+                        )}
+                      </div>
+                    </td>
+                    {viewScope !== "me" && (
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <div className="user-avatar" style={{ width: 22, height: 22, fontSize: '0.6rem' }}>
+                            {wish.user.name[0].toUpperCase()}
+                          </div>
+                          <span className="text-xs font-semibold">{wish.user.name}</span>
+                        </div>
+                      </td>
+                    )}
+                    <td className="text-right">
+                      <div className="flex gap-2 justify-end">
+                        {viewScope !== "me" && (
+                          <button 
+                            className="btn btn-primary btn-sm" 
+                            onClick={() => alert("Tahle funkce bude v další verzi! 😉")}
+                          >
+                            🤝 Nabídnout
+                          </button>
+                        )}
+                        {viewScope === "me" && (
+                          <button 
+                            className="btn btn-ghost btn-icon btn-sm text-muted hover:text-danger"
+                            onClick={() => handleDeleteWish(wish.id)}
+                            title="Smazat přání"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                              <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

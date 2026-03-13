@@ -127,7 +127,7 @@ export default function CostsPage() {
         </div>
       </div>
 
-      <div className="grid-2 mb-8" style={{ gridTemplateColumns: "1.8fr 1fr" }}>
+      <div className="grid-2 mb-8 costs-main-grid">
         {/* Main Chart */}
         <div className="card">
           <div className="card-header">

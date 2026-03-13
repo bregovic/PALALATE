@@ -90,11 +90,15 @@ const StarIcon = () => (
 export default function Sidebar({ 
   user, 
   pendingRequests = 0, 
-  unreadNotifs = 0 
+  unreadNotifs = 0,
+  isOpen = false,
+  onClose
 }: { 
   user: User; 
   pendingRequests?: number;
   unreadNotifs?: number;
+  isOpen?: boolean;
+  onClose?: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -132,76 +136,92 @@ export default function Sidebar({
     .slice(0, 2);
 
   return (
-    <aside className="sidebar" id="sidebar">
-      {/* Logo */}
-      <div className="sidebar-logo" style={{ justifyContent: 'center', padding: '30px 20px' }}>
-        <Link href="/dashboard" className="flex justify-center transition-opacity hover:opacity-80">
-          <Image src="/logo.png" alt="PalalateLogo" width={180} height={80} style={{ objectFit: 'contain', height: 'auto' }} priority />
-        </Link>
-      </div>
-
-      {/* Navigation */}
-      <nav className="sidebar-nav" role="navigation" aria-label="Hlavní navigace">
-        <span className="nav-section-label">Hlavní menu</span>
-        {navItems.map((item) => {
-          const isActive =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname.startsWith(item.href);
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`nav-item ${isActive ? "active" : ""}`}
-              id={`nav-${item.href.split("/").pop()}`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-              {item.badge ? (
-                <span className="nav-badge">{item.badge}</span>
-              ) : null}
-            </Link>
-          );
-        })}
-
-        <span className="nav-section-label" style={{ marginTop: 8 }}>Nastavení</span>
-        <Link
-          href="/dashboard/settings"
-          className={`nav-item ${pathname.startsWith("/dashboard/settings") ? "active" : ""}`}
-          id="nav-settings"
-        >
-          <SettingsIcon />
-          <span>Nastavení</span>
-        </Link>
-      </nav>
-
-      {/* User footer */}
-      <div className="sidebar-footer">
-        <div className="user-card" id="sidebar-user-card">
-          <div className="user-avatar">
-            {user.avatar ? (
-              <Image src={user.avatar} alt={user.name} width={36} height={36} />
-            ) : (
-              initials
-            )}
-          </div>
-          <div className="user-info">
-            <div className="user-name">{user.name}</div>
-            <div className="user-email">{user.email}</div>
-          </div>
-          <button
-            onClick={handleLogout}
-            disabled={loggingOut}
-            className="btn btn-ghost btn-icon"
-            id="logout-btn"
-            data-tooltip="Odhlásit se"
-            style={{ marginLeft: "auto", flexShrink: 0 }}
+    <>
+      {isOpen && (
+        <div className="sidebar-overlay" onClick={onClose} />
+      )}
+      
+      <aside className={`sidebar ${isOpen ? "open" : ""}`} id="sidebar">
+        {/* Logo & Close */}
+        <div className="sidebar-logo" style={{ justifyContent: 'space-between', padding: '24px 20px' }}>
+          <Link href="/dashboard" className="flex transition-opacity hover:opacity-80" onClick={onClose}>
+            <Image src="/logo.png" alt="PalalateLogo" width={140} height={60} style={{ objectFit: 'contain', height: 'auto' }} priority />
+          </Link>
+          
+          <button 
+            className="btn btn-ghost btn-icon md:hidden" 
+            onClick={onClose}
+            style={{ display: isOpen ? 'flex' : 'none' }}
           >
-            <LogOutIcon />
+            ✕
           </button>
         </div>
-      </div>
-    </aside>
+
+        {/* Navigation */}
+        <nav className="sidebar-nav" role="navigation" aria-label="Hlavní navigace">
+          <span className="nav-section-label">Hlavní menu</span>
+          {navItems.map((item) => {
+            const isActive =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname.startsWith(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-item ${isActive ? "active" : ""}`}
+                id={`nav-${item.href.split("/").pop()}`}
+                onClick={onClose}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+                {item.badge ? (
+                  <span className="nav-badge">{item.badge}</span>
+                ) : null}
+              </Link>
+            );
+          })}
+
+          <span className="nav-section-label" style={{ marginTop: 8 }}>Nastavení</span>
+          <Link
+            href="/dashboard/settings"
+            className={`nav-item ${pathname.startsWith("/dashboard/settings") ? "active" : ""}`}
+            id="nav-settings"
+            onClick={onClose}
+          >
+            <SettingsIcon />
+            <span>Nastavení</span>
+          </Link>
+        </nav>
+
+        {/* User footer */}
+        <div className="sidebar-footer">
+          <div className="user-card" id="sidebar-user-card">
+            <div className="user-avatar">
+              {user.avatar ? (
+                <Image src={user.avatar} alt={user.name} width={36} height={36} />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="user-info">
+              <div className="user-name">{user.name}</div>
+              <div className="user-email">{user.email}</div>
+            </div>
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="btn btn-ghost btn-icon"
+              id="logout-btn"
+              data-tooltip="Odhlásit se"
+              style={{ marginLeft: "auto", flexShrink: 0 }}
+            >
+              <LogOutIcon />
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

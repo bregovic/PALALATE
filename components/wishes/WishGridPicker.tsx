@@ -140,41 +140,40 @@ export function WishGridPicker({ activeWishNames, onWishAdded }: { activeWishNam
   };
 
   return (
-    <div className="mb-8">
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: isOpen ? 24 : 0 }}>
-        <button 
-          onClick={() => setIsOpen(!isOpen)}
-          className={`btn ${isOpen ? 'btn-secondary' : 'btn-primary'} shadow-lg animate-bounce-subtle`}
-          style={{ 
-            width: 64, 
-            height: 64, 
-            borderRadius: "50%", 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center",
-            padding: 0,
-            fontSize: "2rem",
-            transform: isOpen ? 'rotate(45deg)' : 'none',
-            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
-          }}
-          title={isOpen ? "Zavřít číselník" : "Přidat přání z číselníku"}
-        >
-          ＋
-        </button>
-      </div>
+    <div className="mb-8" id="wish-grid-picker">
+      {!isOpen && (
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <button 
+            onClick={() => setIsOpen(true)}
+            className="btn btn-primary shadow-lg"
+            style={{ 
+              width: 56, 
+              height: 56, 
+              borderRadius: "50%", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              fontSize: "1.5rem",
+              padding: 0
+            }}
+          >
+            ＋
+          </button>
+        </div>
+      )}
 
       {isOpen && (
         <div className="card animate-slide-up bg-white border-2 border-brand-100">
           <div className="card-header" style={{ borderBottom: "1px solid var(--border-subtle)", padding: "20px 24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-              <div>
-                <h3 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>🔍 Co si přeješ?</h3>
-                <p className="text-xs text-muted">Hledej v číselníku nebo přidej vlastní přání</p>
+              <div className="flex-1">
+                <h3 className="text-base md:text-lg font-semibold" style={{ color: "var(--text-primary)" }}>🔍 Co si přeješ?</h3>
+                <p className="text-[10px] md:text-xs text-muted">Hledej v číselníku nebo přidej vlastní</p>
               </div>
               
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div className="input-with-icon" style={{ maxWidth: 220 }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                <div className="input-with-icon flex-1 md:max-w-[220px]">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14" className="hidden-mobile">
                     <circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/>
                   </svg>
                   <input 
@@ -189,10 +188,12 @@ export function WishGridPicker({ activeWishNames, onWishAdded }: { activeWishNam
                 <button 
                   onClick={handleAddSelected}
                   disabled={selectedIds.length === 0 || isAdding}
-                  className={`btn ${selectedIds.length > 0 ? 'btn-primary' : 'btn-glow'} btn-sm`}
+                  className={`btn ${selectedIds.length > 0 ? 'btn-primary' : 'btn-glow'} btn-sm px-4 whitespace-nowrap`}
                 >
-                  {isAdding ? "Přidávám..." : `Přidat vybrané (${selectedIds.length})`}
+                  {isAdding ? "..." : `Přidat (${selectedIds.length})`}
                 </button>
+                
+                <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setIsOpen(false)}>✕</button>
               </div>
             </div>
 
@@ -276,13 +277,13 @@ export function WishGridPicker({ activeWishNames, onWishAdded }: { activeWishNam
         <div className="modal-overlay" style={{ zIndex: 1100 }}>
           <div className="modal" style={{ maxWidth: 500 }}>
             <div className="modal-header">
-              <h3>✨ Co si přeješ?</h3>
+              <h3>✨ Přidat vlastní přání</h3>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowAddForm(false)}>✕</button>
             </div>
             <div className="modal-body">
               <div className="grid-1" style={{ gap: 16 }}>
                 <div className="form-group">
-                  <label className="form-label">Název co si přeješ</label>
+                  <label className="form-label">Služba / Produkt</label>
                   <input 
                     autoFocus
                     placeholder="Např. HBO Max, YouTube Premium..."

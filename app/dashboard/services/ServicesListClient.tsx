@@ -288,21 +288,21 @@ export function ServicesListClient({ initialServices }: Props) {
                 <th onClick={() => toggleSort("name")} className="cursor-pointer hover:text-brand-600">
                   Služba {sortCol === "name" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th onClick={() => toggleSort("category")} className="cursor-pointer hover:text-brand-600">
+                <th onClick={() => toggleSort("category")} className="cursor-pointer hover:text-brand-600 hidden-mobile">
                   Kategorie {sortCol === "category" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
                 <th onClick={() => toggleSort("price")} className="cursor-pointer hover:text-brand-600">
                   Cena {sortCol === "price" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th>Perioda</th>
-                <th onClick={() => toggleSort("renewal")} className="cursor-pointer hover:text-brand-600">
+                <th className="hidden-mobile">Perioda</th>
+                <th onClick={() => toggleSort("renewal")} className="cursor-pointer hover:text-brand-600 hidden-mobile">
                   Obnova {sortCol === "renewal" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th>Stav</th>
+                <th className="hidden-mobile">Stav</th>
                 <th onClick={() => toggleSort("sharing")} className="cursor-pointer hover:text-brand-600">
                   Sdílení {sortCol === "sharing" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th>Uživatelé</th>
+                <th className="hidden-mobile">Uživatelé</th>
                 <th></th>
               </tr>
             </thead>
@@ -325,23 +325,24 @@ export function ServicesListClient({ initialServices }: Props) {
                     </td>
                     <td>
                       <div className="flex items-center gap-3">
-                        <div className="text-xl w-8 text-center">{icon}</div>
+                        <div className="text-xl w-8 text-center hidden-mobile">{icon}</div>
                         <div>
                           <div className="font-bold text-primary">{svc.serviceName}</div>
                           <div className="text-[11px] text-muted">{svc.providerName}</div>
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td className="hidden-mobile">
                        <span className="text-xs font-medium text-muted bg-muted px-2 py-0.5 rounded-full">
                          {svc.category || "Ostatní"}
                        </span>
                     </td>
                     <td className="font-bold text-primary">
                       {Number(svc.periodicPrice).toFixed(2)} {svc.currency}
+                      <div className="show-mobile text-[10px] text-muted font-normal">{billingLabels[svc.billingCycle]}</div>
                     </td>
-                    <td className="text-sm">{billingLabels[svc.billingCycle]}</td>
-                    <td>
+                    <td className="text-sm hidden-mobile">{billingLabels[svc.billingCycle]}</td>
+                    <td className="hidden-mobile">
                       {svc.isTerminated ? (
                         <span className="text-[10px] font-bold uppercase text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded-full">
                           Ukončeno
@@ -356,9 +357,9 @@ export function ServicesListClient({ initialServices }: Props) {
                         )
                       )}
                     </td>
-                    <td>{statusBadge(svc.status)}</td>
+                    <td className="hidden-mobile">{statusBadge(svc.status)}</td>
                     <td>{sharingBadge((svc as any).usageMode)}</td>
-                    <td>
+                    <td className="hidden-mobile">
                       <span className="text-xs text-muted">
                         {svc._count.accessGrants} aktivních
                         {svc._count.accessRequests > 0 && (

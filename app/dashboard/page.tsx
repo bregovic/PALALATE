@@ -135,7 +135,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Main grid */}
-      <div className="grid-2 mb-6" style={{ gridTemplateColumns: "1.5fr 1fr" }}>
+      <div className="grid-2 mb-6 dashboard-main-grid">
 
         {/* Mé služby */}
         <div className="card">

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import Sidebar from "@/components/layout/Sidebar";
+import DashboardShell from "@/components/layout/DashboardShell";
 
 export default async function DashboardLayout({
   children,
@@ -19,11 +19,12 @@ export default async function DashboardLayout({
   ]);
 
   return (
-    <div className="app-shell">
-      <Sidebar user={user} pendingRequests={pendingRequests} unreadNotifs={unreadNotifs} />
-      <div className="main-content">
-        {children}
-      </div>
-    </div>
+    <DashboardShell 
+      user={user} 
+      pendingRequests={pendingRequests} 
+      unreadNotifs={unreadNotifs}
+    >
+      {children}
+    </DashboardShell>
   );
 }
