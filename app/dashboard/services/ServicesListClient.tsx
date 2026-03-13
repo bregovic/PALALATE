@@ -14,6 +14,7 @@ interface Service {
   renewalDate: string | null;
   status: string;
   sharingStatus: string;
+  usageMode: string;
   isTerminated: boolean;
   _count: {
     accessGrants: number;
@@ -54,7 +55,7 @@ export function ServicesListClient({ initialServices }: Props) {
   const [services] = useState(initialServices);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [sortCol, setSortCol] = useState<"name" | "price" | "renewal" | "category">("name");
+  const [sortCol, setSortCol] = useState<"name" | "price" | "renewal" | "category" | "sharing">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const [showFilters, setShowFilters] = useState(false);
@@ -91,6 +92,9 @@ export function ServicesListClient({ initialServices }: Props) {
       } else if (sortCol === "renewal") {
         v1 = a.renewalDate ? new Date(a.renewalDate).getTime() : Infinity;
         v2 = b.renewalDate ? new Date(b.renewalDate).getTime() : Infinity;
+      } else if (sortCol === "sharing") {
+        v1 = (a.usageMode || "zzz").toLowerCase();
+        v2 = (b.usageMode || "zzz").toLowerCase();
       }
 
       if (v1 < v2) return sortDir === "asc" ? -1 : 1;
@@ -295,7 +299,9 @@ export function ServicesListClient({ initialServices }: Props) {
                   Obnova {sortCol === "renewal" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
                 <th>Stav</th>
-                <th>Sdílení</th>
+                <th onClick={() => toggleSort("sharing")} className="cursor-pointer hover:text-brand-600">
+                  Sdílení {sortCol === "sharing" && (sortDir === "asc" ? "↑" : "↓")}
+                </th>
                 <th>Uživatelé</th>
                 <th></th>
               </tr>

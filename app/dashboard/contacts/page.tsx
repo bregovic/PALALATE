@@ -89,6 +89,13 @@ export default function ContactsPage() {
     load();
   }
 
+  async function cancelInvitation(id: string, type: 'FRIEND' | 'INVITE') {
+    if (!confirm("Opravdu chceš tuto žádost/pozvánku zrušit?")) return;
+    const url = type === 'FRIEND' ? `/api/contacts/${id}` : `/api/invitations/${id}`;
+    await fetch(url, { method: "DELETE" });
+    load();
+  }
+
   const accepted = friendships.filter((f) => f.status === "ACCEPTED");
   const pending = friendships.filter((f) => f.status === "PENDING");
   const pendingIncoming = pending.filter((f) => f.addresseeId === currentUserId);
@@ -229,6 +236,15 @@ export default function ContactsPage() {
                     <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{other.email}</div>
                   </div>
                   <span className="badge badge-yellow">⏳ Čeká na přijetí</span>
+                  <button
+                    className="btn btn-ghost btn-icon btn-sm"
+                    onClick={() => cancelInvitation(f.id, 'FRIEND')}
+                    data-tooltip="Zrušit žádost"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                      <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" />
+                    </svg>
+                  </button>
                 </div>
               );
             })}
@@ -242,6 +258,15 @@ export default function ContactsPage() {
                   <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Pozvání do aplikace</div>
                 </div>
                 <span className="badge badge-purple">📩 Pozvánka odeslána</span>
+                <button
+                  className="btn btn-ghost btn-icon btn-sm"
+                  onClick={() => cancelInvitation(inv.id, 'INVITE')}
+                  data-tooltip="Zrušit pozvánku"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                    <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" />
+                  </svg>
+                </button>
               </div>
             ))}
           </div>
