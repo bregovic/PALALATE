@@ -180,6 +180,7 @@ export default function SettingsPage() {
 function SystemTab({ user }: { user: any }) {
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [genKey, setGenKey] = useState("");
 
   async function testEmail() {
     setTesting(true);
@@ -199,11 +200,21 @@ function SystemTab({ user }: { user: any }) {
     }
   }
 
+  const generateKey = () => {
+    const chars = '0123456789abcdef';
+    let key = '';
+    for (let i = 0; i < 64; i++) {
+      key += chars[Math.floor(Math.random() * chars.length)];
+    }
+    setGenKey(key);
+  };
+
   return (
     <div className="card animate-fade-in" style={{ maxWidth: 600 }}>
       <div className="card-header"><h3>⚙️ Systémová nastavení</h3></div>
       <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         
+        {/* Email Test */}
         <div>
           <h4 className="mb-2">📧 Test odesílání emailů</h4>
           <p className="text-sm text-muted mb-4">
@@ -232,6 +243,38 @@ function SystemTab({ user }: { user: any }) {
                   <pre className="text-xs break-all whitespace-pre-wrap">{JSON.stringify(result.error, null, 2)}</pre>
                 </>
               )}
+            </div>
+          )}
+        </div>
+
+        <hr style={{ border: 0, borderTop: "1px solid var(--border-subtle)" }} />
+
+        {/* Encryption Key Generator */}
+        <div>
+          <h4 className="mb-2">🔐 Šifrovací klíč (Credentials)</h4>
+          <p className="text-sm text-muted mb-4">
+            Pro ukládání hesel potřebuje aplikace 32-bytový hex klíč v proměnné <code>CREDENTIAL_ENCRYPTION_KEY</code>.
+            Pokud ho ještě nemáte nastavený na Railway, vygenerujte si ho zde a vložte ho do <strong>Variables</strong> projektu.
+          </p>
+          
+          <div className="flex gap-2">
+            <button className="btn btn-secondary btn-sm" onClick={generateKey}>Vygenerovat nový klíč</button>
+            {genKey && (
+              <button 
+                className="btn btn-ghost btn-sm" 
+                onClick={() => {
+                  navigator.clipboard.writeText(genKey);
+                  alert("Klíč byl zkopírován!");
+                }}
+              >
+                📋 Kopírovat
+              </button>
+            )}
+          </div>
+
+          {genKey && (
+            <div className="mt-3 p-3 bg-muted rounded-lg border border-subtle font-mono text-[10px] break-all">
+              {genKey}
             </div>
           )}
         </div>

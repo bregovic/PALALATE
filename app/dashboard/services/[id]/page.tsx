@@ -59,6 +59,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     visibility: "OWNER_ONLY" as "OWNER_ONLY" | "GRANTED_USERS",
   });
   const [savingCred, setSavingCred] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   // Settlement modal
   const [showSettlementModal, setShowSettlementModal] = useState(false);
@@ -186,6 +187,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
       if (res.ok) {
         setShowAddCredentialModal(false);
         setCredForm({ type: "EMAIL_PASSWORD", label: "", login: "", password: "", visibility: "OWNER_ONLY" });
+        setShowPassword(false);
         load();
       } else {
         const errData = await res.json().catch(() => ({}));
@@ -577,11 +579,11 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
               )}
             </div>
             <div className="card-body">
-              {service.credentials.length === 0 ? (
+              {(service.credentials || []).length === 0 ? (
                 <p className="text-muted text-sm italic">Žádné uložené údaje.</p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {service.credentials.map((c: any) => (
+                  {(service.credentials || []).map((c: any) => (
                     <div key={c.id} className="p-4 rounded-lg border border-subtle bg-elevated flex items-center justify-between">
                       <div>
                         <div className="text-xs text-muted uppercase tracking-wider font-bold mb-1">{c.label || c.secretType}</div>
@@ -1147,7 +1149,21 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                   <div className="form-group">
                     <label className="form-label">Heslo / Klíč</label>
-                    <input className="form-input" type="password" value={credForm.password} onChange={e => setCredForm({...credForm, password: e.target.value})} />
+                    <div className="relative">
+                      <input 
+                        className="form-input pr-10" 
+                        type={showPassword ? "text" : "password"} 
+                        value={credForm.password} 
+                        onChange={e => setCredForm({...credForm, password: e.target.value})} 
+                      />
+                      <button 
+                        type="button"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-primary transition-colors"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? "👁️" : "🙈"}
+                      </button>
+                    </div>
                   </div>
                </div>
                <div className="form-group">
