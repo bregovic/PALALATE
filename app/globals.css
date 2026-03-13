@@ -1019,7 +1019,7 @@ tbody tr:hover { background: var(--bg-elevated); }
     transform: translateX(0); 
   }
   
-  .main-content { margin-left: 0; padding-top: var(--topbar-height); }
+  .main-content { margin-left: 0; padding-top: calc(var(--topbar-height) + 52px); }
   
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   
@@ -1085,9 +1085,91 @@ tbody tr:hover { background: var(--bg-elevated); }
     z-index: 940;
     animation: fadeIn 0.3s ease;
   }
+
+  /* Mobile horizontal scroll nav */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    top: var(--topbar-height);
+    left: 0;
+    right: 0;
+    z-index: 935;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 5px 8px;
+    gap: 4px;
+    backdrop-filter: blur(20px);
+    height: 52px;
+    align-items: center;
+  }
+  
+  .mobile-bottom-nav::-webkit-scrollbar { display: none; }
+
+  .mobile-nav-item {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    text-decoration: none;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+    position: relative;
+    min-width: 52px;
+  }
+
+  .mobile-nav-item.active {
+    background: rgba(139, 92, 246, 0.12);
+    color: var(--brand-400);
+  }
+
+  .mobile-nav-item:not(.active):active {
+    background: var(--bg-elevated);
+  }
+
+  .mobile-nav-emoji {
+    font-size: 1.05rem;
+    line-height: 1;
+    display: block;
+  }
+
+  .mobile-nav-label {
+    font-size: 0.58rem;
+    display: block;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  .mobile-nav-badge {
+    position: absolute;
+    top: 1px;
+    right: 5px;
+    background: var(--danger-400);
+    color: white;
+    font-size: 0.5rem;
+    font-weight: 700;
+    min-width: 14px;
+    height: 14px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 2px;
+  }
 }
 
 .mobile-header { display: none; }
+.mobile-bottom-nav { display: none; }
+
 
 /* ─── AUTH PAGES ───────────────────────────────────────────────────────────── */
 .auth-page {

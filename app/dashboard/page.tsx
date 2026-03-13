@@ -86,13 +86,9 @@ export default async function DashboardPage() {
 
   const daysTo = (date: Date) => Math.ceil((new Date(date).getTime() - Date.now()) / 86400000);
 
+
   return (
     <div className="page-content animate-fade-in">
-      <div className="dashboard-hero mb-6">
-        <h1 style={{ fontSize: "1.6rem", marginBottom: 0 }}>
-          {greeting}, <span className="gradient-text">{user.name.split(" ")[0]}</span> 👋
-        </h1>
-      </div>
 
       {/* Stat cards */}
       <div className="grid-4 mb-6">
