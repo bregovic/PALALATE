@@ -127,15 +127,15 @@ export default function DiscoverPage() {
               <Link href="/dashboard/contacts" className="btn btn-primary mt-6">Zvětšit okruh přátel</Link>
             </div>
           ) : (
-            <table style={{ tableLayout: "fixed", width: "100%", borderCollapse: "collapse" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                  <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Služba</th>
+                  <th style={{ textAlign: "left", padding: "12px 16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Služba</th>
                   <th className="hidden-mobile" style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "120px" }}>Kategorie</th>
-                  <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "120px" }}>Cena</th>
+                  <th style={{ textAlign: "left", padding: "12px 16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "100px" }}>Cena</th>
                   <th className="hidden-mobile" style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "130px" }}>Status</th>
-                  <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "140px" }}>Sdílí</th>
-                  <th style={{ width: "140px" }}></th>
+                  <th style={{ textAlign: "left", padding: "12px 16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "60px" }}>Sdílí</th>
+                  <th style={{ width: "100px", padding: "12px 16px" }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -146,8 +146,8 @@ export default function DiscoverPage() {
 
                   return (
                     <tr key={svc.id} style={{ borderBottom: "1px solid var(--border-subtle)", verticalAlign: "middle" }}>
-                      <td style={{ padding: "16px", verticalAlign: "middle" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span className="hidden-mobile" style={{ fontSize: "1.4rem", width: 32, flexShrink: 0, textAlign: "center" }}>{icon}</span>
                           <div style={{ overflow: "hidden" }}>
                             <div className="font-bold text-primary" style={{ fontSize: "0.9rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{svc.serviceName}</div>
@@ -179,12 +179,9 @@ export default function DiscoverPage() {
                           )
                         )}
                       </td>
-                      <td style={{ padding: "16px", verticalAlign: "middle" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <div className="user-avatar" style={{ width: 24, height: 24, fontSize: '0.65rem', flexShrink: 0 }}>
-                            {svc.owner.name[0].toUpperCase()}
-                          </div>
-                          <span className="hidden-mobile" style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{svc.owner.name}</span>
+                      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
+                        <div className="user-avatar" style={{ width: 24, height: 24, fontSize: '0.65rem', flexShrink: 0 }} title={svc.owner.name}>
+                          {svc.owner.name[0].toUpperCase()}
                         </div>
                       </td>
                       <td style={{ padding: "16px", verticalAlign: "middle", textAlign: "right" }}>

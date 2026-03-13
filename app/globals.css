@@ -645,8 +645,8 @@ code {
   border: 1px solid var(--border-subtle);
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
-  /* isolate scroll so swiping the table doesn't scroll the page */
-  touch-action: pan-x;
+  /* isolate horizontal scroll but allow page vertical scroll */
+  touch-action: auto;
 }
 
 table {
