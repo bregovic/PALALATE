@@ -62,7 +62,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const {
       serviceName, providerName, periodicPrice, currency,
       billingCycle, pricingType, pricingDetails, renewalDate, startDate,
-      description, category, maxSharedSlots
+      description, category, maxSharedSlots,
+      allowConcurrentUse, requiresBookingApproval
     } = body;
 
     const updated = await prisma.service.update({
@@ -77,9 +78,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         pricingDetails,
         renewalDate: renewalDate ? new Date(renewalDate) : null,
         startDate: startDate ? new Date(startDate) : null,
-        description,
         category,
         maxSharedSlots: maxSharedSlots != null ? parseInt(maxSharedSlots) : undefined,
+        allowConcurrentUse: allowConcurrentUse !== undefined ? allowConcurrentUse : undefined,
+        requiresBookingApproval: requiresBookingApproval !== undefined ? requiresBookingApproval : undefined,
         updatedAt: new Date(),
       },
     });

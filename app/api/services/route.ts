@@ -59,7 +59,8 @@ export async function POST(req: NextRequest) {
       periodicPrice, currency, billingCycle, renewalDate,
       sharingStatus, sharingVisibility, maxSharedSlots,
       legalNote, tags, iconUrl, websiteUrl,
-      licenseType, sharingConditions, internalNote, startDate
+      licenseType, sharingConditions, internalNote, startDate,
+      allowConcurrentUse, requiresBookingApproval,
     } = body;
 
     if (!serviceName || !providerName || periodicPrice == null) {
@@ -96,6 +97,8 @@ export async function POST(req: NextRequest) {
         licenseType: licenseType || null,
         sharingConditions: sharingConditions || null,
         internalNote: internalNote || null,
+        allowConcurrentUse: allowConcurrentUse ?? true,
+        requiresBookingApproval: requiresBookingApproval ?? false,
         status: "ACTIVE",
       },
     });

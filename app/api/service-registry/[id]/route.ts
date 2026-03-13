@@ -23,7 +23,9 @@ export async function PATCH(
       billingCycle, 
       pricingType, 
       isShareable, 
-      description 
+      description,
+      allowConcurrentUse,
+      requiresBookingApproval
     } = await req.json();
 
     const service = await prisma.serviceRegistry.update({
@@ -37,6 +39,8 @@ export async function PATCH(
         pricingType,
         isShareable,
         description,
+        allowConcurrentUse: allowConcurrentUse !== undefined ? allowConcurrentUse : undefined,
+        requiresBookingApproval: requiresBookingApproval !== undefined ? requiresBookingApproval : undefined,
       },
     });
 

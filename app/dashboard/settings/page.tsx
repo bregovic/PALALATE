@@ -394,7 +394,9 @@ function ServicesTab() {
     billingCycle: "MONTHLY",
     pricingType: "PAID",
     isShareable: true,
-    description: ""
+    description: "",
+    allowConcurrentUse: true,
+    requiresBookingApproval: false,
   });
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
 
@@ -441,7 +443,9 @@ function ServicesTab() {
       billingCycle: service.billingCycle,
       pricingType: service.pricingType || "PAID",
       isShareable: service.isShareable,
-      description: service.description || ""
+      description: service.description || "",
+      allowConcurrentUse: service.allowConcurrentUse ?? true,
+      requiresBookingApproval: service.requiresBookingApproval ?? false,
     });
     setEditingServiceId(service.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -450,7 +454,8 @@ function ServicesTab() {
   const cancelEdit = () => {
     setSvcForm({
       name: "", category: "", defaultPrice: 0, currency: "CZK",
-      billingCycle: "MONTHLY", pricingType: "PAID", isShareable: true, description: ""
+      billingCycle: "MONTHLY", pricingType: "PAID", isShareable: true, description: "",
+      allowConcurrentUse: true, requiresBookingApproval: false
     });
     setEditingServiceId(null);
   };
@@ -499,19 +504,30 @@ function ServicesTab() {
                 <label className="form-label">Frekvence platby</label>
                 <select className="form-select" value={svcForm.billingCycle} onChange={e => setSvcForm({...svcForm, billingCycle: e.target.value})}>
                   <option value="MONTHLY">Měsíčně</option>
-                  <option value="YEARLY">Ročně</option>
                   <option value="QUARTERLY">Čtvrtletně</option>
+                  <option value="SEMI_ANNUALLY">Půlročně</option>
+                  <option value="YEARLY">Ročně</option>
                   <option value="WEEKLY">Týdně</option>
                 </select>
               </div>
             </div>
 
             <div className="grid-2 gap-4 items-center">
-               <div className="flex gap-4">
+               <div className="flex flex-col gap-2">
                  <label className="flex items-center gap-2 cursor-pointer">
                    <input type="checkbox" checked={svcForm.isShareable} onChange={e => setSvcForm({...svcForm, isShareable: e.target.checked})} />
                    <span className="text-sm">Lze sdílet ve skupině</span>
                  </label>
+                 <label className="flex items-center gap-2 cursor-pointer">
+                   <input type="checkbox" checked={svcForm.allowConcurrentUse} onChange={e => setSvcForm({...svcForm, allowConcurrentUse: e.target.checked})} />
+                   <span className="text-sm">Lze používat současně (souběžně)</span>
+                 </label>
+                 {!svcForm.allowConcurrentUse && (
+                   <label className="flex items-center gap-2 cursor-pointer ml-4">
+                     <input type="checkbox" checked={svcForm.requiresBookingApproval} onChange={e => setSvcForm({...svcForm, requiresBookingApproval: e.target.checked})} />
+                     <span className="text-xs">Vyžadovat schválení rezervace</span>
+                   </label>
+                 )}
                </div>
                <div className="form-group">
                  <label className="form-label">Výchozí typ platby</label>

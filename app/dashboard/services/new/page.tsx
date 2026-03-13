@@ -6,29 +6,33 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 
-const POPULAR_SERVICES = [
-  { name: "Netflix", provider: "Netflix Inc.", category: "streaming" },
-  { name: "Spotify", provider: "Spotify AB", category: "music" },
-  { name: "YouTube Premium", provider: "Google", category: "streaming" },
-  { name: "Disney+", provider: "Disney", category: "streaming" },
-  { name: "Apple Music", provider: "Apple Inc.", category: "music" },
-  { name: "ChatGPT Plus", provider: "OpenAI", category: "ai" },
-  { name: "Adobe CC", provider: "Adobe Inc.", category: "design" },
-  { name: "Dropbox", provider: "Dropbox Inc.", category: "cloud" },
-  { name: "Microsoft 365", provider: "Microsoft", category: "productivity" },
-];
+// Removed hardcoded popular services, fetching from Registry instead
 
 export default function NewServicePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [registry, setRegistry] = useState<any[]>([]);
+  const [userServices, setUserServices] = useState<any[]>([]);
+  const [showSyncPrompt, setShowSyncPrompt] = useState(false);
+  const [showDuplicatePrompt, setShowDuplicatePrompt] = useState(false);
+  const [matchedRegistryItem, setMatchedRegistryItem] = useState<any>(null);
+  const [nextSuggestedName, setNextSuggestedName] = useState("");
+  const [confirmedDuplicate, setConfirmedDuplicate] = useState(false);
 
   useState(() => {
-    fetch("/api/categories")
-      .then(r => r.json())
-      .then(setCategories)
-      .catch(console.error);
+    Promise.all([
+      fetch("/api/categories").then(r => r.json()),
+      fetch("/api/service-registry").then(r => r.json()),
+      fetch("/api/services").then(r => r.json())
+    ]).then(([cats, reg, svcs]) => {
+      setCategories(cats);
+      setRegistry(reg);
+      setUserServices(Array.isArray(svcs) ? svcs : []);
+    }).catch(console.error);
   });
 
   const [form, setForm] = useState({
@@ -48,37 +52,122 @@ export default function NewServicePage() {
     internalNote: "",
     sharingConditions: "",
     startDate: "",
+    allowConcurrentUse: true,
+    requiresBookingApproval: false,
   });
 
   function fill(data: Partial<typeof form>) {
     setForm((prev) => ({ ...prev, ...data }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  function fillFromRegistry(svc: any) {
+    setForm((prev) => ({
+      ...prev,
+      serviceName: svc.name,
+      providerName: svc.name, // Usually the same for quick fill
+      category: svc.category || "other",
+      periodicPrice: svc.defaultPrice ? svc.defaultPrice.toString() : "",
+      currency: svc.currency || "CZK",
+      billingCycle: svc.billingCycle || "MONTHLY",
+      description: svc.description || "",
+      allowConcurrentUse: svc.allowConcurrentUse ?? true,
+      requiresBookingApproval: svc.requiresBookingApproval ?? false,
+    }));
+  }
 
+  function getNextServiceName(name: string, services: any[]) {
+    let finalName = name;
+    let counter = 2;
+    // Simple check: if "Name" exists, try "Name 2", "Name 3"...
+    while (services.some(s => s.serviceName.toLowerCase() === finalName.toLowerCase())) {
+      finalName = `${name} ${counter}`;
+      counter++;
+    }
+    return finalName;
+  }
+
+  async function handleDuplicateConfirm() {
+    setConfirmedDuplicate(true);
+    const finalName = nextSuggestedName;
+    setForm(prev => ({ ...prev, serviceName: finalName }));
+    setShowDuplicatePrompt(false);
+    
+    // Auto-submit with the new name
+    await performSubmit({ ...form, serviceName: finalName });
+  }
+
+  async function handleSyncWithRegistry() {
+    if (!matchedRegistryItem) return;
+    try {
+       await fetch(`/api/service-registry`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+           ...matchedRegistryItem,
+           defaultPrice: parseFloat(form.periodicPrice),
+           billingCycle: form.billingCycle,
+           currency: form.currency
+         })
+       });
+       setShowSyncPrompt(false);
+       alert("Služba v číselníku byla aktualizována. Díky! ⚡");
+    } catch (e) {
+       console.error(e);
+    }
+  }
+
+  async function performSubmit(formData: any) {
+    setLoading(true);
     try {
       const res = await fetch("/api/services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         setError(data.error || "Nepodařilo se přidat službu");
+        setLoading(false);
         return;
       }
 
-      router.push(`/dashboard/services/${data.id}`);
+      // Check for sync potential
+      const matchingRegistry = registry.find(r => r.name.toLowerCase() === formData.serviceName.toLowerCase());
+      if (matchingRegistry && (
+          parseFloat(matchingRegistry.defaultPrice) !== parseFloat(formData.periodicPrice) || 
+          matchingRegistry.billingCycle !== formData.billingCycle
+      )) {
+          setMatchedRegistryItem(matchingRegistry);
+          setShowSyncPrompt(true);
+          setTimeout(() => {
+            if (!showSyncPrompt) router.push(`/dashboard/services/${data.id}`);
+          }, 3000);
+      } else {
+          router.push(`/dashboard/services/${data.id}`);
+      }
     } catch {
       setError("Chyba připojení");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    // Check for duplicate name
+    const existing = userServices.find(s => s.serviceName.toLowerCase() === form.serviceName.toLowerCase());
+    if (existing && !confirmedDuplicate) {
+        const next = getNextServiceName(form.serviceName, userServices);
+        setNextSuggestedName(next);
+        setShowDuplicatePrompt(true);
+        return;
+    }
+
+    await performSubmit(form);
   }
 
   return (
@@ -97,21 +186,34 @@ export default function NewServicePage() {
 
       {/* Quick fill */}
       <div className="card mb-6">
-        <div className="card-header">
+        <div className="card-header flex justify-between items-center">
           <h3>⚡ Rychlé vyplnění</h3>
+          <input 
+            className="form-input w-48 btn-sm" 
+            placeholder="Hledat v číselníku..." 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
         </div>
         <div className="card-body">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {POPULAR_SERVICES.map((svc) => (
-              <button
-                key={svc.name}
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => fill({ serviceName: svc.name, providerName: svc.provider, category: svc.category })}
-              >
-                {svc.name}
-              </button>
-            ))}
+            {registry
+              .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+              .slice(0, 15)
+              .map((svc) => (
+                <button
+                  key={svc.id}
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => fillFromRegistry(svc)}
+                >
+                  {svc.name}
+                </button>
+              ))}
+            {registry.length === 0 && <span className="text-muted text-xs">Načítám číselník...</span>}
+            {registry.length > 0 && registry.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+              <span className="text-muted text-xs italic">Žádná shoda v systému.</span>
+            )}
           </div>
         </div>
       </div>
@@ -236,6 +338,7 @@ export default function NewServicePage() {
                   <option value="WEEKLY">Týdně</option>
                   <option value="MONTHLY">Měsíčně</option>
                   <option value="QUARTERLY">Čtvrtletně</option>
+                  <option value="SEMI_ANNUALLY">Půlročně</option>
                   <option value="YEARLY">Ročně</option>
                   <option value="CUSTOM">Vlastní</option>
                 </select>
@@ -274,9 +377,9 @@ export default function NewServicePage() {
             </div>
           </div>
 
-          {/* Nastavení sdílení */}
+          {/* Nastavení sdílení a kapacity */}
           <div className="card" style={{ gridColumn: "1 / -1" }}>
-            <div className="card-header"><h3>🤝 Nastavení sdílení</h3></div>
+            <div className="card-header"><h3>🤝 Nastavení sdílení a kapacity</h3></div>
             <div className="card-body" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
               <div className="form-group">
                 <label className="form-label">Stav sdílení</label>
@@ -319,6 +422,28 @@ export default function NewServicePage() {
                 />
                 <span className="form-hint">0 = neomezeno</span>
               </div>
+
+              <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                <div className="flex gap-8 p-4 bg-muted rounded-lg border border-subtle">
+                   <label className="flex items-center gap-3 cursor-pointer">
+                     <input type="checkbox" className="form-checkbox" checked={form.allowConcurrentUse} onChange={e => fill({ allowConcurrentUse: e.target.checked })} />
+                     <div>
+                       <span className="font-bold block">Povolit souběžné používání</span>
+                       <span className="text-xs text-muted">Lze používat službu více lidmi najednou? (Např. Netflix ano, herní účet ne)</span>
+                     </div>
+                   </label>
+                   {!form.allowConcurrentUse && (
+                      <label className="flex items-center gap-3 cursor-pointer p-2 bg-white rounded border border-primary animate-fade-in">
+                        <input type="checkbox" className="form-checkbox" checked={form.requiresBookingApproval} onChange={e => fill({ requiresBookingApproval: e.target.checked })} />
+                        <div>
+                          <span className="font-bold block text-sm text-primary">Vyžadovat schválení termínu</span>
+                          <span className="text-xs text-muted">Uživatelé si musí rezervovat čas v kalendáři a vy ho schválíte.</span>
+                        </div>
+                      </label>
+                   )}
+                </div>
+              </div>
+
               <div className="form-group" style={{ gridColumn: "1 / -1" }}>
                 <label className="form-label">Podmínky sdílení a právní poznámka</label>
                 <textarea
@@ -329,9 +454,6 @@ export default function NewServicePage() {
                   onChange={(e) => fill({ legalNote: e.target.value })}
                   style={{ minHeight: 70 }}
                 />
-                <span className="form-hint">
-                  ℹ️ Zobrazt jen oprávněným uživatelům – připomenutí odpovědnosti
-                </span>
               </div>
             </div>
           </div>
@@ -358,6 +480,58 @@ export default function NewServicePage() {
           </button>
         </div>
       </form>
+
+      {/* Registry Sync Prompt */}
+      {showSyncPrompt && matchedRegistryItem && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: 450 }}>
+            <div className="modal-header">
+              <h3>💡 Aktualizovat číselník?</h3>
+            </div>
+            <div className="modal-body">
+              <p className="text-sm mb-4">
+                Zadal jsi jinou cenu nebo frekvenci u služby <strong>{form.serviceName}</strong>, než máme v našem globálním číselníku. 
+              </p>
+              <div className="p-4 bg-muted rounded-lg border border-subtle mb-4">
+                <div className="flex justify-between text-xs text-muted mb-1">
+                  <span>Původní (číselník):</span>
+                  <span>{Number(matchedRegistryItem.defaultPrice).toFixed(2)} {matchedRegistryItem.currency} / {matchedRegistryItem.billingCycle}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold text-primary">
+                  <span>Tvoje hodnota:</span>
+                  <span>{form.periodicPrice} {form.currency} / {form.billingCycle}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted">
+                Pomůžeš ostatním uživatelům tím, že budeme mít v systému aktuální data?
+              </p>
+            </div>
+            <div className="modal-footer flex gap-3">
+              <button className="btn btn-secondary w-full" onClick={() => router.push(`/dashboard/services`)}>Ne, díky</button>
+              <button className="btn btn-primary w-full" onClick={handleSyncWithRegistry}>Ano, aktualizovat ✓</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Duplicate Name Prompt */}
+      {showDuplicatePrompt && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <h3>⚠️ Služba již existuje</h3>
+            </div>
+            <div className="modal-body text-sm">
+              Službu <strong>{form.serviceName}</strong> už ve svém seznamu máš. 
+              Chceš ji přidat znovu jako další konto pod názvem <strong>{nextSuggestedName}</strong>?
+            </div>
+            <div className="modal-footer flex gap-3">
+              <button className="btn btn-ghost w-full" onClick={() => setShowDuplicatePrompt(false)}>Zrušit</button>
+              <button className="btn btn-primary w-full" onClick={handleDuplicateConfirm}>Ano, přidat jako {nextSuggestedName}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -38,6 +38,7 @@ model User {
   notifications     Notification[]
   auditLogs         AuditLog[]
   sessions          Session[]
+  bookings          Booking[]
 
   @@map("users")
 }
@@ -119,6 +120,8 @@ model ServiceRegistry {
   iconUrl       String?
   websiteUrl    String?
   description   String?
+  allowConcurrentUse Boolean @default(true)
+  requiresBookingApproval Boolean @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -152,6 +155,8 @@ model Service {
   internalNote     String?
   licenseType      String?
   sharingConditions String?
+  allowConcurrentUse Boolean @default(true)
+  requiresBookingApproval Boolean @default(false)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   archivedAt       DateTime?
@@ -162,8 +167,33 @@ model Service {
   accessGrants     AccessGrant[]
   settlementPeriods SettlementPeriod[]
   auditLogs        AuditLog[]
+  bookings         Booking[]
 
   @@map("services")
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  serviceId   String
+  userId      String
+  startDate   DateTime
+  endDate     DateTime
+  note        String?
+  status      BookingStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  service     Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
 
 enum ServiceStatus {
@@ -190,6 +220,7 @@ enum BillingCycle {
   WEEKLY
   MONTHLY
   QUARTERLY
+  SEMI_ANNUALLY
   YEARLY
   CUSTOM
 }

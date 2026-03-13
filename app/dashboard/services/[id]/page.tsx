@@ -26,6 +26,8 @@ interface Service {
   pricingDetails: string | null;
   renewalDate: string | null;
   startDate: string | null;
+  allowConcurrentUse: boolean;
+  requiresBookingApproval: boolean;
   _count: { accessGrants: number };
 }
 
@@ -48,6 +50,16 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     calculationModel: "EQUAL_SPLIT",
   });
 
+  // Bookings handling
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    startDate: new Date().toISOString().split("T")[0],
+    endDate: new Date().toISOString().split("T")[0],
+    note: "",
+  });
+
   // Edit modal
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -63,6 +75,8 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     pricingType: "PAID" as "PAID" | "AFFILIATE" | "INCLUDED" | "FREE",
     pricingDetails: "",
     startDate: "",
+    allowConcurrentUse: true,
+    requiresBookingApproval: false,
   });
   const [priceInput, setPriceInput] = useState("");
   const [slotsInput, setSlotsInput] = useState("");
@@ -95,6 +109,8 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         pricingType: data.pricingType,
         pricingDetails: data.pricingDetails || "",
         startDate: data.startDate ? data.startDate.split("T")[0] : "",
+        allowConcurrentUse: data.allowConcurrentUse ?? true,
+        requiresBookingApproval: data.requiresBookingApproval ?? false,
       });
       setPriceInput(data.periodicPrice.toString());
       setSlotsInput(data.maxSharedSlots.toString());
@@ -151,10 +167,26 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     }
   }
 
+  const fetchBookings = async () => {
+    setBookingLoading(true);
+    try {
+      const res = await fetch(`/api/services/${id}/bookings`);
+      if (res.ok) setBookings(await res.json());
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
   useEffect(() => { 
     load(); 
     loadCategories();
   }, [id]);
+
+  useEffect(() => {
+    if (service && !service.allowConcurrentUse) {
+      fetchBookings();
+    }
+  }, [service?.allowConcurrentUse]);
 
   async function reveal(cid: string) {
     setRevealing(prev => ({ ...prev, [cid]: true }));
@@ -178,6 +210,30 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     if (res.ok) {
       setShowSettlementModal(false);
       router.push("/dashboard/settlements");
+    }
+  }
+
+  async function handleUpdateBookingStatus(bookingId: string, status: string) {
+    const res = await fetch(`/api/bookings/${bookingId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (res.ok) fetchBookings();
+  }
+
+  async function handleCreateBooking() {
+    const res = await fetch(`/api/services/${id}/bookings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bookingForm),
+    });
+    if (res.ok) {
+      setShowBookingModal(false);
+      fetchBookings();
+    } else {
+      const err = await res.json();
+      alert(err.error || "Chyba při rezervaci");
     }
   }
 
@@ -215,6 +271,60 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         {/* Left Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           
+          {/* Reservations / Calendar Component Area */}
+          {!service.allowConcurrentUse && (
+            <div className="card border-amber-200 shadow-sm animate-fade-in">
+              <div className="card-header bg-amber-50 flex justify-between items-center">
+                <h3 className="text-amber-800">📅 Rezervace a termíny</h3>
+                <button className="btn btn-primary btn-sm" onClick={() => setShowBookingModal(true)}>
+                  ＋ Rezervovat čas
+                </button>
+              </div>
+              <div className="card-body">
+                {bookingLoading ? (
+                  <p className="p-4 text-center">Načítám rezervace...</p>
+                ) : bookings.length === 0 ? (
+                  <div className="text-center py-8 text-muted italic bg-muted rounded-xl border border-dashed">
+                    Žádné aktivní rezervace. Služba je momentálně volná.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {bookings.map((b: any) => (
+                      <div key={b.id} className={`p-4 rounded-xl border flex justify-between items-center transition-all hover:shadow-sm ${b.status === 'PENDING' ? 'bg-amber-50 border-amber-200' : 'bg-elevated border-subtle'}`}>
+                        <div className="flex items-center gap-4">
+                           <div className="flex flex-col items-center justify-center bg-white rounded-lg border border-subtle w-12 h-12 shadow-sm">
+                              <span className="text-[10px] font-bold uppercase text-muted">{new Date(b.startDate).toLocaleString('cs', { month: 'short' })}</span>
+                              <span className="text-lg font-bold leading-none">{new Date(b.startDate).getDate()}</span>
+                           </div>
+                           <div>
+                              <div className="font-bold flex items-center gap-2">
+                                {b.user.name}
+                                {b.status === 'PENDING' && <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full font-bold uppercase">Čeká</span>}
+                              </div>
+                              <div className="text-xs text-muted">
+                                {new Date(b.startDate).toLocaleDateString()} — {new Date(b.endDate).toLocaleDateString()}
+                              </div>
+                              {b.note && <div className="text-xs italic mt-1 text-muted border-l-2 pl-2 border-subtle">"{b.note}"</div>}
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                           {service.isOwner && b.status === 'PENDING' && (
+                             <div className="flex gap-2">
+                               <button className="btn btn-ghost btn-sm text-green-600 font-bold hover:bg-green-50" onClick={() => handleUpdateBookingStatus(b.id, 'APPROVED')}>✓ Schválit</button>
+                               <button className="btn btn-ghost btn-sm text-danger hover:bg-red-50" onClick={() => handleUpdateBookingStatus(b.id, 'REJECTED')}>✕ Zamítnout</button>
+                             </div>
+                           )}
+                           {b.status === 'APPROVED' && <span className="text-green-600 font-bold text-sm">✓ Schváleno</span>}
+                           {b.status === 'REJECTED' && <span className="text-danger font-bold text-sm text-muted line-through">Zamítnuto</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Main Info Card */}
           <div className="card">
             <div className="card-header"><h3>ℹ️ Informace o službě</h3></div>
@@ -259,6 +369,16 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   <label className="text-muted text-xs block mb-1">DALŠÍ OBNOVA</label>
                   <div className="font-medium">
                     {service.renewalDate ? new Date(service.renewalDate).toLocaleDateString() : <span className="text-muted italic">neuvedeno</span>}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-muted text-xs block mb-1">REŽIM POUŽÍVÁNÍ</label>
+                  <div className="font-medium">
+                    {service.allowConcurrentUse ? (
+                      <span className="text-green-600">✅ Souběžné</span>
+                    ) : (
+                      <span className="text-amber-600">🕒 Rezervační</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -353,6 +473,21 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Right Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          
+          {!service.allowConcurrentUse && (
+             <div className="card shadow-md border-amber-200 bg-amber-50 animate-fade-in">
+               <div className="card-header border-amber-200" style={{ background: "rgba(251, 191, 36, 0.1)" }}>
+                 <h3 className="text-amber-800">🕒 Rezervační režim</h3>
+               </div>
+               <div className="card-body text-sm text-amber-700">
+                  Tato služba neumožňuje souběžné používání. 
+                  {service.requiresBookingApproval ? " Všechny rezervace musí schválit vlastník." : " Rezervace jsou automaticky potvrzeny."}
+                  <button className="btn btn-primary w-full mt-4" onClick={() => alert("Kalendář bude brzy implementován! Prozatím se domluvte v chatu.")}>
+                    📅 Otevřít kalendář
+                  </button>
+               </div>
+             </div>
+          )}
           
           {/* Owner Box */}
           <div className="card">
@@ -522,10 +657,25 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                     onChange={e => setEditForm({...editForm, billingCycle: e.target.value})}
                   >
                     <option value="MONTHLY">Měsíčně</option>
-                    <option value="YEARLY">Ročně</option>
                     <option value="QUARTERLY">Čtvrtletně</option>
+                    <option value="SEMI_ANNUALLY">Půlročně</option>
+                    <option value="YEARLY">Ročně</option>
                     <option value="WEEKLY">Týdně</option>
                   </select>
+                </div>
+                <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                  <div className="flex gap-4 p-3 bg-muted rounded-lg border border-subtle">
+                     <label className="flex items-center gap-2 cursor-pointer">
+                       <input type="checkbox" checked={editForm.allowConcurrentUse} onChange={e => setEditForm({...editForm, allowConcurrentUse: e.target.checked})} />
+                       <span className="text-sm font-bold">Souběžné používání</span>
+                     </label>
+                     {!editForm.allowConcurrentUse && (
+                        <label className="flex items-center gap-2 cursor-pointer ml-auto border-l pl-4 border-subtle">
+                          <input type="checkbox" checked={editForm.requiresBookingApproval} onChange={e => setEditForm({...editForm, requiresBookingApproval: e.target.checked})} />
+                          <span className="text-sm">Vyžadovat schválení termínu</span>
+                        </label>
+                     )}
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Datum obnovy</label>
@@ -622,6 +772,61 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
               >
                 {savingEdit ? "Ukládám..." : "Uložit změny"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking Modal */}
+      {showBookingModal && (
+        <div 
+          className="modal-overlay" 
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowBookingModal(false);
+          }}
+        >
+          <div className="modal" onMouseDown={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <h3>📅 Rezervovat službu</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => setShowBookingModal(false)}>✕</button>
+            </div>
+            <div className="modal-body flex flex-col gap-4">
+              <div className="form-group">
+                <label className="form-label font-bold">Od</label>
+                <input 
+                  type="date"
+                  className="form-input"
+                  value={bookingForm.startDate}
+                  onChange={e => setBookingForm({...bookingForm, startDate: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label font-bold">Do</label>
+                <input 
+                  type="date"
+                  className="form-input"
+                  value={bookingForm.endDate}
+                  onChange={e => setBookingForm({...bookingForm, endDate: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label font-bold">Poznámka (pro vlastníka)</label>
+                <input 
+                  className="form-input"
+                  placeholder="Např. Potřebuji na víkend..."
+                  value={bookingForm.note}
+                  onChange={e => setBookingForm({...bookingForm, note: e.target.value})}
+                />
+              </div>
+              {service?.requiresBookingApproval && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-700">
+                  ℹ️ Tato rezervace vyžaduje schválení vlastníkem.
+                </div>
+              )}
+            </div>
+            <div className="modal-footer flex gap-3">
+              <button className="btn btn-ghost w-full" onClick={() => setShowBookingModal(false)}>Zrušit</button>
+              <button className="btn btn-primary w-full" onClick={handleCreateBooking}>Potvrdit rezervaci</button>
             </div>
           </div>
         </div>
