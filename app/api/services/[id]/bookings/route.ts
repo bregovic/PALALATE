@@ -31,11 +31,13 @@ export async function POST(
     const { id } = await params;
     const service = await prisma.service.findUnique({
       where: { id },
-      select: { allowConcurrentUse: true, requiresBookingApproval: true, ownerId: true }
+      select: { usageMode: true, requiresBookingApproval: true, ownerId: true }
     });
 
     if (!service) return NextResponse.json({ error: "Service not found" }, { status: 404 });
-    if (service.allowConcurrentUse) return NextResponse.json({ error: "Service is concurrent-use only" }, { status: 400 });
+    if (service.usageMode !== "SHARED_ROTATION") {
+      return NextResponse.json({ error: "Rezervace jsou dostupné pouze pro režim střídání." }, { status: 400 });
+    }
 
     const { startDate, endDate, note } = await req.json();
 

@@ -56,11 +56,18 @@ export default function CostsPage() {
 
   if (!data) return <div className="p-8">Chyba při načítání dat.</div>;
 
+  const now = new Date();
+  const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
   const monthEntries = Object.entries(data.monthlyStats)
     .sort((a, b) => a[0].localeCompare(b[0]))
-    .slice(-12); // Last 12 months
+    .slice(-12);
 
-  const maxMonthly = Math.max(...monthEntries.map(e => e[1].total), 1);
+  const yearEntries = Object.entries(data.yearlyStats)
+    .sort((a, b) => a[0].localeCompare(b[0]));
+
+  const chartEntries = view === "monthly" ? monthEntries : yearEntries;
+  const maxVal = Math.max(...chartEntries.map(e => typeof e[1] === 'number' ? e[1] : e[1].total), 1);
 
   return (
     <div className="page-content animate-fade-in">
@@ -124,26 +131,38 @@ export default function CostsPage() {
         {/* Main Chart */}
         <div className="card">
           <div className="card-header">
-            <h3>📈 Vývoj nákladů (posledních 12 měsíců)</h3>
+            <h3>📈 Vývoj nákladů ({view === "monthly" ? "posledních 12 měsíců" : "historie po letech"})</h3>
           </div>
           <div className="card-body">
             <div className="flex items-end gap-2" style={{ height: 260, paddingTop: 20 }}>
-              {monthEntries.map(([key, val]) => {
-                const height = (val.total / maxMonthly) * 100;
-                const monthName = new Date(key + "-01").toLocaleDateString("cs-CZ", { month: "short" });
+              {chartEntries.map(([key, rawVal]) => {
+                const val = typeof rawVal === 'number' ? rawVal : rawVal.total;
+                const height = (val / maxVal) * 100;
+                
+                let label = key;
+                if (view === "monthly") {
+                   try {
+                     label = new Date(key + "-01").toLocaleDateString("cs-CZ", { month: "short" });
+                   } catch { label = key; }
+                }
+
+                const isCurrent = view === "monthly" ? key === currentKey : key === now.getFullYear().toString();
+
                 return (
                   <div key={key} className="flex-1 flex flex-col items-center group relative">
                     {/* Tooltip */}
                     <div className="absolute -top-8 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
-                      {val.total.toLocaleString()} Kč
+                      {val.toLocaleString()} Kč
                     </div>
                     <div 
-                      className="w-full bg-brand-500 rounded-t-md group-hover:bg-brand-400 transition-colors relative"
+                      className={`w-full rounded-t-md transition-all relative ${isCurrent ? "bg-accent-500 group-hover:bg-accent-400" : "bg-brand-500 group-hover:bg-brand-400"}`}
                       style={{ height: `${height}%`, minHeight: 4 }}
                     >
                       <div className="absolute inset-x-0 top-0 h-1/2 bg-white/10 rounded-t-md"></div>
                     </div>
-                    <div className="text-[10px] text-muted mt-2 font-bold uppercase">{monthName}</div>
+                    <div className={`text-[10px] mt-2 font-bold uppercase ${isCurrent ? "text-accent-600" : "text-muted"}`}>
+                      {label}
+                    </div>
                   </div>
                 );
               })}

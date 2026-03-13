@@ -115,6 +115,7 @@ model ServiceRegistry {
   websiteUrl    String?
   description   String?
   usageMode     UsageMode    @default(PRIVATE)
+  requiresBookingApproval Boolean @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

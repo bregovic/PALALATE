@@ -52,7 +52,7 @@ export default function NewServicePage() {
     internalNote: "",
     sharingConditions: "",
     startDate: "",
-    allowConcurrentUse: true,
+    usageMode: "PRIVATE",
     requiresBookingApproval: false,
   });
 
@@ -70,7 +70,7 @@ export default function NewServicePage() {
       currency: svc.currency || "CZK",
       billingCycle: svc.billingCycle || "MONTHLY",
       description: svc.description || "",
-      allowConcurrentUse: svc.allowConcurrentUse ?? true,
+      usageMode: svc.usageMode || "PRIVATE",
       requiresBookingApproval: svc.requiresBookingApproval ?? false,
     }));
   }
@@ -425,20 +425,33 @@ export default function NewServicePage() {
               </div>
 
               <div className="form-group" style={{ gridColumn: "1 / -1" }}>
-                <div className="flex gap-8 p-4 bg-muted rounded-lg border border-subtle">
-                   <label className="flex items-center gap-3 cursor-pointer">
-                     <input type="checkbox" className="form-checkbox" checked={form.allowConcurrentUse} onChange={e => fill({ allowConcurrentUse: e.target.checked })} />
-                     <div>
-                       <span className="font-bold block">Povolit souběžné používání</span>
-                       <span className="text-xs text-muted">Lze používat službu více lidmi najednou? (Např. Netflix ano, herní účet ne)</span>
-                     </div>
-                   </label>
-                   {!form.allowConcurrentUse && (
-                      <label className="flex items-center gap-3 cursor-pointer p-2 bg-white rounded border border-primary animate-fade-in">
+                <div className="flex gap-8 p-4 bg-muted rounded-lg border border-subtle items-center">
+                   <div className="flex-1">
+                     <label className="form-label font-bold">Režim používání</label>
+                     <select 
+                       className="form-select" 
+                       value={form.usageMode} 
+                       onChange={e => fill({ usageMode: e.target.value })}
+                     >
+                        <option value="PRIVATE">🔒 Soukromé</option>
+                        <option value="SHARED">👥 Sdílené (Souběžné)</option>
+                        <option value="SHARED_ROTATION">🕒 Střídání (Rezervace)</option>
+                        <option value="LICENSE">🔑 Licence</option>
+                     </select>
+                     <span className="text-[10px] text-muted block mt-1">
+                        {form.usageMode === "PRIVATE" && "Služba je jen pro tebe."}
+                        {form.usageMode === "SHARED" && "Více lidí může službu využívat najednou."}
+                        {form.usageMode === "SHARED_ROTATION" && "Lidé si musí rezervovat termín (např. u her)."}
+                        {form.usageMode === "LICENSE" && "Sdílíš klíč nebo licenci."}
+                     </span>
+                   </div>
+
+                   {form.usageMode === "SHARED_ROTATION" && (
+                      <label className="flex items-center gap-3 cursor-pointer p-4 bg-white rounded-xl border border-primary animate-fade-in shadow-sm">
                         <input type="checkbox" className="form-checkbox" checked={form.requiresBookingApproval} onChange={e => fill({ requiresBookingApproval: e.target.checked })} />
                         <div>
-                          <span className="font-bold block text-sm text-primary">Vyžadovat schválení termínu</span>
-                          <span className="text-xs text-muted">Uživatelé si musí rezervovat čas v kalendáři a vy ho schválíte.</span>
+                          <span className="font-bold block text-sm text-primary">Vyžadovat schválení rezervace</span>
+                          <span className="text-[10px] text-muted">Budeš muset každý termín potvrdit v aplikaci.</span>
                         </div>
                       </label>
                    )}

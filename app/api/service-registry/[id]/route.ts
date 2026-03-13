@@ -24,7 +24,7 @@ export async function PATCH(
       pricingType, 
       isShareable, 
       description,
-      allowConcurrentUse,
+      usageMode,
       requiresBookingApproval
     } = await req.json();
 
@@ -33,14 +33,14 @@ export async function PATCH(
       data: {
         name,
         category,
-        defaultPrice: parseFloat(defaultPrice),
+        defaultPrice: defaultPrice !== undefined ? Number(defaultPrice) : undefined,
         currency,
         billingCycle,
         pricingType,
         isShareable,
         description,
-        allowConcurrentUse: allowConcurrentUse !== undefined ? allowConcurrentUse : undefined,
-        requiresBookingApproval: requiresBookingApproval !== undefined ? requiresBookingApproval : undefined,
+        usageMode,
+        requiresBookingApproval,
       },
     });
 
