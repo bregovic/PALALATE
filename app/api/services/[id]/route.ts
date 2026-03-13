@@ -24,6 +24,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           include: { requester: { select: { id: true, name: true, email: true } } },
         },
         _count: { select: { accessGrants: { where: { status: "ACTIVE" } } } },
+        priceIntervals: { orderBy: { startDate: "asc" } },
       },
     });
 
@@ -63,7 +64,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       serviceName, providerName, periodicPrice, currency,
       billingCycle, pricingType, pricingDetails, renewalDate, startDate,
       description, category, maxSharedSlots,
-      allowConcurrentUse, requiresBookingApproval, isTerminated
+      allowConcurrentUse, requiresBookingApproval, isTerminated,
+      priceIntervals
     } = body;
 
     const updated = await prisma.service.update({
@@ -84,6 +86,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         allowConcurrentUse: allowConcurrentUse !== undefined ? Boolean(allowConcurrentUse) : undefined,
         requiresBookingApproval: requiresBookingApproval !== undefined ? Boolean(requiresBookingApproval) : undefined,
         isTerminated: isTerminated !== undefined ? Boolean(isTerminated) : undefined,
+        priceIntervals: Array.isArray(priceIntervals) ? {
+          deleteMany: {},
+          create: priceIntervals.map((pi: any) => ({
+            startDate: new Date(pi.startDate),
+            endDate: pi.endDate ? new Date(pi.endDate) : null,
+            price: Number(pi.price),
+          })),
+        } : undefined,
         updatedAt: new Date(),
       },
     });

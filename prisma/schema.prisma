@@ -168,7 +168,7 @@ model Service {
   accessGrants     AccessGrant[]
   settlementPeriods SettlementPeriod[]
   bookings         Booking[]
-  auditLogs        AuditLog[]
+  priceIntervals   PriceInterval[]
 
   @@map("services")
 }
@@ -493,4 +493,17 @@ model AuditLog {
   actor        User?     @relation(fields: [actorId], references: [id])
 
   @@map("audit_logs")
+}
+
+model PriceInterval {
+  id        String   @id @default(cuid())
+  serviceId String
+  startDate DateTime
+  endDate   DateTime?
+  price     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@map("service_price_intervals")
 }

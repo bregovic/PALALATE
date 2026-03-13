@@ -4,6 +4,13 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+interface PriceInterval {
+  id?: string;
+  startDate: string;
+  endDate: string | null;
+  price: number;
+}
+
 interface Service {
   id: string;
   serviceName: string;
@@ -29,6 +36,7 @@ interface Service {
   allowConcurrentUse: boolean;
   requiresBookingApproval: boolean;
   isTerminated: boolean;
+  priceIntervals: PriceInterval[];
   _count: { accessGrants: number };
 }
 
@@ -87,6 +95,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     allowConcurrentUse: true,
     requiresBookingApproval: false,
     isTerminated: false,
+    priceIntervals: [] as PriceInterval[],
   });
   const [priceInput, setPriceInput] = useState("");
   const [slotsInput, setSlotsInput] = useState("");
@@ -122,6 +131,11 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         allowConcurrentUse: data.allowConcurrentUse ?? true,
         requiresBookingApproval: data.requiresBookingApproval ?? false,
         isTerminated: data.isTerminated ?? false,
+        priceIntervals: (data.priceIntervals || []).map((pi: any) => ({
+          ...pi,
+          startDate: pi.startDate ? pi.startDate.split("T")[0] : "",
+          endDate: pi.endDate ? pi.endDate.split("T")[0] : null,
+        })),
       });
       setPriceInput(data.periodicPrice.toString());
       setSlotsInput(data.maxSharedSlots.toString());
@@ -171,6 +185,30 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     }
   }
 
+  const addPriceInterval = () => {
+    setEditForm(prev => ({
+      ...prev,
+      priceIntervals: [
+        ...prev.priceIntervals,
+        { startDate: new Date().toISOString().split('T')[0], endDate: null, price: 0 }
+      ]
+    }));
+  };
+
+  const removePriceInterval = (index: number) => {
+    setEditForm(prev => ({
+      ...prev,
+      priceIntervals: prev.priceIntervals.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updatePriceInterval = (index: number, data: Partial<PriceInterval>) => {
+    setEditForm(prev => ({
+      ...prev,
+      priceIntervals: prev.priceIntervals.map((pi, i) => i === index ? { ...pi, ...data } : pi)
+    }));
+  };
+
   async function handleUpdateService() {
     setSavingEdit(true);
     try {
@@ -185,6 +223,11 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
           periodicPrice: isNaN(price) ? 0 : price,
           maxSharedSlots: isNaN(slots) ? 0 : slots,
           renewalDate: editForm.renewalDate || null,
+          priceIntervals: editForm.priceIntervals.map(pi => ({
+            ...pi,
+            endDate: pi.endDate || null,
+            price: Number(pi.price)
+          }))
         }),
       });
       if (res.ok) {
@@ -202,6 +245,14 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
       setSavingEdit(false);
     }
   }
+
+  const getCurrentPrice = () => {
+    if (!service?.priceIntervals?.length) return service?.periodicPrice || 0;
+    const now = new Date();
+    const sorted = [...service.priceIntervals].sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    const current = sorted.find(pi => new Date(pi.startDate) <= now);
+    return current ? current.price : (sorted[sorted.length-1].price);
+  };
 
   const fetchBookings = async () => {
     setBookingLoading(true);
@@ -379,7 +430,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   <div style={{ fontSize: "1.2rem", fontWeight: 700 }}>
                     {service.pricingType === "PAID" ? (
                       <>
-                        {Number(service.periodicPrice).toFixed(2)} {service.currency}
+                        {Number(getCurrentPrice()).toFixed(2)} {service.currency}
                         <span style={{ fontSize: "0.9rem", fontWeight: 400, marginLeft: 6 }}>/ {service.billingCycle}</span>
                       </>
                     ) : (
@@ -389,6 +440,17 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                       </span>
                     )}
                   </div>
+                  {service.priceIntervals && service.priceIntervals.length > 0 && (
+                    <div className="mt-2 flex flex-col gap-1">
+                       <span className="text-[10px] text-muted font-bold uppercase">Historie cen:</span>
+                       {service.priceIntervals.map((pi, idx) => (
+                         <div key={idx} className="text-[11px] text-muted flex justify-between border-b border-dashed border-subtle pb-0.5">
+                            <span>{new Date(pi.startDate).toLocaleDateString()} {pi.endDate ? `- ${new Date(pi.endDate).toLocaleDateString()}` : '...'}</span>
+                            <span className="font-bold">{Number(pi.price).toFixed(2)} {service.currency}</span>
+                         </div>
+                       ))}
+                    </div>
+                  )}
                   {service.pricingDetails && (
                     <div className="text-xs text-muted mt-1">{service.pricingDetails}</div>
                   )}
@@ -838,6 +900,69 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   onChange={e => setEditForm({...editForm, description: e.target.value})}
                   placeholder="Např. jak se dělí platba, nebo co je v ceně..."
                 />
+              </div>
+
+              {/* Price Intervals History */}
+              <div className="mt-6 border-t pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-muted">📊 Cenová historie / intervaly</h4>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={addPriceInterval}>
+                    ＋ Přidat interval
+                  </button>
+                </div>
+                
+                {editForm.priceIntervals.length === 0 ? (
+                  <p className="text-xs text-muted italic p-4 bg-muted rounded-lg text-center">
+                    Žádné zadané intervaly. Služba používá fixní cenu {priceInput} {editForm.currency}.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {editForm.priceIntervals.map((pi, idx) => (
+                      <div key={idx} className="p-3 bg-muted rounded-xl border border-subtle relative group">
+                        <button 
+                          type="button" 
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                          onClick={() => removePriceInterval(idx)}
+                        >
+                          ✕
+                        </button>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="form-group mb-0">
+                            <label className="text-[10px] font-bold text-muted uppercase">Od</label>
+                            <input 
+                              type="date" 
+                              className="form-input text-sm px-2 py-1" 
+                              value={pi.startDate} 
+                              onChange={e => updatePriceInterval(idx, { startDate: e.target.value })}
+                            />
+                          </div>
+                          <div className="form-group mb-0">
+                            <label className="text-[10px] font-bold text-muted uppercase">Do (volitelně)</label>
+                            <input 
+                              type="date" 
+                              className="form-input text-sm px-2 py-1" 
+                              value={pi.endDate || ""} 
+                              onChange={e => updatePriceInterval(idx, { endDate: e.target.value || null })}
+                            />
+                          </div>
+                          <div className="form-group mb-0">
+                            <label className="text-[10px] font-bold text-muted uppercase">Cena ({editForm.currency})</label>
+                            <input 
+                              type="number" 
+                              step="0.01"
+                              className="form-input text-sm px-2 py-1" 
+                              value={pi.price} 
+                              onChange={e => updatePriceInterval(idx, { price: parseFloat(e.target.value) })}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <p className="text-[10px] text-muted italic mt-2">
+                      💡 Tip: Pro "neomezeně" nechte pole "Do" prázdné.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
             <div className="modal-footer">
