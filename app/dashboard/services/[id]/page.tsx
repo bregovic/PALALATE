@@ -179,6 +179,9 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         setShowAddCredentialModal(false);
         setCredForm({ type: "EMAIL_PASSWORD", label: "", login: "", password: "", visibility: "OWNER_ONLY" });
         load();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(`Chyba: ${errData.error || "Server vrátil 500"}`);
       }
     } finally {
       setSavingCred(false);

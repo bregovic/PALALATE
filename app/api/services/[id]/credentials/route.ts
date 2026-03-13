@@ -22,35 +22,48 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const encrypted = encryptCredential(payload);
 
-    const secret = await prisma.credentialSecret.create({
-      data: {
-        serviceId,
-        secretType: secretType as any,
-        label: label || null,
-        encryptedPayload: encrypted.encryptedPayload,
-        iv: encrypted.iv,
-        visibilityRule: (visibilityRule || "OWNER_ONLY") as any,
-        note: note || null,
-      },
-    });
-
-    await prisma.auditLog.create({
+    let secret;
+    try {
+      secret = await prisma.credentialSecret.create({
         data: {
-          actorId: user.id,
-          entityType: "CredentialSecret",
-          entityId: secret.id,
-          action: "CREATE",
-          metadata: { serviceId }
-        }
-    });
+          serviceId,
+          secretType: secretType as any,
+          label: label || null,
+          encryptedPayload: encrypted.encryptedPayload,
+          iv: encrypted.iv,
+          visibilityRule: (visibilityRule || "OWNER_ONLY") as any,
+        },
+      });
+    } catch (dbErr: any) {
+      console.error("[DB ERROR credentials create]", dbErr);
+      return NextResponse.json({ 
+        error: "Chyba databáze při ukládání údajů.", 
+        details: dbErr.message,
+        code: dbErr.code 
+      }, { status: 500 });
+    }
+
+    try {
+      await prisma.auditLog.create({
+          data: {
+            actorId: user.id,
+            entityType: "CredentialSecret",
+            entityId: secret.id,
+            action: "CREATE",
+            metadata: { serviceId }
+          }
+      });
+    } catch (auditErr) {
+      console.error("[AUDIT ERROR credentials create]", auditErr);
+      // We don't fail the whole request if audit log fails, but it's good to know
+    }
 
     return NextResponse.json(secret);
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.error("[POST /api/services/[id]/credentials]", err);
-    // Return the error message to help the user debug if it's the encryption key
+    console.error("[POST /api/services/[id]/credentials GENERAL ERROR]", err);
     const message = err instanceof Error ? err.message : "Server error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
