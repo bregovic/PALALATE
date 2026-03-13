@@ -44,6 +44,22 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     calculationModel: "EQUAL_SPLIT",
   });
 
+  // Edit modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    serviceName: "",
+    providerName: "",
+    periodicPrice: 0,
+    currency: "CZK",
+    billingCycle: "MONTHLY",
+    description: "",
+    category: "",
+    maxSharedSlots: 0,
+    renewalDate: "",
+  });
+
+  const [savingEdit, setSavingEdit] = useState(false);
+
   async function load() {
     setLoading(true);
     try {
@@ -55,10 +71,43 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
       }
       const data = await res.json();
       setService(data);
+      // Fill edit form
+      setEditForm({
+        serviceName: data.serviceName,
+        providerName: data.providerName,
+        periodicPrice: data.periodicPrice,
+        currency: data.currency,
+        billingCycle: data.billingCycle,
+        description: data.description || "",
+        category: data.category || "",
+        maxSharedSlots: data.maxSharedSlots,
+        renewalDate: data.renewalDate ? data.renewalDate.split("T")[0] : "",
+      });
     } catch {
       setError("Chyba při načítání.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleUpdateService() {
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/services/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      if (res.ok) {
+        setShowEditModal(false);
+        await load();
+      } else {
+        alert("Chyba při ukládání změn.");
+      }
+    } catch (err) {
+      alert("Nepodařilo se uložit změny.");
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -107,7 +156,12 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         </div>
         <div style={{ display: "flex", gap: 12 }}>
           {service.isOwner && (
-            <button className="btn btn-secondary btn-sm">Editovat</button>
+            <button 
+              className="btn btn-secondary btn-sm"
+              onClick={() => setShowEditModal(true)}
+            >
+              ⚙️ Editovat službu
+            </button>
           )}
           <Link href="/dashboard/services" className="btn btn-ghost btn-sm">← Zpět</Link>
         </div>
@@ -283,7 +337,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* Settlement Modal */}
+      {/* Settlement Modal (stays as is) */}
       {showSettlementModal && (
         <div className="modal-overlay" onClick={() => setShowSettlementModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -329,6 +383,118 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowSettlementModal(false)}>Zrušit</button>
               <button className="btn btn-primary" onClick={handleCreateSettlement}>Vytvořit vyúčtování</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Service Modal */}
+      {showEditModal && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+            <div className="modal-header">
+              <h3>⚙️ Editovat informace o službě</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => setShowEditModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="grid-2" style={{ gap: 16 }}>
+                <div className="form-group">
+                  <label className="form-label">Název služby</label>
+                  <input 
+                    className="form-input"
+                    value={editForm.serviceName}
+                    onChange={e => setEditForm({...editForm, serviceName: e.target.value})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Poskytovatel</label>
+                  <input 
+                    className="form-input"
+                    value={editForm.providerName}
+                    onChange={e => setEditForm({...editForm, providerName: e.target.value})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Cena</label>
+                  <input 
+                    type="number"
+                    className="form-input"
+                    value={editForm.periodicPrice}
+                    onChange={e => setEditForm({...editForm, periodicPrice: parseFloat(e.target.value)})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Měna</label>
+                  <select 
+                    className="form-select"
+                    value={editForm.currency}
+                    onChange={e => setEditForm({...editForm, currency: e.target.value})}
+                  >
+                    <option value="CZK">CZK</option>
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Frekvence platby</label>
+                  <select 
+                    className="form-select"
+                    value={editForm.billingCycle}
+                    onChange={e => setEditForm({...editForm, billingCycle: e.target.value})}
+                  >
+                    <option value="MONTHLY">Měsíčně</option>
+                    <option value="YEARLY">Ročně</option>
+                    <option value="QUARTERLY">Čtvrtletně</option>
+                    <option value="WEEKLY">Týdně</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Datum obnovy</label>
+                  <input 
+                    type="date"
+                    className="form-input"
+                    value={editForm.renewalDate}
+                    onChange={e => setEditForm({...editForm, renewalDate: e.target.value})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Sdílené sloty (počet)</label>
+                  <input 
+                    type="number"
+                    className="form-input"
+                    value={editForm.maxSharedSlots}
+                    onChange={e => setEditForm({...editForm, maxSharedSlots: parseInt(e.target.value)})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Kategorie</label>
+                  <input 
+                    className="form-input"
+                    value={editForm.category}
+                    onChange={e => setEditForm({...editForm, category: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="form-group mt-4">
+                <label className="form-label">Popis / poznámka k platbě</label>
+                <textarea 
+                  className="form-input"
+                  style={{ minHeight: 80 }}
+                  value={editForm.description}
+                  onChange={e => setEditForm({...editForm, description: e.target.value})}
+                  placeholder="Např. jak se dělí platba, nebo co je v ceně..."
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Zrušit</button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleUpdateService}
+                disabled={savingEdit}
+              >
+                {savingEdit ? "Ukládám..." : "Uložit změny"}
+              </button>
             </div>
           </div>
         </div>
