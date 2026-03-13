@@ -120,7 +120,9 @@ export default function Sidebar({
     <aside className="sidebar" id="sidebar">
       {/* Logo */}
       <div className="sidebar-logo" style={{ justifyContent: 'center', padding: '30px 20px' }}>
-        <Image src="/logo.png" alt="PalalateLogo" width={180} height={80} style={{ objectFit: 'contain', height: 'auto' }} priority />
+        <Link href="/dashboard" className="flex justify-center transition-opacity hover:opacity-80">
+          <Image src="/logo.png" alt="PalalateLogo" width={180} height={80} style={{ objectFit: 'contain', height: 'auto' }} priority />
+        </Link>
       </div>
 
       {/* Navigation */}

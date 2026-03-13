@@ -718,35 +718,6 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
              </div>
           )}
           
-          {/* Owner Box */}
-          <div className="card">
-            <div className="card-header"><h3>👤 Vlastník</h3></div>
-            <div className="card-body flex items-center gap-4">
-              <div className="user-avatar">{service.owner.name[0]}</div>
-              <div>
-                <div className="font-bold">{service.owner.name}</div>
-                <div className="text-xs text-muted">{service.owner.email}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions Box */}
-          {service.isOwner && (
-            <div className="card">
-              <div className="card-header"><h3>⚡ Akce</h3></div>
-              <div className="card-body flex flex-col gap-3">
-                <button 
-                  className="btn btn-primary w-full"
-                  onClick={() => setShowSettlementModal(true)}
-                >
-                  💰 Vygenerovat vyúčtování
-                </button>
-                <button className="btn btn-secondary w-full">🔄 Synchronizovat platbu</button>
-                <hr className="border-subtle my-2" />
-                <button className="btn btn-danger w-full outline">⚠️ Archivovat službu</button>
-              </div>
-            </div>
-          )}
 
           {/* Access Requests */}
           {service.isOwner && service.accessRequests.length > 0 && (
