@@ -61,6 +61,8 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     pricingType: "PAID" as "PAID" | "AFFILIATE" | "INCLUDED" | "FREE",
     pricingDetails: "",
   });
+  const [priceInput, setPriceInput] = useState("");
+  const [slotsInput, setSlotsInput] = useState("");
 
   const [savingEdit, setSavingEdit] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
@@ -90,6 +92,8 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         pricingType: data.pricingType,
         pricingDetails: data.pricingDetails || "",
       });
+      setPriceInput(data.periodicPrice.toString());
+      setSlotsInput(data.maxSharedSlots.toString());
     } catch {
       setError("Chyba při načítání.");
     } finally {
@@ -112,10 +116,13 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
   async function handleUpdateService() {
     setSavingEdit(true);
     try {
+      const price = parseFloat(priceInput.replace(",", "."));
+      const slots = parseInt(slotsInput);
+
       const cleanForm = {
         ...editForm,
-        periodicPrice: isNaN(editForm.periodicPrice) ? 0 : editForm.periodicPrice,
-        maxSharedSlots: isNaN(editForm.maxSharedSlots) ? 0 : editForm.maxSharedSlots,
+        periodicPrice: isNaN(price) ? 0 : price,
+        maxSharedSlots: isNaN(slots) ? 0 : slots,
         renewalDate: editForm.renewalDate || null,
       };
 
@@ -128,10 +135,12 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         setShowEditModal(false);
         await load();
       } else {
-        const err = await res.json();
-        alert(`Chyba při ukládání: ${err.error || "Neznámá chyba"}`);
+        const errData = await res.json().catch(() => ({}));
+        console.error("Update failed:", errData);
+        alert(`Chyba při ukládání: ${errData.error || "Neznámá chyba"}`);
       }
     } catch (err) {
+      console.error("Update error:", err);
       alert("Nepodařilo se spojit se serverem.");
     } finally {
       setSavingEdit(false);
@@ -432,8 +441,13 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Edit Service Modal */}
       {showEditModal && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+        <div 
+          className="modal-overlay" 
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowEditModal(false);
+          }}
+        >
+          <div className="modal" onMouseDown={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
             <div className="modal-header">
               <h3>⚙️ Editovat informace o službě</h3>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowEditModal(false)}>✕</button>
@@ -459,12 +473,16 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                 <div className="form-group">
                   <label className="form-label">Cena</label>
                   <input 
-                    type="number"
+                    type="text"
                     className="form-input"
-                    value={editForm.periodicPrice}
+                    value={priceInput}
                     onChange={e => {
-                      const val = parseFloat(e.target.value);
-                      setEditForm({...editForm, periodicPrice: isNaN(val) ? 0 : val});
+                      let val = e.target.value;
+                      // Remove leading zero if typing more numbers
+                      if (val.length > 1 && val.startsWith("0") && val[1] !== "." && val[1] !== ",") {
+                        val = val.substring(1);
+                      }
+                      setPriceInput(val);
                     }}
                   />
                 </div>
@@ -507,8 +525,8 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   <input 
                     type="number"
                     className="form-input"
-                    value={editForm.maxSharedSlots}
-                    onChange={e => setEditForm({...editForm, maxSharedSlots: parseInt(e.target.value)})}
+                    value={slotsInput}
+                    onChange={e => setSlotsInput(e.target.value)}
                   />
                 </div>
                 <div className="form-group">
