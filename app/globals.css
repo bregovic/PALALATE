@@ -639,30 +639,19 @@ code {
 
 /* ─── TABLES ───────────────────────────────────────────────────────────────── */
 .table-wrap {
-  position: relative;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  display: block;
-  /* Allow momentum but keep it contained */
-  overscroll-behavior-x: pan-x;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
-  width: 100%;
-  max-width: 100%;
+  background: var(--bg-card);
 }
 
 table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
 }
 
 thead th {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   background: var(--bg-elevated);
-  white-space: nowrap;
   padding: 12px 16px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -670,8 +659,8 @@ thead th {
   text-transform: uppercase;
   color: var(--text-muted);
   text-align: left;
-  border-bottom: 2px solid var(--border-subtle);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
 }
 
 tbody td {
@@ -1049,26 +1038,16 @@ tbody tr:hover { background: var(--bg-elevated); }
   
   .page-content { padding: 16px; }
   
-  /* Tables on mobile */
   .table-wrap {
     margin: 0 -16px;
     width: calc(100% + 32px);
-    max-width: none;
     border-radius: 0;
     border-left: none;
     border-right: none;
-    overflow-x: scroll; /* Force scroll visibility on some systems */
-    display: block;
   }
 
-  .table-wrap table {
-    min-width: 650px;
-    display: table;
-  }
-  
-  thead th {
-    /* Offset by mobile-header (64px) + mobile-bottom-nav (52px) = 116px */
-    top: 116px;
+  table {
+    min-width: 800px;
   }
   
   /* Alternative table style for mobile if needed, but horizontal scroll is often enough */

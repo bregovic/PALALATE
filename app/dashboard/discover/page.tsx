@@ -141,14 +141,20 @@ export default function DiscoverPage() {
               </thead>
               <tbody>
                 {services.map((svc: any) => {
+                  const icon = CATEGORY_ICONS[svc.category?.toLowerCase() || "other"] || "📦";
                   const hasRequested = svc.hasPendingRequest;
                   const hasAccess = svc.hasActiveGrant;
 
                   return (
                     <tr key={svc.id}>
                       <td>
-                        <div className="font-bold text-primary">{svc.serviceName}</div>
-                        <div className="text-xs text-muted">{svc.providerName}</div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-xl w-8 text-center hidden-mobile">{icon}</div>
+                          <div>
+                            <div className="font-bold text-primary">{svc.serviceName}</div>
+                            <div className="text-xs text-muted">{svc.providerName}</div>
+                          </div>
+                        </div>
                       </td>
                       <td className="hidden-mobile text-center">
                         <span className="badge badge-gray">

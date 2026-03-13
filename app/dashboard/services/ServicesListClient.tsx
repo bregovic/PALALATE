@@ -185,20 +185,22 @@ export function ServicesListClient({ initialServices }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3 mb-2">
-        <div className="relative flex-1">
+        <div className="input-with-icon flex-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
           <input 
             type="text" 
             placeholder="Hledat službu..." 
-            className="form-input pl-10"
+            className="form-input"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">🔍</span>
         </div>
         
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className={`btn ${showFilters ? 'btn-secondary' : 'btn-ghost'} flex items-center gap-2 px-4`}
+          className={`btn ${showFilters ? 'btn-secondary' : 'btn-ghost'} flex items-center gap-2 px-4 h-[44px]`}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
@@ -321,8 +323,11 @@ export function ServicesListClient({ initialServices }: Props) {
                          onChange={() => toggleSelect(svc.id)}
                        />
                     </td>
-                    <td className="font-bold text-primary">
-                      {svc.serviceName}
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="text-xl w-8 text-center hidden-mobile">{icon}</div>
+                        <div className="font-bold text-primary">{svc.serviceName}</div>
+                      </div>
                     </td>
                     <td className="text-center">
                        <span className="text-xs font-medium text-muted bg-muted px-2 py-0.5 rounded-full">
