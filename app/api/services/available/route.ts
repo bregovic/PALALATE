@@ -44,13 +44,21 @@ export async function GET() {
       },
     });
 
-    // 3. Map to include free slots info
+    // 3. Get my pending requests to show "Požádáno"
+    const myRequests = await prisma.accessRequest.findMany({
+      where: { requesterId: user.id, status: "PENDING" },
+      select: { serviceId: true }
+    });
+    const requestedServiceIds = new Set(myRequests.map(r => r.serviceId));
+
+    // 4. Map to include free slots info and request status
     const enrichedServices = services.map(s => {
       const occupied = s._count.accessGrants + s._count.manualSlots;
-      const freeSlots = s.maxSharedSlots > 0 ? Math.max(0, s.maxSharedSlots - occupied) : Infinity;
+      const freeSlots = s.maxSharedSlots > 0 ? Math.max(0, s.maxSharedSlots - occupied) : null;
       return {
         ...s,
         freeSlots,
+        hasPendingRequest: requestedServiceIds.has(s.id),
       };
     });
 

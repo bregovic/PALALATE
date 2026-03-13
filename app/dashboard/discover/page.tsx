@@ -99,64 +99,71 @@ export default function DiscoverPage() {
           ) : (
             <table style={{ borderCollapse: "collapse", width: "100%" }}>
               <thead>
-                <tr>
-                  <th style={{ textAlign: "left" }}>Služba</th>
-                  <th className="hidden-mobile" style={{ textAlign: "left" }}>Kategorie</th>
-                  <th style={{ textAlign: "left" }}>Cena</th>
-                  <th className="hidden-mobile" style={{ textAlign: "left" }}>Status</th>
-                  <th style={{ textAlign: "left" }}>Sdílí</th>
+                <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                  <th style={{ textAlign: "left", padding: "12px 16px" }}>Služba</th>
+                  <th className="hidden-mobile" style={{ textAlign: "left", padding: "12px 16px" }}>Kategorie</th>
+                  <th style={{ textAlign: "left", padding: "12px 16px" }}>Cena</th>
+                  <th className="hidden-mobile" style={{ textAlign: "left", padding: "12px 16px" }}>Status</th>
+                  <th style={{ textAlign: "left", padding: "12px 16px" }}>Sdílí</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                {services.map((svc) => {
+                {services.map((svc: any) => {
                   const icon = CATEGORY_ICONS[svc.category?.toLowerCase() || "other"] || "📦";
+                  const hasRequested = svc.hasPendingRequest;
+
                   return (
-                    <tr key={svc.id} style={{ verticalAlign: "middle" }}>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <span className="hidden-mobile" style={{ fontSize: "1.2rem", lineHeight: 1, width: 28, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+                    <tr key={svc.id} style={{ borderBottom: "1px solid var(--border-subtle)", verticalAlign: "middle" }}>
+                      <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <span className="hidden-mobile" style={{ fontSize: "1.4rem", lineHeight: 1, width: 32, textAlign: "center", flexShrink: 0 }}>{icon}</span>
                           <div>
-                            <div className="font-bold text-primary" style={{ fontSize: "0.875rem" }}>{svc.serviceName}</div>
-                            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{svc.providerName}</div>
+                            <div className="font-bold text-primary" style={{ fontSize: "0.9rem", lineHeight: 1.2 }}>{svc.serviceName}</div>
+                            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{svc.providerName}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="hidden-mobile" style={{ verticalAlign: "middle" }}>
-                        <span style={{ fontSize: "0.75rem", fontWeight: 500, background: "var(--bg-elevated)", padding: "2px 8px", borderRadius: "var(--radius-full)", color: "var(--text-muted)" }}>
-                          {svc.category || "Ostatní"}
-                        </span>
+                      <td className="hidden-mobile" style={{ padding: "16px", verticalAlign: "middle" }}>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 600, background: "var(--bg-elevated)", padding: "4px 10px", borderRadius: "var(--radius-full)", color: "var(--text-muted)", display: "inline-flex", alignItems: "center", lineHeight: 1 }}>
+                            {svc.category || "Ostatní"}
+                          </span>
+                        </div>
                       </td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--text-primary)" }}>
+                      <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary)", lineHeight: 1.2 }}>
                           {Number(svc.periodicPrice).toLocaleString()} {svc.currency}
                         </div>
-                        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase" }}>/ {svc.billingCycle}</div>
+                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase" }}>/ {svc.billingCycle}</div>
                       </td>
-                      <td className="hidden-mobile" style={{ verticalAlign: "middle" }}>
-                        {(svc.freeSlots === null || svc.freeSlots === Infinity) ? (
-                          <span className="badge badge-green">Volno</span>
-                        ) : (
-                          <span className={`badge ${svc.freeSlots > 0 ? 'badge-blue' : 'badge-red'}`}>
-                            {svc.freeSlots > 0 ? `${svc.freeSlots} volných míst` : 'Obsazeno'}
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <div className="user-avatar" style={{ width: 26, height: 26, fontSize: '0.65rem', flexShrink: 0 }}>
-                            {svc.owner.name[0].toUpperCase()}
-                          </div>
-                          <span className="hidden-mobile" style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)" }}>{svc.owner.name}</span>
+                      <td className="hidden-mobile" style={{ padding: "16px", verticalAlign: "middle" }}>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          {svc.freeSlots === null ? (
+                            <span className="badge badge-green" style={{ padding: "4px 10px", lineHeight: 1 }}>Volno</span>
+                          ) : (
+                            <span className={`badge ${svc.freeSlots > 0 ? 'badge-blue' : 'badge-red'}`} style={{ padding: "4px 10px", lineHeight: 1 }}>
+                              {svc.freeSlots > 0 ? `${svc.freeSlots} volných míst` : 'Obsazeno'}
+                            </span>
+                          )}
                         </div>
                       </td>
-                      <td style={{ verticalAlign: "middle", textAlign: "right" }}>
+                      <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div className="user-avatar" style={{ width: 28, height: 28, fontSize: '0.7rem', flexShrink: 0 }}>
+                            {svc.owner.name[0].toUpperCase()}
+                          </div>
+                          <span className="hidden-mobile" style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-primary)" }}>{svc.owner.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "16px", verticalAlign: "middle", textAlign: "right" }}>
                         <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => handleRequestAccess(svc.id)}
-                          disabled={requestingId === svc.id || svc.freeSlots === 0}
+                          className={`btn ${hasRequested ? 'btn-glow' : 'btn-primary'} btn-sm`}
+                          style={{ minWidth: 90 }}
+                          onClick={() => !hasRequested && handleRequestAccess(svc.id)}
+                          disabled={requestingId === svc.id || svc.freeSlots === 0 || hasRequested}
                         >
-                          {requestingId === svc.id ? "..." : "Požádat"}
+                          {requestingId === svc.id ? "..." : (hasRequested ? "Požádáno" : "Požádat")}
                         </button>
                       </td>
                     </tr>

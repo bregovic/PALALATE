@@ -154,36 +154,38 @@ export default function WishesPage() {
       ) : (
         <div className="card">
           <div className="table-wrap">
-            <table className="w-full">
+            <table style={{ borderCollapse: "collapse", width: "100%" }}>
               <thead>
-                <tr>
-                  <th>Služba</th>
-                  <th className="hidden-mobile">Priorita</th>
-                  <th>Poznámka / Odkaz</th>
-                  {viewScope !== "me" && <th>Přeje si</th>}
-                  <th>Akce</th>
+                <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                  <th style={{ textAlign: "left", padding: "12px 16px" }}>Služba</th>
+                  <th className="hidden-mobile" style={{ textAlign: "left", padding: "12px 16px" }}>Priorita</th>
+                  <th style={{ textAlign: "left", padding: "12px 16px" }}>Poznámka / Odkaz</th>
+                  {viewScope !== "me" && <th style={{ textAlign: "left", padding: "12px 16px" }}>Přeje si</th>}
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {wishes.map((wish) => (
-                  <tr key={wish.id}>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <div className="user-avatar" style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--brand-50)', color: 'var(--brand-600)', fontSize: '0.9rem' }}>
+                  <tr key={wish.id} style={{ borderBottom: "1px solid var(--border-subtle)", verticalAlign: "middle" }}>
+                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div className="user-avatar" style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--brand-50)', color: 'var(--brand-600)', fontSize: '0.9rem', flexShrink: 0 }}>
                           {wish.serviceName[0].toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-bold text-sm">{wish.serviceName}</div>
-                          <div className="text-[9px] text-muted uppercase">Přidáno: {new Date(wish.createdAt).toLocaleDateString()}</div>
+                          <div className="font-bold text-sm" style={{ lineHeight: 1.2 }}>{wish.serviceName}</div>
+                          <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase" }}>Přidáno: {new Date(wish.createdAt).toLocaleDateString()}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="hidden-mobile">
-                      {wish.priority === 3 && <span className="badge badge-red">🔥 Vysoká</span>}
-                      {wish.priority === 2 && <span className="badge badge-yellow">⭐ Střední</span>}
-                      {wish.priority <= 1 && <span className="badge badge-gray">Nízká</span>}
+                    <td className="hidden-mobile" style={{ padding: "16px", verticalAlign: "middle" }}>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        {wish.priority === 3 && <span className="badge badge-red" style={{ padding: "4px 10px", lineHeight: 1 }}>🔥 Vysoká</span>}
+                        {wish.priority === 2 && <span className="badge badge-yellow" style={{ padding: "4px 10px", lineHeight: 1 }}>⭐ Střední</span>}
+                        {wish.priority <= 1 && <span className="badge badge-gray" style={{ padding: "4px 10px", lineHeight: 1 }}>Nízká</span>}
+                      </div>
                     </td>
-                    <td>
+                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
                       <div className="flex flex-col gap-1">
                         {wish.description && <div className="text-sm italic text-secondary">"{wish.description}"</div>}
                         {wish.link && (
@@ -197,16 +199,16 @@ export default function WishesPage() {
                       </div>
                     </td>
                     {viewScope !== "me" && (
-                      <td>
-                        <div className="flex items-center gap-2">
-                          <div className="user-avatar" style={{ width: 22, height: 22, fontSize: '0.6rem' }}>
+                      <td style={{ padding: "16px", verticalAlign: "middle" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div className="user-avatar" style={{ width: 24, height: 24, fontSize: '0.65rem', flexShrink: 0 }}>
                             {wish.user.name[0].toUpperCase()}
                           </div>
-                          <span className="text-xs font-semibold">{wish.user.name}</span>
+                          <span className="text-xs font-semibold text-primary">{wish.user.name}</span>
                         </div>
                       </td>
                     )}
-                    <td className="text-right">
+                    <td style={{ padding: "16px", verticalAlign: "middle", textAlign: "right" }}>
                       <div className="flex gap-2 justify-end">
                         {viewScope !== "me" && (
                           <button 
