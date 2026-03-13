@@ -295,9 +295,6 @@ export function ServicesListClient({ initialServices }: Props) {
                   Cena {sortCol === "price" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
                 <th className="hidden-mobile">Perioda</th>
-                <th onClick={() => toggleSort("renewal")} className="cursor-pointer hover:text-brand-600 hidden-mobile">
-                  Obnova {sortCol === "renewal" && (sortDir === "asc" ? "↑" : "↓")}
-                </th>
                 <th className="hidden-mobile">Stav</th>
                 <th onClick={() => toggleSort("sharing")} className="cursor-pointer hover:text-brand-600">
                   Sdílení {sortCol === "sharing" && (sortDir === "asc" ? "↑" : "↓")}
@@ -328,7 +325,6 @@ export function ServicesListClient({ initialServices }: Props) {
                         <div className="text-xl w-8 text-center hidden-mobile">{icon}</div>
                         <div>
                           <div className="font-bold text-primary">{svc.serviceName}</div>
-                          <div className="text-[11px] text-muted">{svc.providerName}</div>
                         </div>
                       </div>
                     </td>
@@ -344,20 +340,11 @@ export function ServicesListClient({ initialServices }: Props) {
                     <td className="text-sm hidden-mobile">{billingLabels[svc.billingCycle]}</td>
                     <td className="hidden-mobile">
                       {svc.isTerminated ? (
-                        <span className="text-[10px] font-bold uppercase text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded-full">
-                          Ukončeno
-                        </span>
+                        <span className="badge badge-red">Ukončeno</span>
                       ) : (
-                        days !== null ? (
-                          <span className={`text-sm ${days <= 7 ? "text-amber-500 font-bold" : "text-muted"}`}>
-                            {days < 0 ? "Expirováno" : (days === 0 ? "Dnes!" : `za ${days} dní`)}
-                          </span>
-                        ) : (
-                          <span className="text-muted">–</span>
-                        )
+                        statusBadge(svc.status)
                       )}
                     </td>
-                    <td className="hidden-mobile">{statusBadge(svc.status)}</td>
                     <td>{sharingBadge((svc as any).usageMode)}</td>
                     <td className="hidden-mobile">
                       <div className="flex items-center gap-2">

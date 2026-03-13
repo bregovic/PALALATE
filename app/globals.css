@@ -1358,10 +1358,10 @@ tbody tr:hover { background: var(--bg-elevated); }
 }
 
 /* Utilities */
-.hidden-mobile { display: inherit; }
+.hidden-mobile { display: revert; }
 @media (max-width: 768px) {
   .hidden-mobile { display: none !important; }
-  .show-mobile { display: inherit !important; }
+  .show-mobile { display: revert !important; }
 }
 .show-mobile { display: none; }
 
