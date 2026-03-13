@@ -42,19 +42,40 @@ export default function DashboardShell({
         <button 
           className="btn btn-ghost btn-icon" 
           onClick={() => setIsSidebarOpen(true)}
+          aria-label="Otevřít menu"
+          style={{ flexShrink: 0 }}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
             <line x1="3" y1="12" x2="21" y2="12" />
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
         
-        <Link href="/dashboard" className="flex items-center">
-          <Image src="/logo.png" alt="Palalate" width={100} height={40} style={{ objectFit: 'contain' }} />
+        {/* Centered logo – links to home */}
+        <Link 
+          href="/dashboard" 
+          style={{ 
+            position: "absolute", 
+            left: "50%", 
+            transform: "translateX(-50%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "44px",
+          }}
+        >
+          <Image 
+            src="/logo.png" 
+            alt="Palalate" 
+            width={110} 
+            height={38} 
+            style={{ objectFit: 'contain', maxHeight: 38 }} 
+            priority
+          />
         </Link>
         
-        <div style={{ width: 40 }} /> {/* Spacer to center logo */}
+        <div style={{ width: 40, flexShrink: 0 }} /> {/* Right spacer for balance */}
       </header>
 
       {/* Mobile horizontal scroll nav */}

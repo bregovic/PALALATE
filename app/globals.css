@@ -640,8 +640,13 @@ code {
 /* ─── TABLES ───────────────────────────────────────────────────────────────── */
 .table-wrap {
   overflow-x: auto;
+  overflow-y: visible;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  /* isolate scroll so swiping the table doesn't scroll the page */
+  touch-action: pan-x;
 }
 
 table {
@@ -1041,6 +1046,10 @@ tbody tr:hover { background: var(--bg-elevated); }
     border-radius: 0;
     border-left: none;
     border-right: none;
+    /* Isolate horizontal touch scroll - don't let it bubble to page */
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    -webkit-overflow-scrolling: touch;
   }
   
   /* Alternative table style for mobile if needed, but horizontal scroll is often enough */
