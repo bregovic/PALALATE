@@ -1013,6 +1013,10 @@ tbody tr:hover { background: var(--bg-elevated); }
 
 [data-tooltip]:hover::after { opacity: 1; }
 
+/* Elements hidden by default, shown only on mobile via media query below */
+.mobile-header { display: none; }
+.mobile-bottom-nav { display: none; }
+
 /* ─── RESPONSIVE ───────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar { 
@@ -1176,8 +1180,6 @@ tbody tr:hover { background: var(--bg-elevated); }
   }
 }
 
-.mobile-header { display: none; }
-.mobile-bottom-nav { display: none; }
 
 
 /* ─── AUTH PAGES ───────────────────────────────────────────────────────────── */
