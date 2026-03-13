@@ -5,20 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-const CATEGORIES = [
-  { value: "streaming", label: "🎬 Streaming" },
-  { value: "music", label: "🎵 Hudba" },
-  { value: "gaming", label: "🎮 Gaming" },
-  { value: "productivity", label: "💼 Produktivita" },
-  { value: "cloud", label: "☁️ Cloud / Storage" },
-  { value: "design", label: "🎨 Design / Kreativita" },
-  { value: "ai", label: "🤖 AI nástroje" },
-  { value: "security", label: "🔐 Bezpečnost" },
-  { value: "fitness", label: "💪 Fitness / Zdraví" },
-  { value: "education", label: "📚 Vzdělávání" },
-  { value: "news", label: "📰 Zpravodajství" },
-  { value: "other", label: "📦 Ostatní" },
-];
 
 const POPULAR_SERVICES = [
   { name: "Netflix", provider: "Netflix Inc.", category: "streaming" },
@@ -36,6 +22,14 @@ export default function NewServicePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [categories, setCategories] = useState<any[]>([]);
+
+  useState(() => {
+    fetch("/api/categories")
+      .then(r => r.json())
+      .then(setCategories)
+      .catch(console.error);
+  });
 
   const [form, setForm] = useState({
     serviceName: "",
@@ -166,8 +160,8 @@ export default function NewServicePage() {
                   value={form.category}
                   onChange={(e) => fill({ category: e.target.value })}
                 >
-                  {CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
                   ))}
                 </select>
               </div>

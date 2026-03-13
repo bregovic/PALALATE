@@ -63,6 +63,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
   });
 
   const [savingEdit, setSavingEdit] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
 
   async function load() {
     setLoading(true);
@@ -96,6 +97,18 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     }
   }
 
+  async function loadCategories() {
+    try {
+      const res = await fetch("/api/categories");
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error("Failed to load categories", err);
+    }
+  }
+
   async function handleUpdateService() {
     setSavingEdit(true);
     try {
@@ -125,7 +138,10 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     }
   }
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { 
+    load(); 
+    loadCategories();
+  }, [id]);
 
   async function reveal(cid: string) {
     setRevealing(prev => ({ ...prev, [cid]: true }));
@@ -497,11 +513,16 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                 </div>
                 <div className="form-group">
                   <label className="form-label">Kategorie</label>
-                  <input 
-                    className="form-input"
+                  <select 
+                    className="form-select"
                     value={editForm.category}
                     onChange={e => setEditForm({...editForm, category: e.target.value})}
-                  />
+                  >
+                    <option value="">-- Vyber --</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

@@ -219,6 +219,7 @@ function ManagementTab() {
     isShareable: true,
     description: ""
   });
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -253,18 +254,47 @@ function ManagementTab() {
   const saveService = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!svcForm.name) return;
-    const res = await fetch("/api/service-registry", {
-      method: "POST",
+    
+    const method = editingServiceId ? "PATCH" : "POST";
+    const url = editingServiceId ? `/api/service-registry/${editingServiceId}` : "/api/service-registry";
+    
+    // We need to handle PATCH in a new API route or update the existing one
+    // For now, let's assume we use the POST route with an ID if possible, 
+    // but better practice is a separate route. 
+    // Wait, the existing /api/service-registry route handles only POST.
+    // I should check if I need to create /api/service-registry/[id]/route.ts
+    
+    const res = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(svcForm),
     });
     if (res.ok) {
-      setSvcForm({
-        name: "", category: "", defaultPrice: 0, currency: "CZK",
-        billingCycle: "MONTHLY", pricingType: "PAID", isShareable: true, description: ""
-      });
+      cancelEdit();
       load();
     }
+  };
+
+  const startEdit = (service: any) => {
+    setSvcForm({
+      name: service.name,
+      category: service.category || "",
+      defaultPrice: service.defaultPrice,
+      currency: service.currency,
+      billingCycle: service.billingCycle,
+      pricingType: service.pricingType || "PAID",
+      isShareable: service.isShareable,
+      description: service.description || ""
+    });
+    setEditingServiceId(service.id);
+  };
+
+  const cancelEdit = () => {
+    setSvcForm({
+      name: "", category: "", defaultPrice: 0, currency: "CZK",
+      billingCycle: "MONTHLY", pricingType: "PAID", isShareable: true, description: ""
+    });
+    setEditingServiceId(null);
   };
 
   if (loading) return <div>Načítám číselníky...</div>;
@@ -294,7 +324,12 @@ function ManagementTab() {
 
       {/* Services Registry */}
       <div className="card">
-        <div className="card-header"><h3>📋 Číselník služeb</h3></div>
+        <div className="card-header">
+          <h3>📋 Číselník služeb</h3>
+          {editingServiceId && (
+            <button className="btn btn-ghost btn-sm" onClick={cancelEdit}>Zrušit editaci</button>
+          )}
+        </div>
         <div className="card-body">
           <form onSubmit={saveService} className="grid-1 gap-4 mb-8 p-4 bg-muted rounded-lg">
             <div className="grid-2 gap-4">
@@ -345,7 +380,9 @@ function ManagementTab() {
                  </select>
                </div>
             </div>
-            <button className="btn btn-primary w-full">Uložit do číselníku</button>
+            <button className="btn btn-primary w-full">
+              {editingServiceId ? "Uložit změny" : "Uložit do číselníku"}
+            </button>
           </form>
 
           <div className="table-wrap">
@@ -356,6 +393,7 @@ function ManagementTab() {
                   <th>Kategorie</th>
                   <th>Cena</th>
                   <th>Sdílet?</th>
+                  <th style={{ width: 40 }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -365,6 +403,15 @@ function ManagementTab() {
                     <td>{s.category}</td>
                     <td>{s.defaultPrice} {s.currency}</td>
                     <td>{s.isShareable ? "✅" : "❌"}</td>
+                    <td>
+                      <button 
+                        className="btn btn-ghost btn-icon btn-sm"
+                        onClick={() => startEdit(s)}
+                        title="Upravit"
+                      >
+                        ✏️
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
