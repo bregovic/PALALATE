@@ -131,41 +131,111 @@ export default function CostsPage() {
         {/* Main Chart */}
         <div className="card">
           <div className="card-header">
-            <h3>📈 Vývoj nákladů ({view === "monthly" ? "posledních 12 měsíců" : "historie po letech"})</h3>
+            <h3>📈 {view === "monthly" ? "Vývoj nákladů (posledních 12 měsíců)" : "Historie nákladů po letech"}</h3>
           </div>
           <div className="card-body">
-            <div className="flex items-end gap-2" style={{ height: 260, paddingTop: 20 }}>
-              {chartEntries.map(([key, rawVal]) => {
-                const val = typeof rawVal === 'number' ? rawVal : rawVal.total;
-                const height = (val / maxVal) * 100;
-                
-                let label = key;
-                if (view === "monthly") {
-                   try {
-                     label = new Date(key + "-01").toLocaleDateString("cs-CZ", { month: "short" });
-                   } catch { label = key; }
-                }
+            <div className="relative" style={{ height: 260 }}>
+              {/* SVG Line Chart */}
+              <svg width="100%" height="200" viewBox="0 0 1000 200" preserveAspectRatio="none" className="overflow-visible">
+                <defs>
+                  <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--brand-500)" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="var(--brand-500)" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
 
-                const isCurrent = view === "monthly" ? key === currentKey : key === now.getFullYear().toString();
+                {/* Grid Lines */}
+                {[0, 0.25, 0.5, 0.75, 1].map(p => (
+                  <line 
+                    key={p} 
+                    x1="0" y1={200 - p * 190} x2="1000" y2={200 - p * 190} 
+                    stroke="var(--border-subtle)" strokeWidth="1" strokeDasharray="4 4" 
+                  />
+                ))}
 
-                return (
-                  <div key={key} className="flex-1 flex flex-col items-center group relative">
-                    {/* Tooltip */}
-                    <div className="absolute -top-8 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
-                      {val.toLocaleString()} Kč
-                    </div>
-                    <div 
-                      className={`w-full rounded-t-md transition-all relative ${isCurrent ? "bg-accent-500 group-hover:bg-accent-400" : "bg-brand-500 group-hover:bg-brand-400"}`}
-                      style={{ height: `${height}%`, minHeight: 4 }}
-                    >
-                      <div className="absolute inset-x-0 top-0 h-1/2 bg-white/10 rounded-t-md"></div>
-                    </div>
-                    <div className={`text-[10px] mt-2 font-bold uppercase ${isCurrent ? "text-accent-600" : "text-muted"}`}>
+                {/* Area Fill */}
+                <path
+                  d={`
+                    M 0 200
+                    ${chartEntries.map((e, i) => {
+                      const val = typeof e[1] === 'number' ? e[1] : e[1].total;
+                      const x = (i / (chartEntries.length - 1)) * 1000;
+                      const y = 200 - (val / maxVal) * 190;
+                      return `L ${x} ${y}`;
+                    }).join(" ")}
+                    L 1000 200
+                    Z
+                  `}
+                  fill="url(#chartGradient)"
+                />
+
+                {/* Line */}
+                <path
+                  d={`
+                    M ${ (0 / (chartEntries.length - 1)) * 1000 } ${ 200 - ((typeof chartEntries[0][1] === 'number' ? chartEntries[0][1] : chartEntries[0][1].total) / maxVal) * 190 }
+                    ${chartEntries.map((e, i) => {
+                      if (i === 0) return "";
+                      const val = typeof e[1] === 'number' ? e[1] : e[1].total;
+                      const x = (i / (chartEntries.length - 1)) * 1000;
+                      const y = 200 - (val / maxVal) * 190;
+                      return `L ${x} ${y}`;
+                    }).join(" ")}
+                  `}
+                  fill="none"
+                  stroke="var(--brand-500)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {/* Data Points */}
+                {chartEntries.map((e, i) => {
+                  const val = typeof e[1] === 'number' ? e[1] : e[1].total;
+                  const x = (i / (chartEntries.length - 1)) * 1000;
+                  const y = 200 - (val / maxVal) * 190;
+                  const key = e[0];
+                  const isCurrent = view === "monthly" ? key === currentKey : key === now.getFullYear().toString();
+
+                  return (
+                    <g key={key} className="group cursor-pointer">
+                      <circle 
+                        cx={x} cy={y} r="5" 
+                        fill={isCurrent ? "var(--accent-500)" : "white"} 
+                        stroke={isCurrent ? "var(--accent-600)" : "var(--brand-500)"} 
+                        strokeWidth="2"
+                        className="transition-all group-hover:r-[7px]"
+                      />
+                      {/* Tooltip Area (invisible but captures hover) */}
+                      <rect x={x - 20} y="0" width="40" height="200" fill="transparent" />
+                      
+                      {/* Tooltip Content */}
+                      <foreignObject x={x - 60} y={y - 50} width="120" height="40" className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="bg-slate-800 text-white text-[10px] py-1 px-2 rounded shadow-lg text-center font-bold">
+                          {val.toLocaleString()} Kč
+                        </div>
+                      </foreignObject>
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {/* X-Axis Labels */}
+              <div className="absolute bottom-0 inset-x-0 flex justify-between px-2">
+                {chartEntries.map(([key]) => {
+                  let label = key;
+                  if (view === "monthly") {
+                    try {
+                      label = new Date(key + "-01").toLocaleDateString("cs-CZ", { month: "short" });
+                    } catch { label = key; }
+                  }
+                  const isCurrent = view === "monthly" ? key === currentKey : key === now.getFullYear().toString();
+                  return (
+                    <div key={key} className={`text-[10px] font-bold uppercase ${isCurrent ? "text-accent-600" : "text-muted"}`}>
                       {label}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
