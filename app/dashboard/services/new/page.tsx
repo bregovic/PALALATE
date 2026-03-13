@@ -340,6 +340,7 @@ export default function NewServicePage() {
                   <option value="QUARTERLY">Čtvrtletně</option>
                   <option value="SEMI_ANNUALLY">Půlročně</option>
                   <option value="YEARLY">Ročně</option>
+                  <option value="ONEOFF">Jednorázově</option>
                   <option value="CUSTOM">Vlastní</option>
                 </select>
               </div>

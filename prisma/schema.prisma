@@ -223,6 +223,7 @@ enum BillingCycle {
   QUARTERLY
   SEMI_ANNUALLY
   YEARLY
+  ONEOFF
   CUSTOM
 }
 

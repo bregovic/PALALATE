@@ -74,6 +74,7 @@ export default async function DashboardPage() {
     MONTHLY: "měsíčně",
     QUARTERLY: "čtvrtletně",
     YEARLY: "ročně",
+    ONEOFF: "jednorázově",
     CUSTOM: "",
   };
 

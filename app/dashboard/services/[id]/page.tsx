@@ -792,6 +792,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                     <option value="SEMI_ANNUALLY">Půlročně</option>
                     <option value="YEARLY">Ročně</option>
                     <option value="WEEKLY">Týdně</option>
+                    <option value="ONEOFF">Jednorázově</option>
                   </select>
                 </div>
                 <div className="form-group" style={{ gridColumn: "1 / -1" }}>

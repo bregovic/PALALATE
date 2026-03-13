@@ -45,6 +45,7 @@ const billingLabels: Record<string, string> = {
   QUARTERLY: "čtvrtletně",
   SEMI_ANNUALLY: "půlročně",
   YEARLY: "ročně",
+  ONEOFF: "jednorázově",
   CUSTOM: "",
 };
 

@@ -131,7 +131,12 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
       const res = await fetch("/api/services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...customService, periodicPrice: customService.defaultPrice }),
+        body: JSON.stringify({ 
+          ...customService, 
+          serviceName: customService.name,
+          providerName: customService.name,
+          periodicPrice: customService.defaultPrice 
+        }),
       });
 
       if (res.ok) {
@@ -349,7 +354,10 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                       <select className="form-select" value={customService.billingCycle} onChange={e => setCustomService({...customService, billingCycle: e.target.value})}>
                         <option value="MONTHLY">Měsíčně</option>
                         <option value="YEARLY">Ročně</option>
+                        <option value="SEMI_ANNUALLY">Půlročně</option>
+                        <option value="QUARTERLY">Čtvrtletně</option>
                         <option value="WEEKLY">Týdně</option>
+                        <option value="ONEOFF">Jednorázově</option>
                       </select>
                     </div>
                   </div>
