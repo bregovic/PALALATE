@@ -97,4 +97,29 @@ export const emailTemplates = {
       </div>
     `,
   }),
+
+  passwordReset: (resetUrl: string) => ({
+    subject: "🔑 Obnova hesla - Palalate",
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <img src="${APP_URL}/logo.png" alt="Palalate" style="height: 48px;" />
+        </div>
+        <h2 style="color: #a78bfa; text-align: center;">Zapomenuté heslo?</h2>
+        <p>Ahoj,</p>
+        <p>Dostali jsme žádost o obnovu hesla pro tvůj účet na Palalate. Pokud jsi to nebyl/a ty, můžeš tento email v klidu ignorovat.</p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${resetUrl}" style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+            Nastavit nové heslo
+          </a>
+        </div>
+        <p style="font-size: 13px; color: #9ca3af; margin-top: 32px;">
+          Pokud tlačítko nefunguje, zkopíruj tento odkaz do prohlížeče:<br />
+          <span style="word-break: break-all; color: #6d28d9;">${resetUrl}</span>
+        </p>
+        <hr style="border: 0; border-top: 1px solid #1f2937; margin: 32px 0;" />
+        <p style="color: #6b7280; font-size: 12px; text-align: center;">Palalate – Tvá aplikace pro férové sdílení</p>
+      </div>
+    `,
+  }),
 };

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import { sendEmail, emailTemplates } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,10 +31,19 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // In a real app, send email here. 
-    // For now, we simulate and log it.
-    console.log(`[PASSWORD RESET] Token for ${email}: ${token}`);
-    console.log(`[PASSWORD RESET] URL: ${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`);
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+    
+    // Send ACTUAL email
+    const template = emailTemplates.passwordReset(resetUrl);
+    await sendEmail({
+      to: email,
+      subject: template.subject,
+      html: template.html,
+    });
+
+    // Still log it for dev purposes
+    console.log(`[PASSWORD RESET] Email sent to ${email}`);
+    console.log(`[PASSWORD RESET] URL: ${resetUrl}`);
 
     return NextResponse.json({ message: "Pokud email existuje, instrukce byly odeslány." });
   } catch (err) {
