@@ -16,7 +16,7 @@ export default function SettingsPage() {
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [tab, setTab] = useState<"profile" | "security" | "privacy" | "management">("profile");
+  const [tab, setTab] = useState<"profile" | "security" | "privacy" | "services" | "categories">("profile");
   const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   useEffect(() => {
@@ -63,8 +63,11 @@ export default function SettingsPage() {
         <button className={`tab ${tab === "privacy" ? "active" : ""}`} onClick={() => setTab("privacy")}>
           🛡️ Soukromí
         </button>
-        <button className={`tab ${tab === "management" ? "active" : ""}`} onClick={() => setTab("management")}>
-          ⚙️ Správa
+        <button className={`tab ${tab === "services" ? "active" : ""}`} onClick={() => setTab("services")}>
+          📋 Číselník služeb
+        </button>
+        <button className={`tab ${tab === "categories" ? "active" : ""}`} onClick={() => setTab("categories")}>
+          📁 Kategorie
         </button>
       </div>
 
@@ -200,7 +203,8 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {tab === "management" && <ManagementTab />}
+      {tab === "services" && <ServicesTab />}
+      {tab === "categories" && <CategoriesTab />}
     </div>
   );
 }
@@ -263,15 +267,70 @@ function PasswordChangeForm({ onCancel }: { onCancel: () => void }) {
   );
 }
 
-function ManagementTab() {
+function CategoriesTab() {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [catName, setCatName] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    const res = await fetch("/api/categories");
+    setCategories(await res.json());
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const saveCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!catName) return;
+    const res = await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: catName }),
+    });
+    if (res.ok) {
+      setCatName("");
+      load();
+    }
+  };
+
+  if (loading) return <div className="p-8">Načítám kategorie...</div>;
+
+  return (
+    <div className="card animate-fade-in" style={{ maxWidth: 600 }}>
+      <div className="card-header"><h3>📁 Správa kategorií</h3></div>
+      <div className="card-body">
+        <form onSubmit={saveCategory} className="flex gap-2 mb-8">
+          <input 
+            className="form-input" 
+            placeholder="Název nové kategorie..." 
+            value={catName}
+            onChange={e => setCatName(e.target.value)}
+          />
+          <button className="btn btn-primary">Přidat kategorii</button>
+        </form>
+        
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {categories.map(c => (
+            <div key={c.id} className="p-4 rounded-lg border border-subtle bg-elevated flex justify-between items-center group">
+              <span className="font-medium">{c.name}</span>
+              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                 <button className="btn btn-ghost btn-icon btn-sm" title="Smazat (zatím neaktivní)" disabled>🗑️</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ServicesTab() {
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Category Form
-  const [catName, setCatName] = useState("");
-  
-  // Service Form
   const [svcForm, setSvcForm] = useState({
     name: "",
     category: "",
@@ -300,32 +359,12 @@ function ManagementTab() {
 
   useEffect(() => { load(); }, []);
 
-  const saveCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!catName) return;
-    const res = await fetch("/api/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: catName }),
-    });
-    if (res.ok) {
-      setCatName("");
-      load();
-    }
-  };
-
   const saveService = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!svcForm.name) return;
     
     const method = editingServiceId ? "PATCH" : "POST";
     const url = editingServiceId ? `/api/service-registry/${editingServiceId}` : "/api/service-registry";
-    
-    // We need to handle PATCH in a new API route or update the existing one
-    // For now, let's assume we use the POST route with an ID if possible, 
-    // but better practice is a separate route. 
-    // Wait, the existing /api/service-registry route handles only POST.
-    // I should check if I need to create /api/service-registry/[id]/route.ts
     
     const res = await fetch(url, {
       method,
@@ -342,7 +381,7 @@ function ManagementTab() {
     setSvcForm({
       name: service.name,
       category: service.category || "",
-      defaultPrice: service.defaultPrice,
+      defaultPrice: Number(service.defaultPrice),
       currency: service.currency,
       billingCycle: service.billingCycle,
       pricingType: service.pricingType || "PAID",
@@ -350,6 +389,7 @@ function ManagementTab() {
       description: service.description || ""
     });
     setEditingServiceId(service.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const cancelEdit = () => {
@@ -360,58 +400,37 @@ function ManagementTab() {
     setEditingServiceId(null);
   };
 
-  if (loading) return <div>Načítám číselníky...</div>;
+  if (loading) return <div className="p-8">Načítám číselník...</div>;
 
   return (
-    <div className="grid-2" style={{ gridTemplateColumns: "1fr 1.5fr", gap: 24, alignItems: "start" }}>
-      {/* Categories */}
-      <div className="card">
-        <div className="card-header"><h3>📁 Kategorie</h3></div>
-        <div className="card-body">
-          <form onSubmit={saveCategory} className="flex gap-2 mb-4">
-            <input 
-              className="form-input" 
-              placeholder="Nová kategorie..." 
-              value={catName}
-              onChange={e => setCatName(e.target.value)}
-            />
-            <button className="btn btn-secondary">Přidat</button>
-          </form>
-          <div className="flex flex-wrap gap-2">
-            {categories.map(c => (
-              <span key={c.id} className="badge badge-blue">{c.name}</span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Services Registry */}
+    <div className="flex flex-col gap-8 animate-fade-in">
       <div className="card">
         <div className="card-header">
-          <h3>📋 Číselník služeb</h3>
+          <h3>{editingServiceId ? "✏️ Upravit službu" : "➕ Přidat do číselníku"}</h3>
           {editingServiceId && (
             <button className="btn btn-ghost btn-sm" onClick={cancelEdit}>Zrušit editaci</button>
           )}
         </div>
         <div className="card-body">
-          <form onSubmit={saveService} className="grid-1 gap-4 mb-8 p-4 bg-muted rounded-lg">
+          <form onSubmit={saveService} className="grid-1 gap-6">
             <div className="grid-2 gap-4">
               <div className="form-group">
-                <label className="form-label">Název</label>
-                <input className="form-input" value={svcForm.name} onChange={e => setSvcForm({...svcForm, name: e.target.value})} />
+                <label className="form-label">Název služby</label>
+                <input className="form-input" value={svcForm.name} onChange={e => setSvcForm({...svcForm, name: e.target.value})} placeholder="Např. Netflix" />
               </div>
               <div className="form-group">
                 <label className="form-label">Kategorie</label>
                 <select className="form-select" value={svcForm.category} onChange={e => setSvcForm({...svcForm, category: e.target.value})}>
-                  <option value="">-- Vyber --</option>
+                  <option value="">-- Vyber kategorii --</option>
                   {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
             </div>
+            
             <div className="grid-3 gap-4">
               <div className="form-group">
                 <label className="form-label">Výchozí cena</label>
-                <input type="number" className="form-input" value={svcForm.defaultPrice} onChange={e => setSvcForm({...svcForm, defaultPrice: parseFloat(e.target.value)})} />
+                <input type="number" step="0.01" className="form-input" value={svcForm.defaultPrice} onChange={e => setSvcForm({...svcForm, defaultPrice: parseFloat(e.target.value)})} />
               </div>
               <div className="form-group">
                 <label className="form-label">Měna</label>
@@ -422,66 +441,91 @@ function ManagementTab() {
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Frekvence</label>
+                <label className="form-label">Frekvence platby</label>
                 <select className="form-select" value={svcForm.billingCycle} onChange={e => setSvcForm({...svcForm, billingCycle: e.target.value})}>
                   <option value="MONTHLY">Měsíčně</option>
                   <option value="YEARLY">Ročně</option>
+                  <option value="QUARTERLY">Čtvrtletně</option>
+                  <option value="WEEKLY">Týdně</option>
                 </select>
               </div>
             </div>
-            <div className="flex gap-6 items-center">
-               <label className="flex items-center gap-2 cursor-pointer">
-                 <input type="checkbox" checked={svcForm.isShareable} onChange={e => setSvcForm({...svcForm, isShareable: e.target.checked})} />
-                 <span className="text-sm">Lze sdílet?</span>
-               </label>
-               <div className="flex gap-2">
-                 <label className="text-sm">Typ:</label>
-                 <select className="form-select btn-sm" value={svcForm.pricingType} onChange={e => setSvcForm({...svcForm, pricingType: e.target.value})}>
-                   <option value="PAID">Placené</option>
-                   <option value="AFFILIATE">Affiliate</option>
-                   <option value="INCLUDED">V ceně</option>
+
+            <div className="grid-2 gap-4 items-center">
+               <div className="flex gap-4">
+                 <label className="flex items-center gap-2 cursor-pointer">
+                   <input type="checkbox" checked={svcForm.isShareable} onChange={e => setSvcForm({...svcForm, isShareable: e.target.checked})} />
+                   <span className="text-sm">Lze sdílet ve skupině</span>
+                 </label>
+               </div>
+               <div className="form-group">
+                 <label className="form-label">Výchozí typ platby</label>
+                 <select className="form-select" value={svcForm.pricingType} onChange={e => setSvcForm({...svcForm, pricingType: e.target.value})}>
+                    <option value="PAID">Placené</option>
+                    <option value="AFFILIATE">Affiliate / Deal</option>
+                    <option value="INCLUDED">V balíčku</option>
+                    <option value="FREE">Zdarma</option>
                  </select>
                </div>
             </div>
-            <button className="btn btn-primary w-full">
-              {editingServiceId ? "Uložit změny" : "Uložit do číselníku"}
+
+            <div className="form-group">
+              <label className="form-label">Popis (interní)</label>
+              <textarea 
+                className="form-input" 
+                style={{ minHeight: 60 }} 
+                value={svcForm.description} 
+                onChange={e => setSvcForm({...svcForm, description: e.target.value})}
+                placeholder="Krátký popis pro číselník..."
+              />
+            </div>
+
+            <button className="btn btn-primary w-full btn-lg">
+              {editingServiceId ? "Aktualizovat službu v číselníku ✓" : "Přidat službu do systému →"}
             </button>
           </form>
+        </div>
+      </div>
 
-          <div className="table-wrap">
-            <table className="text-xs">
-              <thead>
-                <tr>
-                  <th>Název</th>
-                  <th>Kategorie</th>
-                  <th>Cena</th>
-                  <th>Sdílet?</th>
-                  <th style={{ width: 40 }}></th>
+      <div className="card">
+        <div className="card-header"><h3>📋 Seznam služeb v systému</h3></div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Název</th>
+                <th>Kategorie</th>
+                <th>Výchozí cena</th>
+                <th>Sdílení</th>
+                <th style={{ width: 50 }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {services.map(s => (
+                <tr key={s.id}>
+                  <td className="font-bold">{s.name}</td>
+                  <td>{s.category || <span className="text-muted italic">není</span>}</td>
+                  <td>{Number(s.defaultPrice).toFixed(2)} {s.currency} / {s.billingCycle}</td>
+                  <td>{s.isShareable ? <span className="badge badge-green">Povoleno</span> : <span className="badge badge-gray">Zakázáno</span>}</td>
+                  <td>
+                    <button 
+                      className="btn btn-ghost btn-icon btn-sm"
+                      onClick={() => startEdit(s)}
+                      title="Upravit"
+                    >
+                      ✏️
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {services.map(s => (
-                  <tr key={s.id}>
-                    <td className="font-bold">{s.name}</td>
-                    <td>{s.category}</td>
-                    <td>{s.defaultPrice} {s.currency}</td>
-                    <td>{s.isShareable ? "✅" : "❌"}</td>
-                    <td>
-                      <button 
-                        className="btn btn-ghost btn-icon btn-sm"
-                        onClick={() => startEdit(s)}
-                        title="Upravit"
-                      >
-                        ✏️
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   );
+}
+
+function ManagementTab() {
+  return null; // Deprecated
 }

@@ -47,6 +47,7 @@ export default function NewServicePage() {
     websiteUrl: "",
     internalNote: "",
     sharingConditions: "",
+    startDate: "",
   });
 
   function fill(data: Partial<typeof form>) {
@@ -247,6 +248,16 @@ export default function NewServicePage() {
                   className="form-input"
                   value={form.renewalDate}
                   onChange={(e) => fill({ renewalDate: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Datum začátku předplatného</label>
+                <input
+                  id="start-date"
+                  type="date"
+                  className="form-input"
+                  value={form.startDate}
+                  onChange={(e) => fill({ startDate: e.target.value })}
                 />
               </div>
               <div className="form-group">

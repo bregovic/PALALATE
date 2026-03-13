@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       periodicPrice, currency, billingCycle, renewalDate,
       sharingStatus, sharingVisibility, maxSharedSlots,
       legalNote, tags, iconUrl, websiteUrl,
-      licenseType, sharingConditions, internalNote,
+      licenseType, sharingConditions, internalNote, startDate
     } = body;
 
     if (!serviceName || !providerName || periodicPrice == null) {
@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
         pricingType: body.pricingType || "PAID",
         pricingDetails: body.pricingDetails || null,
         renewalDate: renewalDate ? new Date(renewalDate) : null,
+        startDate: startDate ? new Date(startDate) : null,
         sharingStatus: sharingStatus || "SHARING_DISABLED",
         sharingVisibility: sharingVisibility || "FRIENDS_ONLY",
         maxSharedSlots: isNaN(slots) ? 0 : slots,

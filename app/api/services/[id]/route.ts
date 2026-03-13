@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const {
       serviceName, providerName, periodicPrice, currency,
-      billingCycle, pricingType, pricingDetails, renewalDate,
+      billingCycle, pricingType, pricingDetails, renewalDate, startDate,
       description, category, maxSharedSlots
     } = body;
 
@@ -76,6 +76,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         pricingType,
         pricingDetails,
         renewalDate: renewalDate ? new Date(renewalDate) : null,
+        startDate: startDate ? new Date(startDate) : null,
         description,
         category,
         maxSharedSlots: maxSharedSlots != null ? parseInt(maxSharedSlots) : undefined,

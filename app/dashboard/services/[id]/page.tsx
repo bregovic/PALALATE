@@ -24,6 +24,8 @@ interface Service {
   isOwner: boolean;
   pricingType: "PAID" | "AFFILIATE" | "INCLUDED" | "FREE";
   pricingDetails: string | null;
+  renewalDate: string | null;
+  startDate: string | null;
   _count: { accessGrants: number };
 }
 
@@ -60,6 +62,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     renewalDate: "",
     pricingType: "PAID" as "PAID" | "AFFILIATE" | "INCLUDED" | "FREE",
     pricingDetails: "",
+    startDate: "",
   });
   const [priceInput, setPriceInput] = useState("");
   const [slotsInput, setSlotsInput] = useState("");
@@ -91,6 +94,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         renewalDate: data.renewalDate ? data.renewalDate.split("T")[0] : "",
         pricingType: data.pricingType,
         pricingDetails: data.pricingDetails || "",
+        startDate: data.startDate ? data.startDate.split("T")[0] : "",
       });
       setPriceInput(data.periodicPrice.toString());
       setSlotsInput(data.maxSharedSlots.toString());
@@ -243,6 +247,18 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                     ) : (
                       <span className="badge badge-gray">Soukromé</span>
                     )}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-muted text-xs block mb-1">AKTIVNÍ OD</label>
+                  <div className="font-medium">
+                    {service.startDate ? new Date(service.startDate).toLocaleDateString() : <span className="text-muted italic">neuvedeno</span>}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-muted text-xs block mb-1">DALŠÍ OBNOVA</label>
+                  <div className="font-medium">
+                    {service.renewalDate ? new Date(service.renewalDate).toLocaleDateString() : <span className="text-muted italic">neuvedeno</span>}
                   </div>
                 </div>
               </div>
@@ -518,6 +534,15 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                     className="form-input"
                     value={editForm.renewalDate}
                     onChange={e => setEditForm({...editForm, renewalDate: e.target.value})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Datum začátku</label>
+                  <input 
+                    type="date"
+                    className="form-input"
+                    value={editForm.startDate}
+                    onChange={e => setEditForm({...editForm, startDate: e.target.value})}
                   />
                 </div>
                 <div className="form-group">

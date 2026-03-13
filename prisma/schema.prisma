@@ -142,6 +142,7 @@ model Service {
   pricingType      PricingType     @default(PAID)
   pricingDetails   String?         // e.g. "V ceně Revolut Ultra"
   renewalDate      DateTime?
+  startDate        DateTime?
   status           ServiceStatus   @default(ACTIVE)
   sharingStatus    SharingStatus   @default(SHARING_DISABLED)
   sharingVisibility SharingVisibility @default(FRIENDS_ONLY)
