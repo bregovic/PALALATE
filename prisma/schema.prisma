@@ -167,8 +167,8 @@ model Service {
   accessRequests   AccessRequest[]
   accessGrants     AccessGrant[]
   settlementPeriods SettlementPeriod[]
-  auditLogs        AuditLog[]
   bookings         Booking[]
+  auditLogs        AuditLog[]
 
   @@map("services")
 }
@@ -241,7 +241,6 @@ model CredentialSecret {
   rotatedAt        DateTime?
 
   service          Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  auditLogs        AuditLog[]
 
   @@map("credential_secrets")
 }
@@ -492,8 +491,6 @@ model AuditLog {
   createdAt    DateTime  @default(now())
 
   actor        User?     @relation(fields: [actorId], references: [id])
-  service      Service?  @relation(fields: [entityId], references: [id], map: "audit_service_fk")
-  credential   CredentialSecret? @relation(fields: [entityId], references: [id], map: "audit_credential_fk")
 
   @@map("audit_logs")
 }
