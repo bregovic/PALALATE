@@ -4,51 +4,37 @@ import { requireAuth } from "@/lib/auth";
 import { encryptCredential } from "@/lib/crypto";
 
 // POST /api/services/[id]/credentials
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth();
     const { id: serviceId } = await params;
     const body = await req.json();
 
-    const { secretType, label, value, visibilityRule, note } = body;
-
-    if (!secretType || !value) {
-      return NextResponse.json({ error: "Typ a hodnota jsou povinné" }, { status: 400 });
-    }
+    const { secretType, label, payload, visibilityRule, note } = body;
 
     const service = await prisma.service.findUnique({ where: { id: serviceId } });
     if (!service) return NextResponse.json({ error: "Služba nenalezena" }, { status: 404 });
     if (service.ownerId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    // Encrypt the value
-    const { encryptedPayload, iv } = encryptCredential({ value });
+    if (!secretType || !payload) {
+        return NextResponse.json({ error: "Typ a data jsou povinná" }, { status: 400 });
+    }
 
-    const credential = await prisma.credentialSecret.create({
+    const encrypted = encryptCredential(payload);
+
+    const secret = await prisma.credentialSecret.create({
       data: {
         serviceId,
         secretType,
-        label: label || null,
-        encryptedPayload,
-        iv,
+        label,
+        encryptedPayload: encrypted.encryptedPayload,
+        iv: encrypted.iv,
         visibilityRule: visibilityRule || "OWNER_ONLY",
-        note: note || null,
+        note,
       },
     });
 
-    await prisma.auditLog.create({
-      data: {
-        actorId: user.id,
-        entityType: "CredentialSecret",
-        entityId: credential.id,
-        action: "CREATE",
-        metadata: { serviceId, label },
-      },
-    });
-
-    return NextResponse.json(credential, { status: 201 });
+    return NextResponse.json(secret);
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -57,6 +43,3 @@ export async function POST(
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-
-// GET /api/services/[id]/credentials/decrypt?cid=...
-// Dedicated route for decryption with audit logging

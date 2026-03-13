@@ -160,6 +160,7 @@ model Service {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   archivedAt       DateTime?
+  isTerminated     Boolean @default(false)
 
   owner            User            @relation("ServiceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   credentials      CredentialSecret[]

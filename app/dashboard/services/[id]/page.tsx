@@ -28,6 +28,7 @@ interface Service {
   startDate: string | null;
   allowConcurrentUse: boolean;
   requiresBookingApproval: boolean;
+  isTerminated: boolean;
   _count: { accessGrants: number };
 }
 
@@ -38,9 +39,17 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Credentials handling
-  const [revealed, setRevealed] = useState<Record<string, string>>({});
+  const [revealed, setRevealed] = useState<Record<string, any>>({});
   const [revealing, setRevealing] = useState<Record<string, boolean>>({});
+  const [showAddCredentialModal, setShowAddCredentialModal] = useState(false);
+  const [credForm, setCredForm] = useState({
+    type: "EMAIL_PASSWORD",
+    label: "",
+    login: "",
+    password: "",
+    visibility: "OWNER_ONLY" as "OWNER_ONLY" | "GRANTED_USERS",
+  });
+  const [savingCred, setSavingCred] = useState(false);
   
   // Settlement modal
   const [showSettlementModal, setShowSettlementModal] = useState(false);
@@ -77,6 +86,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     startDate: "",
     allowConcurrentUse: true,
     requiresBookingApproval: false,
+    isTerminated: false,
   });
   const [priceInput, setPriceInput] = useState("");
   const [slotsInput, setSlotsInput] = useState("");
@@ -111,6 +121,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         startDate: data.startDate ? data.startDate.split("T")[0] : "",
         allowConcurrentUse: data.allowConcurrentUse ?? true,
         requiresBookingApproval: data.requiresBookingApproval ?? false,
+        isTerminated: data.isTerminated ?? false,
       });
       setPriceInput(data.periodicPrice.toString());
       setSlotsInput(data.maxSharedSlots.toString());
@@ -133,23 +144,48 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     }
   }
 
+  async function handleAddCredential() {
+    setSavingCred(true);
+    try {
+      const res = await fetch(`/api/services/${id}/credentials`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          secretType: credForm.type,
+          label: credForm.label,
+          visibilityRule: credForm.visibility,
+          payload: { 
+            login: credForm.login, 
+            password: credForm.password,
+            value: credForm.password // fallback for existing reveal logic
+          }
+        }),
+      });
+      if (res.ok) {
+        setShowAddCredentialModal(false);
+        setCredForm({ type: "EMAIL_PASSWORD", label: "", login: "", password: "", visibility: "OWNER_ONLY" });
+        load();
+      }
+    } finally {
+      setSavingCred(false);
+    }
+  }
+
   async function handleUpdateService() {
     setSavingEdit(true);
     try {
       const price = parseFloat(priceInput.replace(",", "."));
       const slots = parseInt(slotsInput);
 
-      const cleanForm = {
-        ...editForm,
-        periodicPrice: isNaN(price) ? 0 : price,
-        maxSharedSlots: isNaN(slots) ? 0 : slots,
-        renewalDate: editForm.renewalDate || null,
-      };
-
       const res = await fetch(`/api/services/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cleanForm),
+        body: JSON.stringify({
+          ...editForm,
+          periodicPrice: isNaN(price) ? 0 : price,
+          maxSharedSlots: isNaN(slots) ? 0 : slots,
+          renewalDate: editForm.renewalDate || null,
+        }),
       });
       if (res.ok) {
         setShowEditModal(false);
@@ -193,8 +229,11 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     try {
       const res = await fetch(`/api/services/${id}/credentials/decrypt?cid=${cid}`);
       const data = await res.json();
-      if (data.value) {
-        setRevealed(prev => ({ ...prev, [cid]: data.value }));
+      if (data.value || data.login || data.password) {
+        setRevealed(prev => ({ ...prev, [cid]: data }));
+      } else if (data.value === undefined && typeof data === 'object') {
+          // If the API returned the object directly or in a way we expected
+          setRevealed(prev => ({ ...prev, [cid]: data }));
       }
     } finally {
       setRevealing(prev => ({ ...prev, [cid]: false }));
@@ -249,7 +288,12 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
             {service.serviceName.slice(0, 2).toUpperCase()}
           </div>
           <div>
-            <h1 className="page-title">{service.serviceName}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="page-title">{service.serviceName}</h1>
+              {service.isTerminated && (
+                <span className="badge badge-error animate-pulse">UKONČENO</span>
+              )}
+            </div>
             <p className="page-subtitle">{service.providerName} • {service.category || "Bez kategorie"}</p>
           </div>
         </div>
@@ -360,15 +404,15 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 </div>
                 <div>
-                  <label className="text-muted text-xs block mb-1">AKTIVNÍ OD</label>
-                  <div className="font-medium">
-                    {service.startDate ? new Date(service.startDate).toLocaleDateString() : <span className="text-muted italic">neuvedeno</span>}
+                  <label className="text-muted text-xs block mb-1">DALŠÍ OBNOVA</label>
+                  <div className="font-medium text-primary">
+                    {service.renewalDate ? new Date(service.renewalDate).toLocaleDateString() : <span className="text-muted italic">neuvedeno</span>}
                   </div>
                 </div>
                 <div>
-                  <label className="text-muted text-xs block mb-1">DALŠÍ OBNOVA</label>
+                  <label className="text-muted text-xs block mb-1">AKTIVNÍ OD</label>
                   <div className="font-medium">
-                    {service.renewalDate ? new Date(service.renewalDate).toLocaleDateString() : <span className="text-muted italic">neuvedeno</span>}
+                    {service.startDate ? new Date(service.startDate).toLocaleDateString() : <span className="text-muted italic">neuvedeno</span>}
                   </div>
                 </div>
                 <div>
@@ -395,7 +439,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
             <div className="card-header">
               <h3>🔐 Přihlašovací údaje</h3>
               {service.isOwner && (
-                <button className="btn btn-ghost btn-sm">＋ Přidat</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowAddCredentialModal(true)}>＋ Přidat</button>
               )}
             </div>
             <div className="card-body">
@@ -409,7 +453,11 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                         <div className="text-xs text-muted uppercase tracking-wider font-bold mb-1">{c.label || c.secretType}</div>
                         <div className="font-mono text-sm">
                           {revealed[c.id] ? (
-                            <span className="text-primary">{revealed[c.id]}</span>
+                            <div className="flex flex-col gap-1">
+                               {revealed[c.id].login && <div><span className="text-muted text-[10px] uppercase">Login:</span> {revealed[c.id].login}</div>}
+                               {revealed[c.id].password && <div><span className="text-muted text-[10px] uppercase">Pass:</span> {revealed[c.id].password}</div>}
+                               {!revealed[c.id].login && !revealed[c.id].password && <span>{revealed[c.id].value}</span>}
+                            </div>
                           ) : (
                             <span className="text-muted">••••••••••••••</span>
                           )}
@@ -433,9 +481,27 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
           <div className="card">
             <div className="card-header">
               <h3>👥 Kdo má přístup</h3>
-              <span className="badge badge-purple">{service._count.accessGrants} / {service.maxSharedSlots || "∞"}</span>
+              <div className="badge badge-primary text-xs">
+                {service._count.accessGrants} / {service.maxSharedSlots || "∞"}
+              </div>
             </div>
             <div className="card-body">
+              <div className="flex gap-4 mb-4 overflow-x-auto pb-2">
+                 <div className="flex flex-col items-center p-3 bg-muted rounded-xl border border-subtle min-w-[80px]">
+                    <span className="text-[10px] font-bold uppercase text-muted">Celkem</span>
+                    <span className="text-lg font-bold">{service.maxSharedSlots || '∞'}</span>
+                 </div>
+                 <div className="flex flex-col items-center p-3 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 min-w-[80px]">
+                    <span className="text-[10px] font-bold uppercase">Obsazeno</span>
+                    <span className="text-lg font-bold">{service._count.accessGrants}</span>
+                 </div>
+                 <div className="flex flex-col items-center p-3 bg-green-50 text-green-700 rounded-xl border border-green-100 min-w-[80px]">
+                    <span className="text-[10px] font-bold uppercase">Volno</span>
+                    <span className="text-lg font-bold">
+                      {service.maxSharedSlots ? (service.maxSharedSlots - service._count.accessGrants) : '∞'}
+                    </span>
+                 </div>
+              </div>
               {service.accessGrants.length === 0 ? (
                 <p className="text-muted text-sm">Zatím nikdo. Sdílej radost!</p>
               ) : (
@@ -677,23 +743,34 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                      )}
                   </div>
                 </div>
+                <div className="form-group flex items-center gap-2" style={{ gridColumn: "1 / -1", padding: '8px 0' }}>
+                   <label className="flex items-center gap-2 cursor-pointer bg-red-50 text-red-700 px-3 py-2 rounded-lg border border-red-200">
+                     <input 
+                       type="checkbox" 
+                       checked={editForm.isTerminated} 
+                       onChange={e => setEditForm({...editForm, isTerminated: e.target.checked})} 
+                     />
+                     <span className="text-sm font-bold">Ukončené (aktivní jen do bodu obnovy)</span>
+                   </label>
+                </div>
+
                 <div className="form-group">
-                  <label className="form-label">Datum obnovy</label>
-                  <input 
-                    type="date"
-                    className="form-input"
-                    value={editForm.renewalDate}
-                    onChange={e => setEditForm({...editForm, renewalDate: e.target.value})}
-                  />
+                   <label className="form-label">Datum začátku</label>
+                   <input 
+                     type="date"
+                     className="form-input"
+                     value={editForm.startDate}
+                     onChange={e => setEditForm({...editForm, startDate: e.target.value})}
+                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Datum začátku</label>
-                  <input 
-                    type="date"
-                    className="form-input"
-                    value={editForm.startDate}
-                    onChange={e => setEditForm({...editForm, startDate: e.target.value})}
-                  />
+                   <label className="form-label">Datum obnovy</label>
+                   <input 
+                     type="date"
+                     className="form-input"
+                     value={editForm.renewalDate}
+                     onChange={e => setEditForm({...editForm, renewalDate: e.target.value})}
+                   />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Sdílené sloty (počet)</label>
@@ -827,6 +904,68 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
             <div className="modal-footer flex gap-3">
               <button className="btn btn-ghost w-full" onClick={() => setShowBookingModal(false)}>Zrušit</button>
               <button className="btn btn-primary w-full" onClick={handleCreateBooking}>Potvrdit rezervaci</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Add Credential Modal */}
+      {showAddCredentialModal && (
+        <div className="modal-overlay" onMouseDown={e => e.target === e.currentTarget && setShowAddCredentialModal(false)}>
+          <div className="modal" onMouseDown={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
+            <div className="modal-header">
+              <h3>🔐 Přidat přihlašovací údaje</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => setShowAddCredentialModal(false)}>✕</button>
+            </div>
+            <div className="modal-body flex flex-col gap-4">
+               <div className="form-group">
+                 <label className="form-label">Typ údajů</label>
+                 <select 
+                   className="form-select"
+                   value={credForm.type}
+                   onChange={e => setCredForm({...credForm, type: e.target.value})}
+                 >
+                   <option value="EMAIL_PASSWORD">Email + Heslo</option>
+                   <option value="INVITE_LINK">Pozvánka / Link</option>
+                   <option value="API_KEY">API Klíč</option>
+                   <option value="NOTE">Poznámka / Jiné</option>
+                 </select>
+               </div>
+               <div className="form-group">
+                 <label className="form-label">Popisek (např. Profil 1)</label>
+                 <input className="form-input" value={credForm.label} onChange={e => setCredForm({...credForm, label: e.target.value})} />
+               </div>
+               <div className="grid-2 gap-4">
+                  <div className="form-group">
+                    <label className="form-label">Login / Email</label>
+                    <input className="form-input" value={credForm.login} onChange={e => setCredForm({...credForm, login: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Heslo / Klíč</label>
+                    <input className="form-input" type="password" value={credForm.password} onChange={e => setCredForm({...credForm, password: e.target.value})} />
+                  </div>
+               </div>
+               <div className="form-group">
+                  <label className="form-label font-bold">Kdo to uvidí?</label>
+                  <select 
+                    className="form-select"
+                    value={credForm.visibility}
+                    onChange={e => setCredForm({...credForm, visibility: e.target.value as any})}
+                  >
+                    <option value="OWNER_ONLY">Jen já (vlastník)</option>
+                    <option value="GRANTED_USERS">Všichni se schváleným přístupem</option>
+                  </select>
+                  <p className="text-[10px] text-muted mt-1 italic">
+                    {credForm.visibility === 'GRANTED_USERS' 
+                      ? "⚠️ Všichni uživatelé, kterým schválíte přístup, uvidí tyto údaje."
+                      : "Heslo uvidíte pouze vy."}
+                  </p>
+               </div>
+            </div>
+            <div className="modal-footer flex gap-3">
+               <button className="btn btn-ghost w-full" onClick={() => setShowAddCredentialModal(false)}>Zrušit</button>
+               <button className="btn btn-primary w-full" disabled={savingCred} onClick={handleAddCredential}>
+                 {savingCred ? "Ukládám..." : "Uložit údaje"}
+               </button>
             </div>
           </div>
         </div>
