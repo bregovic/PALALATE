@@ -4,31 +4,8 @@ import nodemailer from "nodemailer";
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // SMTP Configuration
-const smtpConfig = {
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: process.env.SMTP_PORT === "465", // Use SSL for port 465
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  connectionTimeout: 10000, // 10 seconds timeout
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
-};
-
-console.log("[Email] Config check:", {
-  hasResend: !!process.env.RESEND_API_KEY,
-  hasSmtp: !!process.env.SMTP_HOST,
-  smtpHost: process.env.SMTP_HOST,
-  smtpPort: smtpConfig.port,
-  smtpUser: process.env.SMTP_USER ? "set" : "missing",
-  from: process.env.SMTP_FROM || process.env.EMAIL_FROM || "Not set"
-});
-
-const transporter = smtpConfig.host ? nodemailer.createTransport(smtpConfig) : null;
-
-const FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM || "Palalate <noreply@palalate.app>";
+// Transporter is created dynamically inside sendEmail to be more robust
+const FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM || process.env.SMTP_USER || "Palalate <noreply@palalate.app>";
 
 interface SendEmailOptions {
   to: string;
@@ -56,8 +33,24 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
     }
 
     // 2. Fallback to SMTP or use SMTP as primary if configured
-    if (transporter) {
+    if (process.env.SMTP_HOST) {
       console.log("[Email] Attempting to send via SMTP...");
+      
+      const port = parseInt(process.env.SMTP_PORT || "587");
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: port,
+        secure: port === 465,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+        // Better timeouts for Railway/Gmail
+        connectionTimeout: 20000, 
+        greetingTimeout: 20000,
+        socketTimeout: 30000,
+      });
+
       const info = await transporter.sendMail({
         from: FROM,
         to,
