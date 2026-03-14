@@ -3,9 +3,8 @@ import nodemailer from "nodemailer";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-// SMTP Configuration
-// Transporter is created dynamically inside sendEmail to be more robust
-const FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM || process.env.SMTP_USER || "Palalate <noreply@palalate.app>";
+// Transporter logic moved inside function
+const FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM || "onboarding@resend.dev";
 
 interface SendEmailOptions {
   to: string;
