@@ -15,6 +15,7 @@ export default function AvatarEditor({ onSave, onCancel, aspect = 1, initialImag
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -40,15 +41,19 @@ export default function AvatarEditor({ onSave, onCancel, aspect = 1, initialImag
   const getCroppedImg = async () => {
     try {
       if (!image || !croppedAreaPixels) return;
+      setIsProcessing(true);
 
       const img = await createImage(image);
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      if (!ctx) return;
+      if (!ctx) {
+        setIsProcessing(false);
+        return;
+      }
 
-      // Set target size (e.g., 300x300 for avatars)
-      const targetSize = 300;
+      // High quality target size
+      const targetSize = 600; 
       canvas.width = targetSize;
       canvas.height = targetSize / aspect;
 
@@ -64,23 +69,42 @@ export default function AvatarEditor({ onSave, onCancel, aspect = 1, initialImag
         canvas.height
       );
 
-      // Get as base64
-      const base64 = canvas.toDataURL('image/jpeg', 0.8);
-      onSave(base64);
+      // Get as base64 - higher quality
+      const base64 = canvas.toDataURL('image/jpeg', 0.9);
+      
+      // Delay slightly to show processing for premium feel
+      setTimeout(() => {
+        onSave(base64);
+        setIsProcessing(false);
+      }, 500);
+      
     } catch (e) {
       console.error(e);
+      setIsProcessing(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-elevated w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border border-subtle animate-slide-up">
-        <div className="p-4 border-b border-subtle flex justify-between items-center">
-          <h3 className="font-bold">Upravit obrázek</h3>
-          <button className="btn btn-ghost btn-sm btn-icon" onClick={onCancel}>✕</button>
+    <div className="fixed inset-0 z-max flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
+      <div className="bg-elevated w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl border border-subtle animate-slide-up relative">
+        
+        {/* Header */}
+        <div className="p-6 border-b border-subtle flex justify-between items-center bg-white">
+          <div>
+            <h3 className="font-bold text-lg m-0">Upravit fotku</h3>
+            <p className="text-xs text-muted m-0">Tažením nastav výřez a měřítko</p>
+          </div>
+          <button 
+            className="btn btn-ghost btn-sm btn-icon" 
+            onClick={onCancel}
+            style={{ borderRadius: '50%', background: 'var(--bg-elevated)' }}
+          >
+            ✕
+          </button>
         </div>
 
-        <div className="relative h-80 bg-black">
+        {/* Cropper Container */}
+        <div className="relative h-[400px] w-full bg-[#0a0a0a]">
           {image ? (
             <Cropper
               image={image}
@@ -94,49 +118,105 @@ export default function AvatarEditor({ onSave, onCancel, aspect = 1, initialImag
               showGrid={false}
             />
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted p-8 text-center">
-              <div style={{ fontSize: '3rem' }}>📂</div>
-              <p>Vyberte soubor z počítače pro nahrání profilové fotky</p>
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={onSelectFile} 
-                className="absolute inset-0 opacity-0 cursor-pointer"
-              />
-              <button className="btn btn-primary">Vybrat soubor</button>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted p-8 text-center bg-white">
+              <div className="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center text-brand-500 mb-2">
+                <span style={{ fontSize: '2rem' }}>🖼️</span>
+              </div>
+              <h4 className="font-bold text-primary">Žádný obrázek</h4>
+              <p className="text-sm">Vyberte soubor z počítače pro nahrání profilové fotky</p>
+              
+              <div className="relative mt-4">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={onSelectFile} 
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                />
+                <button className="btn btn-primary btn-lg">Vybrat soubor</button>
+              </div>
+            </div>
+          )}
+          
+          {isProcessing && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm text-white">
+              <div className="spinner mb-4" />
+              <p className="font-bold">Zpracovávám...</p>
             </div>
           )}
         </div>
 
+        {/* Footer / Controls */}
         {image && (
-          <div className="p-6">
+          <div className="p-6 bg-white">
             <div className="mb-6">
-              <label className="text-xs text-muted block mb-2 uppercase tracking-wider font-bold">Přiblížení</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-xs text-muted uppercase tracking-wider font-bold">Přiblížení</label>
+                <span className="text-xs font-bold text-brand-500">{Math.round(zoom * 100)}%</span>
+              </div>
               <input
                 type="range"
                 value={zoom}
                 min={1}
                 max={3}
-                step={0.1}
+                step={0.01}
                 aria-labelledby="Zoom"
-                onChange={(e: any) => setZoom(e.target.value)}
-                className="w-full h-2 bg-subtle rounded-lg appearance-none cursor-pointer accent-brand-500"
+                onChange={(e: any) => setZoom(parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                style={{ outline: 'none' }}
               />
             </div>
 
             <div className="flex gap-4">
-              <button className="btn btn-ghost flex-1" onClick={() => setImage(null)}>Změnit soubor</button>
-              <button className="btn btn-primary flex-1" onClick={getCroppedImg}>Uložit výřez</button>
+              <button 
+                className="btn btn-secondary flex-1" 
+                onClick={() => setImage(null)}
+                disabled={isProcessing}
+              >
+                🔄 Změnit soubor
+              </button>
+              <button 
+                className="btn btn-primary flex-1 btn-lg" 
+                onClick={getCroppedImg}
+                disabled={isProcessing}
+              >
+                {isProcessing ? "Ukládám..." : "✓ Potvrdit a uložit"}
+              </button>
             </div>
           </div>
         )}
         
         {!image && (
-          <div className="p-6">
+          <div className="p-6 bg-white border-t border-subtle">
             <button className="btn btn-ghost w-full" onClick={onCancel}>Zrušit</button>
           </div>
         )}
       </div>
+      
+      {/* Visual background element to make it feel premium */}
+      <style jsx>{`
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid rgba(255,255,255,0.3);
+          border-radius: 50%;
+          border-top-color: white;
+          animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 640px) {
+          .max-w-lg {
+            max-width: 100%;
+            height: 100%;
+            border-radius: 0;
+          }
+          .h-[400px] {
+            height: calc(100vh - 250px);
+          }
+        }
+      `}</style>
     </div>
   );
 }

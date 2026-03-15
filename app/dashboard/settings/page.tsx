@@ -60,6 +60,8 @@ export default function SettingsPage() {
       }),
     });
     if (res.ok) {
+      const updatedData = await res.json();
+      setUser(updatedData);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     }
