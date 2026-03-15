@@ -104,7 +104,7 @@ export default function AvatarEditor({ onSave, onCancel, aspect = 1, initialImag
         </div>
 
         {/* Cropper Container */}
-        <div className="relative h-[400px] w-full bg-[#0a0a0a]">
+        <div id="avatar-cropper-container" className="relative w-full bg-[#0a0a0a]" style={{ height: 400 }}>
           {image ? (
             <Cropper
               image={image}
@@ -138,7 +138,7 @@ export default function AvatarEditor({ onSave, onCancel, aspect = 1, initialImag
           )}
           
           {isProcessing && (
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm text-white">
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-white" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
               <div className="spinner mb-4" />
               <p className="font-bold">Zpracovávám...</p>
             </div>
@@ -212,8 +212,8 @@ export default function AvatarEditor({ onSave, onCancel, aspect = 1, initialImag
             height: 100%;
             border-radius: 0;
           }
-          .h-[400px] {
-            height: calc(100vh - 250px);
+          #avatar-cropper-container {
+            height: calc(100vh - 250px) !important;
           }
         }
       `}</style>
