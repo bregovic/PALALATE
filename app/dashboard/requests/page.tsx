@@ -208,8 +208,13 @@ export default function RequestsPage() {
 
       {/* Decision modal */}
       {showDecisionModal && (
-        <div className="modal-overlay" onClick={() => setShowDecisionModal(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowDecisionModal(null);
+          }}
+        >
+          <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>
                 {showDecisionModal.action === "approve" ? "✅ Schválit žádost" : "❌ Zamítnout žádost"}

@@ -275,8 +275,13 @@ export default function ContactsPage() {
 
       {/* Add contact modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
+        >
+          <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>➕ Přidat kontakt</h3>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}>✕</button>

@@ -214,8 +214,13 @@ export default function DiscoverPage() {
 
       {/* Credentials Modal */}
       {showCreds && (
-        <div className="modal-overlay" onClick={() => setShowCreds(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+        <div 
+          className="modal-overlay" 
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowCreds(null);
+          }}
+        >
+          <div className="modal" onMouseDown={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
             <div className="modal-header">
               <h3>🔐 Přihlašovací údaje</h3>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowCreds(null)}>✕</button>

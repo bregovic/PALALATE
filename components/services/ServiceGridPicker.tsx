@@ -290,8 +290,14 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
       )}
 
       {showAddForm && (
-        <div className="modal-overlay" style={{ zIndex: 1100 }}>
-          <div className="modal" style={{ maxWidth: 550 }}>
+        <div 
+          className="modal-overlay" 
+          style={{ zIndex: 1100 }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowAddForm(false);
+          }}
+        >
+          <div className="modal" onMouseDown={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
             <div className="modal-header">
               <h3>🆕 Nová služba</h3>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowAddForm(false)}>✕</button>

@@ -758,8 +758,13 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Settlement Modal (stays as is) */}
       {showSettlementModal && (
-        <div className="modal-overlay" onClick={() => setShowSettlementModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowSettlementModal(false);
+          }}
+        >
+          <div className="modal" onMouseDown={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>💰 Nové vyúčtování</h3>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowSettlementModal(false)}>✕</button>
