@@ -123,13 +123,16 @@ export default function ChatConversationPage() {
     if (!query.trim()) return;
     setSearchingGifs(true);
     try {
+      // Using Tenor API v2 (Public key for dev if no env key)
+      const apiKey = "LIVDSRZULEUB"; // Default Tenor public key for testing
+      const limit = 21;
       const endpoint = query === "trending" 
-        ? `https://api.giphy.com/v1/gifs/trending?api_key=dc6zaTOxFJmzC&limit=15` 
-        : `https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${encodeURIComponent(query)}&limit=15`;
+        ? `https://tenor.googleapis.com/v2/featured?key=${apiKey}&limit=${limit}` 
+        : `https://tenor.googleapis.com/v2/search?key=${apiKey}&q=${encodeURIComponent(query)}&limit=${limit}`;
         
       const res = await fetch(endpoint);
       const data = await res.json();
-      setGifs(data.data || []);
+      setGifs(data.results || []);
     } catch (err) {
       console.error("GIF search failed", err);
     } finally {
@@ -283,11 +286,11 @@ export default function ChatConversationPage() {
                       gifs.map(gif => (
                         <div 
                           key={gif.id} 
-                          onClick={() => sendGif(gif.images.fixed_height.url)}
+                          onClick={() => sendGif(gif.media_formats.gif.url)}
                           className="hover:scale-105 transition-transform"
                           style={{ cursor: 'pointer', borderRadius: 12, overflow: 'hidden', height: 100, background: 'var(--bg-elevated)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
                         >
-                          <img src={gif.images.fixed_height_small.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={gif.media_formats.tinygif.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                       ))
                     )}
