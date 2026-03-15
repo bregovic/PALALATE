@@ -620,6 +620,24 @@ function ServicesTab() {
   });
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [editorImage, setEditorImage] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const onSync = async () => {
+    if (!confirm("Opravdu chceš sjednotit osiřelé služby a doplnit chybějící údaje v číselníku?")) return;
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/admin/sync-services", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "Synchronizace proběhla úspěšně!");
+        load();
+      } else {
+        alert("Chyba: " + data.error);
+      }
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const onFileSelectForService = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -699,11 +717,22 @@ function ServicesTab() {
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
       <div className="card">
-        <div className="card-header">
+        <div className="card-header" style={{ justifyContent: 'space-between' }}>
           <h3>{editingServiceId ? "✏️ Upravit službu" : "➕ Přidat do číselníku"}</h3>
-          {editingServiceId && (
-            <button className="btn btn-ghost btn-sm" onClick={cancelEdit}>Zrušit editaci</button>
-          )}
+          <div className="flex gap-2">
+            {!editingServiceId && (
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={onSync} 
+                disabled={syncing}
+              >
+                {syncing ? "🔄 Synchronizuji..." : "🔗 Sjednotit s mými službami"}
+              </button>
+            )}
+            {editingServiceId && (
+              <button className="btn btn-ghost btn-sm" onClick={cancelEdit}>Zrušit editaci</button>
+            )}
+          </div>
         </div>
         <div className="card-body">
           <div className="flex flex-col md:flex-row gap-8 items-start mb-8 p-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
