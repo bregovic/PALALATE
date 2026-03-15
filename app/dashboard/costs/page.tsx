@@ -325,7 +325,7 @@ export default function CostsPage() {
                   {data.currentServiceCosts.slice(0, 8).map((svc, idx) => (
                     <tr key={svc.id}>
                       <td>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                            <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-bold ${idx < 3 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
                              {idx + 1}
                            </span>
@@ -366,7 +366,7 @@ export default function CostsPage() {
                   {data.serviceRankings.slice(0, 10).map((svc, idx) => (
                     <tr key={svc.name}>
                       <td>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                           <span className="w-6 h-6 flex items-center justify-center bg-slate-100 rounded text-xs font-bold text-slate-500">{idx + 1}</span>
                           <span className="font-semibold">{svc.name}</span>
                         </div>
@@ -391,20 +391,29 @@ export default function CostsPage() {
             <div className="flex flex-col gap-3">
               {Object.entries(data.yearlyStats)
                 .sort((a, b) => b[0].localeCompare(a[0]))
-                .map(([year, total]) => (
-                <div key={year} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-subtle group hover:border-brand-200 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white rounded-lg shadow-sm">
-                      <Calendar size={18} className="text-brand-500" />
+                .map(([year, total]) => {
+                  const isCurrentYear = year === now.getFullYear().toString();
+                  const displayTotal = isCurrentYear ? projectedYearTotal : total;
+                  
+                  return (
+                    <div key={year} className={`flex items-center justify-between p-4 rounded-xl border border-subtle group transition-colors ${isCurrentYear ? 'bg-accent-50 border-accent-200' : 'bg-slate-50 hover:border-brand-200'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white rounded-lg shadow-sm">
+                          <History size={18} className={isCurrentYear ? "text-accent-600" : "text-brand-500"} />
+                        </div>
+                        <span className="font-bold text-lg">{isCurrentYear ? `~ ${year}` : year}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className={`font-bold text-lg ${isCurrentYear ? 'text-accent-700' : 'text-slate-800'}`}>
+                          {displayTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })} Kč
+                        </div>
+                        <div className="text-xs text-muted uppercase tracking-wider font-bold">
+                          {isCurrentYear ? "odhadovaný náklad" : "celkové výdaje"}
+                        </div>
+                      </div>
                     </div>
-                    <span className="font-bold text-lg">{year}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-lg text-slate-800">{total.toLocaleString()} Kč</div>
-                    <div className="text-xs text-muted uppercase tracking-wider font-bold">celkové výdaje</div>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
             </div>
           </div>
         </div>
