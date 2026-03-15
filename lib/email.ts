@@ -1,7 +1,6 @@
 import { Resend } from "resend";
 import nodemailer from "nodemailer";
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Transporter logic moved inside function
 // Hardcoded defaults from working FotoBuddy configuration
@@ -13,11 +12,6 @@ const SMTP_DEFAULTS = {
   from: "ja.nepalalate@gmail.com"
 };
 
-// Resend requires onboarding@resend.dev for unverified domains
-const FROM = process.env.RESEND_API_KEY 
-  ? (process.env.SMTP_FROM || "onboarding@resend.dev") 
-  : (process.env.SMTP_FROM || process.env.EMAIL_FROM || SMTP_DEFAULTS.from);
-
 interface SendEmailOptions {
   to: string;
   subject: string;
@@ -25,12 +19,25 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
+  const resendKey = process.env.RESEND_API_KEY;
+  const resend = resendKey ? new Resend(resendKey) : null;
+  
+  const fromAddress = resendKey 
+    ? (process.env.SMTP_FROM || "onboarding@resend.dev") 
+    : (process.env.SMTP_FROM || process.env.EMAIL_FROM || SMTP_DEFAULTS.from);
+
   try {
+    console.log("[Email] Initiating send process...");
+    console.log("[Email] Resend API Key present:", !!resendKey);
+    if (resendKey) {
+      console.log("[Email] Key starts with:", resendKey.substring(0, 5) + "...");
+    }
+
     // 1. Try Resend if fully configured (API based - bypasses SMTP blocks)
     if (resend) {
       console.log("[Email] Attempting to send via Resend API...");
       const { data, error } = await resend.emails.send({
-        from: FROM,
+        from: fromAddress,
         to,
         subject,
         html,
@@ -40,7 +47,9 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
         console.log("[Email] Resend success:", data?.id);
         return { success: true, data };
       }
-      console.warn("[Email] Resend failed, falling back to SMTP:", error);
+      console.warn("[Email] Resend failed, falling back to SMTP. Error:", JSON.stringify(error));
+    } else {
+      console.log("[Email] Skipping Resend (no API key found)");
     }
 
     // 2. Fallback to SMTP (pattern from FotoBuddy)
