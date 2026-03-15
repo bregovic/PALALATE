@@ -71,6 +71,26 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    // Ensure it exists in ServiceRegistry
+    try {
+      const registryEntry = await prisma.serviceRegistry.findUnique({
+        where: { name: serviceName }
+      });
+      if (!registryEntry) {
+        await prisma.serviceRegistry.create({
+          data: {
+            name: serviceName,
+            description: description,
+            // If the link looks like a normal URL (not an image), use it as websiteUrl
+            websiteUrl: (link && !link.startsWith('data:') && !link.includes('cloudinary') && !link.includes('storage')) ? link : undefined,
+            iconUrl: (link && (link.startsWith('data:') || link.includes('cloudinary') || link.includes('storage'))) ? link : undefined,
+          }
+        });
+      }
+    } catch (regErr) {
+      console.error("Failed to auto-create registry entry from wish", regErr);
+    }
+
     return NextResponse.json(wish, { status: 201 });
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
