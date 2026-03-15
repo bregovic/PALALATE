@@ -4,11 +4,11 @@ import { requireAuth } from "@/lib/auth";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const { id } = params;
+    const { id } = await params;
     if (user.role !== "ADMIN") {
       // Allow for now as the user requested to see management for all,
       // but in production this should be ADMIN only.
@@ -55,11 +55,11 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const { id } = params;
+    const { id } = await params;
     // if (user.role !== "ADMIN") return new NextResponse("Unauthorized", { status: 401 });
 
     await prisma.serviceRegistry.delete({

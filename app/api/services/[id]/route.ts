@@ -4,10 +4,10 @@ import { requireAuth } from "@/lib/auth";
 import { calculateNextRenewal } from "@/lib/billing";
 
 // GET /api/services/[id]
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth();
-    const { id } = params;
+    const { id } = await params;
 
     const service = await prisma.service.findUnique({
       where: { id },
@@ -57,10 +57,10 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 }
 
 // PATCH /api/services/[id]
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth();
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
 
     const service = await prisma.service.findUnique({ where: { id } });
@@ -140,10 +140,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 // DELETE /api/services/[id]
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth();
-    const { id } = params;
+    const { id } = await params;
 
     const service = await prisma.service.findUnique({ where: { id } });
     if (!service) return NextResponse.json({ error: "Not found" }, { status: 404 });

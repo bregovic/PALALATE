@@ -5,11 +5,11 @@ import { requireAuth } from "@/lib/auth";
 // GET /api/social/chat/[id] - Get messages with a specific contact
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const { id: partnerId } = params;
+    const { id: partnerId } = await params;
 
     const messages = await prisma.chatMessage.findMany({
       where: {
@@ -43,11 +43,11 @@ export async function GET(
 // POST /api/social/chat/[id] - Send a message to a specific contact
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
-    const { id: partnerId } = params;
+    const { id: partnerId } = await params;
     const { content } = await req.json();
 
     if (!content || content.trim() === "") {
