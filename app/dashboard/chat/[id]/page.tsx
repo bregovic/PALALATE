@@ -123,13 +123,15 @@ export default function ChatConversationPage() {
     return <div className="p-8 text-center text-gray-400">Načítám konverzaci...</div>;
   }
 
-  const handleGifSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!gifQuery.trim()) return;
+  const handleGifSearch = async (query: string) => {
+    if (!query.trim()) return;
     setSearchingGifs(true);
     try {
-      // Using Giphy public beta key
-      const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${encodeURIComponent(gifQuery)}&limit=12`);
+      const endpoint = query === "trending" 
+        ? `https://api.giphy.com/v1/gifs/trending?api_key=dc6zaTOxFJmzC&limit=15` 
+        : `https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${encodeURIComponent(query)}&limit=15`;
+        
+      const res = await fetch(endpoint);
       const data = await res.json();
       setGifs(data.data || []);
     } catch (err) {
@@ -138,6 +140,22 @@ export default function ChatConversationPage() {
       setSearchingGifs(false);
     }
   };
+
+  useEffect(() => {
+    if (showGifs && gifs.length === 0) {
+      handleGifSearch("trending");
+    }
+  }, [showGifs]);
+
+  const gifCategories = [
+    { id: "trending", label: "🔥 Trending" },
+    { id: "love", label: "❤️ Láska" },
+    { id: "haha", label: "😂 Smích" },
+    { id: "dance", label: "🕺 Tanec" },
+    { id: "sad", label: "😢 Smutek" },
+    { id: "wow", label: "😮 Úžas" },
+    { id: "thanks", label: "🙏 Díky" },
+  ];
 
   const sendGif = (url: string) => {
     handleSendMessage(undefined, `[GIF] ${url}`);
@@ -228,35 +246,57 @@ export default function ChatConversationPage() {
           <div className="chat-input-area" style={{ background: "var(--bg-surface)", padding: '16px 24px' }}>
             <div style={{ width: "100%" }}>
               {showGifs && (
-                <div className="card mb-4 animate-slide-up" style={{ maxHeight: 300, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                  <div className="card-header" style={{ padding: '8px 16px' }}>
-                    <form onSubmit={handleGifSearch} style={{ display: 'flex', gap: 8, width: '100%' }}>
+                <div className="card mb-4 animate-slide-up shadow-2xl" style={{ maxHeight: 400, overflow: 'hidden', display: 'flex', flexDirection: 'column', border: '1px solid var(--brand-200)', borderRadius: '24px' }}>
+                  <div className="card-header" style={{ padding: '16px', flexDirection: 'column', gap: 12 }}>
+                    <form onSubmit={(e) => { e.preventDefault(); handleGifSearch(gifQuery); }} style={{ display: 'flex', gap: 8, width: '100%' }}>
                       <input 
                         className="form-input" 
-                        placeholder="Hledat GIF..." 
+                        placeholder="Hledej ten pravý moment..." 
                         value={gifQuery} 
                         onChange={e => setGifQuery(e.target.value)} 
                         autoFocus
+                        style={{ borderRadius: 'var(--radius-full)' }}
                       />
-                      <button type="submit" className="btn btn-primary btn-sm">Hledat</button>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowGifs(false)}> zavřít</button>
+                      <button type="submit" className="btn btn-primary btn-sm" style={{ borderRadius: 'var(--radius-full)', padding: '0 20px' }}>Hledat</button>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowGifs(false)}>✖</button>
                     </form>
+                    
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide no-scrollbar">
+                      {gifCategories.map(cat => (
+                        <button 
+                          key={cat.id}
+                          className="btn btn-secondary btn-xs"
+                          style={{ borderRadius: 'var(--radius-full)', whiteSpace: 'nowrap', padding: '6px 12px', background: 'var(--bg-elevated)' }}
+                          onClick={() => { setGifQuery(""); handleGifSearch(cat.id); }}
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="card-body" style={{ overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, padding: 8 }}>
+                  <div className="card-body" style={{ overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, padding: 12, background: 'var(--bg-base)' }}>
                     {searchingGifs ? (
-                      <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: 20 }}>Načítám...</div>
+                      <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+                        <span className="animate-pulse">Hledám ty nejlepší GIFy... ✨</span>
+                      </div>
                     ) : (
                       gifs.map(gif => (
                         <div 
                           key={gif.id} 
                           onClick={() => sendGif(gif.images.fixed_height.url)}
-                          style={{ cursor: 'pointer', borderRadius: 8, overflow: 'hidden', height: 80, background: 'var(--bg-elevated)' }}
+                          className="hover:scale-105 transition-transform"
+                          style={{ cursor: 'pointer', borderRadius: 12, overflow: 'hidden', height: 100, background: 'var(--bg-elevated)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
                         >
                           <img src={gif.images.fixed_height_small.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                       ))
                     )}
-                    {gifs.length === 0 && !searchingGifs && <div style={{ gridColumn: 'span 3', textAlign: 'center', color: 'var(--text-muted)', padding: 10 }}>Nic nenalezeno</div>}
+                    {gifs.length === 0 && !searchingGifs && (
+                      <div style={{ gridColumn: 'span 3', textAlign: 'center', color: 'var(--text-muted)', padding: 30 }}>
+                        <div style={{ fontSize: '2rem', marginBottom: 8 }}>🔍</div>
+                        Nic jsme nenašli. Zkus jiné slovo!
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
