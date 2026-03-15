@@ -30,7 +30,24 @@ export async function PATCH(
         status: newStatus as "ACCEPTED" | "REJECTED" | "BLOCKED",
         acceptedAt: action === "accept" ? new Date() : undefined,
       },
+      include: {
+        requester: { select: { id: true, name: true } },
+        addressee: { select: { id: true, name: true } },
+      },
     });
+
+    if (action === "accept") {
+      await prisma.notification.create({
+        data: {
+          userId: updated.requesterId,
+          type: "FRIEND_REQUEST_ACCEPTED",
+          payload: {
+            friendId: user.id,
+            friendName: user.name,
+          },
+        },
+      });
+    }
 
     return NextResponse.json(updated);
   } catch (err) {

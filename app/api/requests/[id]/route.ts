@@ -61,6 +61,7 @@ export async function PATCH(
             grantId: grant.id,
             serviceId: request.serviceId,
             serviceName: request.service.serviceName,
+            ownerName: user.name,
           },
         },
       });
@@ -89,7 +90,11 @@ export async function PATCH(
         data: {
           userId: request.requesterId,
           type: "ACCESS_REQUEST_REJECTED",
-          payload: { serviceId: request.serviceId, serviceName: request.service.serviceName },
+          payload: { 
+            serviceId: request.serviceId, 
+            serviceName: request.service.serviceName,
+            ownerName: user.name,
+          },
         },
       });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface Notification {
   id: string;
@@ -37,6 +38,7 @@ const NOTIF_LABELS: Record<string, string> = {
 };
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,6 +56,20 @@ export default function NotificationsPage() {
       body: JSON.stringify({ ids: "all" }),
     });
     load();
+    router.refresh(); // Sync sidebar badge
+  }
+
+  async function markAsRead(id: string) {
+    const notif = notifications.find(n => n.id === id);
+    if (!notif || notif.readAt) return;
+
+    await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [id] }),
+    });
+    load();
+    router.refresh(); // Sync sidebar badge
   }
 
   useEffect(() => { load(); }, []);
@@ -115,6 +131,7 @@ export default function NotificationsPage() {
             {notifications.map((n, i) => (
               <div
                 key={n.id}
+                onClick={() => markAsRead(n.id)}
                 style={{
                   display: "flex",
                   alignItems: "flex-start",
@@ -123,7 +140,9 @@ export default function NotificationsPage() {
                   borderBottom: i < notifications.length - 1 ? "1px solid var(--border-subtle)" : "none",
                   background: n.readAt ? "transparent" : "rgba(139, 92, 246, 0.04)",
                   transition: "background var(--transition-fast)",
+                  cursor: n.readAt ? "default" : "pointer",
                 }}
+                className={!n.readAt ? "hover-notif" : ""}
               >
                 <div style={{
                   width: 40, height: 40, borderRadius: "var(--radius-md)",
@@ -135,12 +154,20 @@ export default function NotificationsPage() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: n.readAt ? 400 : 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>
-                    {NOTIF_LABELS[n.type] || n.type}
+                    {n.type === 'FRIEND_REQUEST_ACCEPTED' && n.payload?.friendName 
+                      ? `${n.payload.friendName} přijal(a) váš kontakt`
+                      : (NOTIF_LABELS[n.type] || n.type)}
                   </div>
                   {n.payload?.serviceName && (
                     <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 2 }}>
                       Služba: <strong>{n.payload.serviceName}</strong>
                       {n.payload.requesterName ? ` • Od: ${n.payload.requesterName}` : ""}
+                      {n.payload.ownerName ? ` • Schválil/a: ${n.payload.ownerName}` : ""}
+                    </div>
+                  )}
+                  {n.type === 'FRIEND_REQUEST_ACCEPTED' && !n.payload?.friendName && (
+                    <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 2 }}>
+                      Vaše žádost o přátelství byla schválena.
                     </div>
                   )}
                 </div>
