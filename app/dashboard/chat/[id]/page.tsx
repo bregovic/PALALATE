@@ -114,14 +114,14 @@ export default function ChatConversationPage() {
 
   const commonEmojis = ["😊", "😂", "👍", "❤️", "😮", "🙏", "🔥", "🎉", "🥑", "💡"];
 
-  if (authLoading || loading) {
-    return <div className="p-8 text-center text-gray-400">Načítám konverzaci...</div>;
-  }
-
   const [showGifs, setShowGifs] = useState(false);
   const [gifQuery, setGifQuery] = useState("");
   const [gifs, setGifs] = useState<any[]>([]);
   const [searchingGifs, setSearchingGifs] = useState(false);
+
+  if (authLoading || loading) {
+    return <div className="p-8 text-center text-gray-400">Načítám konverzaci...</div>;
+  }
 
   const handleGifSearch = async (e: React.FormEvent) => {
     e.preventDefault();
