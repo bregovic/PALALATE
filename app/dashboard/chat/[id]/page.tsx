@@ -123,24 +123,22 @@ export default function ChatConversationPage() {
     if (!query.trim()) return;
     setSearchingGifs(true);
     try {
-      // Using Tenor API v1 base with public key (LIVDSRZULEUB is a known active v1 key)
-      const apiKey = "LIVDSRZULEUB";
+      // Reverting to GIPHY as Tenor has restricted public API access in 2026
+      // dc6zaTOxFJmzC is a well known public beta key for prototyping
+      const apiKey = "dc6zaTOxFJmzC";
       const limit = 21;
-      const baseUrl = "https://api.tenor.com/v1";
       const endpoint = query === "trending" 
-        ? `${baseUrl}/trending?key=${apiKey}&limit=${limit}` 
-        : `${baseUrl}/search?key=${apiKey}&q=${encodeURIComponent(query)}&limit=${limit}`;
+        ? `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=${limit}` 
+        : `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=${limit}`;
         
       const res = await fetch(endpoint);
       const data = await res.json();
       
-      // Tenor v1 returns data in 'results'
-      if (data.results) {
-        // Map v1 media structure to a simpler format for our UI
-        const formattedGifs = data.results.map((gif: any) => ({
+      if (data.data) {
+        const formattedGifs = data.data.map((gif: any) => ({
           id: gif.id,
-          url: gif.media[0].gif.url,
-          previewUrl: gif.media[0].tinygif.url
+          url: gif.images.fixed_height.url,
+          previewUrl: gif.images.fixed_height_small.url
         }));
         setGifs(formattedGifs);
       } else {
