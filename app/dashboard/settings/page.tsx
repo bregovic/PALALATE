@@ -706,30 +706,56 @@ function ServicesTab() {
           )}
         </div>
         <div className="card-body">
-          <div className="flex gap-6 mb-6">
-            <div 
-              className="user-avatar" 
-              style={{ width: 64, height: 64, borderRadius: 'var(--radius-lg)', cursor: 'pointer', background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', position: 'relative', overflow: 'hidden' }}
-              onClick={() => document.getElementById('logo-upload')?.click()}
-            >
-              {svcForm.iconUrl ? (
-                <img src={svcForm.iconUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-              ) : (
-                <span style={{ fontSize: '1.2rem' }}>🖼️</span>
-              )}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <span style={{ fontSize: '0.7rem', color: 'white' }}>Nahrát</span>
+          <div className="flex flex-col md:flex-row gap-8 items-start mb-8 p-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+            <div className="relative group">
+              <div 
+                className="user-avatar shadow-lg transition-all group-hover:shadow-xl group-hover:scale-[1.02]" 
+                style={{ 
+                  width: 100, 
+                  height: 100, 
+                  borderRadius: '24px', 
+                  cursor: 'pointer', 
+                  background: 'white', 
+                  border: '2px solid var(--border-subtle)', 
+                  position: 'relative', 
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onClick={() => document.getElementById('logo-upload')?.click()}
+              >
+                {svcForm.iconUrl ? (
+                  <img src={svcForm.iconUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 12 }} />
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-slate-300">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="32" height="32"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                    <span className="text-[10px] font-bold uppercase tracking-tighter">Nahrát logo</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-brand-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
+              <button 
+                type="button" 
+                className="absolute -bottom-2 -right-2 btn btn-primary btn-icon btn-xs shadow-lg"
+                onClick={() => document.getElementById('logo-upload')?.click()}
+              >
+                ✎
+              </button>
             </div>
+            
             <div className="flex-1">
-              <label className="form-label">Logo / Ikona služby</label>
+              <h4 className="text-sm font-bold text-slate-700 mb-1">Ikona služby</h4>
+              <p className="text-xs text-muted mb-4">Nahrajte logo v digitální kvalitě (PNG nebo SVG jsou ideální). Toto logo uvidí všichni uživatelé.</p>
               <div className="flex gap-2">
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => document.getElementById('logo-upload')?.click()}>
-                  📂 Nahrát logo
+                  📂 Vybrat z počítače
                 </button>
                 <input type="file" id="logo-upload" hidden accept="image/*" onChange={onFileSelectForService} />
                 {svcForm.iconUrl && (
-                  <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => setSvcForm({...svcForm, iconUrl: ''})}>Odstranit</button>
+                  <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => setSvcForm({...svcForm, iconUrl: ''})}>
+                    Odstranit
+                  </button>
                 )}
               </div>
             </div>

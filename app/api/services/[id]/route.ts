@@ -119,6 +119,38 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       },
     });
 
+    // BACK-PROPAGATION: Update Registry if name changed or if registry is missing info
+    const searchName = serviceName || service.serviceName;
+    const registryEntry = await prisma.serviceRegistry.findFirst({
+      where: { name: service.serviceName } // Always look up by the OLD name first if we want to update it
+    });
+
+    if (registryEntry) {
+      const registryUpdate: any = {};
+      
+      // If service name changed in user service, update registry name too
+      if (serviceName && serviceName !== registryEntry.name) {
+        registryUpdate.name = serviceName;
+      }
+
+      // Fill in missing info in registry from this user's data
+      if (!registryEntry.description && description) registryUpdate.description = description;
+      if (!registryEntry.iconUrl && iconUrl) registryUpdate.iconUrl = iconUrl;
+      if (!registryEntry.url && url) registryUpdate.url = url;
+      if (!registryEntry.category && category) registryUpdate.category = category;
+      
+      // Update price ONLY if registry price is 0 or null (user said "upravit unikátně")
+      const regPrice = Number(registryEntry.defaultPrice || 0);
+      if (regPrice === 0 && periodicPrice) registryUpdate.defaultPrice = Number(periodicPrice);
+
+      if (Object.keys(registryUpdate).length > 0) {
+        await prisma.serviceRegistry.update({
+          where: { id: registryEntry.id },
+          data: registryUpdate
+        });
+      }
+    }
+
     await prisma.auditLog.create({
       data: {
         actorId: user.id,

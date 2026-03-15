@@ -26,8 +26,13 @@ export async function PATCH(
       description,
       usageMode,
       requiresBookingApproval,
-      iconUrl
+      iconUrl,
+      url
     } = await req.json();
+
+    // Get old state for propagation
+    const oldRegistry = await prisma.serviceRegistry.findUnique({ where: { id } });
+    if (!oldRegistry) return new NextResponse("Not found", { status: 404 });
 
     const service = await prisma.serviceRegistry.update({
       where: { id },
@@ -42,9 +47,32 @@ export async function PATCH(
         description,
         usageMode,
         requiresBookingApproval,
-        iconUrl
+        iconUrl,
+        url
       },
     });
+
+    // PROPAGATION: Update existing user services if registry name or icon changed
+    if (name && name !== oldRegistry.name) {
+      await prisma.service.updateMany({
+        where: { serviceName: oldRegistry.name },
+        data: { serviceName: name }
+      });
+    }
+
+    if (iconUrl && iconUrl !== oldRegistry.iconUrl) {
+      // Update icons for services that had the old icon or no icon
+      await prisma.service.updateMany({
+        where: { 
+          serviceName: name || oldRegistry.name,
+          OR: [
+            { iconUrl: oldRegistry.iconUrl },
+            { iconUrl: null }
+          ]
+        },
+        data: { iconUrl }
+      });
+    }
 
     return NextResponse.json(service);
   } catch (error) {
