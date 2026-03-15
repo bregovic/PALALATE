@@ -149,7 +149,21 @@ export default function DiscoverPage() {
                     <tr key={svc.id}>
                       <td>
                         <div className="flex items-center gap-3">
-                          <div className="text-xl w-8 text-center hidden-mobile">{icon}</div>
+                          <div 
+                            className="user-avatar" 
+                            style={{ 
+                              width: 32, height: 32, borderRadius: 8, 
+                              background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+                              overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              flexShrink: 0
+                            }}
+                          >
+                            {svc.iconUrl ? (
+                              <img src={svc.iconUrl} alt={svc.serviceName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            ) : (
+                              <span style={{ fontSize: '1rem' }}>{icon}</span>
+                            )}
+                          </div>
                           <div>
                             <div className="font-bold text-primary">{svc.serviceName}</div>
                             <div className="text-xs text-muted">{svc.providerName}</div>

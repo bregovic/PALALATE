@@ -17,6 +17,8 @@ export default function AvatarEditor({ onSave, onCancel, aspect = 1, initialImag
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const reader = new FileReader();
@@ -130,9 +132,15 @@ export default function AvatarEditor({ onSave, onCancel, aspect = 1, initialImag
                   type="file" 
                   accept="image/*" 
                   onChange={onSelectFile} 
-                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  className="hidden"
+                  ref={fileInputRef}
                 />
-                <button className="btn btn-primary btn-lg">Vybrat soubor</button>
+                <button 
+                  className="btn btn-primary btn-lg"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Vybrat soubor
+                </button>
               </div>
             </div>
           )}

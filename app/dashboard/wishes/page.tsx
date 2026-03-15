@@ -169,8 +169,20 @@ export default function WishesPage() {
                   <tr key={wish.id} style={{ borderBottom: "1px solid var(--border-subtle)", verticalAlign: "middle" }}>
                     <td style={{ padding: "16px", verticalAlign: "middle" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div className="user-avatar" style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--brand-50)', color: 'var(--brand-600)', fontSize: '0.9rem', flexShrink: 0 }}>
-                          {wish.serviceName[0].toUpperCase()}
+                        <div 
+                          className="user-avatar" 
+                          style={{ 
+                            width: 32, height: 32, borderRadius: 8, 
+                            background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+                            overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            flexShrink: 0 
+                          }}
+                        >
+                          {wish.link && (wish.link.startsWith('data:image') || wish.link.includes('cloudinary') || wish.link.includes('storage')) ? (
+                            <img src={wish.link} alt={wish.serviceName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          ) : (
+                            <span style={{ color: 'var(--brand-600)', fontSize: '0.9rem' }}>{wish.serviceName[0].toUpperCase()}</span>
+                          )}
                         </div>
                         <div style={{ overflow: "hidden" }}>
                           <div className="font-bold text-sm" style={{ lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{wish.serviceName}</div>
@@ -186,7 +198,7 @@ export default function WishesPage() {
                     <td style={{ padding: "16px", verticalAlign: "middle" }}>
                       <div className="flex flex-col gap-1" style={{ overflow: "hidden" }}>
                         {wish.description && <div className="text-sm italic text-secondary" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>"{wish.description}"</div>}
-                        {wish.link && (
+                        {wish.link && !wish.link.startsWith('data:image') && !wish.link.includes('cloudinary') && !wish.link.includes('storage') && (
                           <a href={wish.link} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-600 hover:underline flex items-center gap-1">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="10" height="10">
                               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
