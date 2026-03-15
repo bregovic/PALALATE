@@ -419,13 +419,19 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
       <div className="page-header">
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div 
-            className="user-avatar" 
+            className="user-avatar group relative cursor-pointer" 
             style={{ width: 64, height: 64, fontSize: "1.8rem", borderRadius: "var(--radius-lg)", background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)", overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => service.isOwner && setShowIconEditor(true)}
           >
             {service.iconUrl ? (
               <img src={service.iconUrl} alt={service.serviceName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             ) : (
               service.serviceName.slice(0, 2).toUpperCase()
+            )}
+            {service.isOwner && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span style={{ fontSize: '0.8rem', color: 'white' }}>✏️</span>
+              </div>
             )}
           </div>
           <div>
@@ -1364,7 +1370,24 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
 
       {showIconEditor && (
         <AvatarEditor 
-          onSave={(img) => { setEditForm({...editForm, iconUrl: img}); setShowIconEditor(false); }}
+          onSave={async (img) => { 
+            if (showEditModal) {
+              setEditForm({...editForm, iconUrl: img}); 
+            } else {
+              // Direct update from detail header
+              try {
+                const res = await fetch(`/api/services/${id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ iconUrl: img })
+                });
+                if (res.ok) await load();
+              } catch (e) {
+                console.error(e);
+              }
+            }
+            setShowIconEditor(false); 
+          }}
           onCancel={() => setShowIconEditor(false)}
           aspect={1}
         />

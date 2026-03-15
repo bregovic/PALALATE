@@ -147,7 +147,7 @@ export default function ChatConversationPage() {
     }
   }, [showGifs]);
 
-  const gifCategories = [
+  const categories = [
     { id: "trending", label: "🔥 Trending" },
     { id: "love", label: "❤️ Láska" },
     { id: "haha", label: "😂 Smích" },
@@ -262,7 +262,7 @@ export default function ChatConversationPage() {
                     </form>
                     
                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide no-scrollbar">
-                      {gifCategories.map(cat => (
+                      {categories.map(cat => (
                         <button 
                           key={cat.id}
                           className="btn btn-secondary btn-xs"

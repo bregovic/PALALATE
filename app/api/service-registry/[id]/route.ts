@@ -67,10 +67,19 @@ export async function PATCH(
           serviceName: name || oldRegistry.name,
           OR: [
             { iconUrl: oldRegistry.iconUrl },
-            { iconUrl: null }
+            { iconUrl: null },
+            { iconUrl: "" }
           ]
         },
         data: { iconUrl }
+      });
+
+      // PROPAGATION TO WISHES
+      await prisma.wish.updateMany({
+        where: { 
+          serviceName: name || oldRegistry.name
+        },
+        data: { link: iconUrl } // In this app, sometimes link is used for icon/meta for wishes
       });
     }
 
