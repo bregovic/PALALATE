@@ -13,9 +13,10 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const [pendingRequests, unreadNotifs] = await Promise.all([
+  const [pendingRequests, unreadNotifs, unreadMessages] = await Promise.all([
     import("@/lib/prisma").then(m => m.prisma.accessRequest.count({ where: { ownerId: user.id, status: "PENDING" } })),
     import("@/lib/prisma").then(m => m.prisma.notification.count({ where: { userId: user.id, readAt: null } })),
+    import("@/lib/prisma").then(m => m.prisma.chatMessage.count({ where: { receiverId: user.id, readAt: null } })),
   ]);
 
   return (
@@ -23,6 +24,7 @@ export default async function DashboardLayout({
       user={user} 
       pendingRequests={pendingRequests} 
       unreadNotifs={unreadNotifs}
+      unreadMessages={unreadMessages}
     >
       {children}
     </DashboardShell>

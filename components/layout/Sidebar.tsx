@@ -103,12 +103,14 @@ export default function Sidebar({
   user, 
   pendingRequests = 0, 
   unreadNotifs = 0,
+  unreadMessages = 0,
   isOpen = false,
   onClose
 }: { 
   user: User; 
   pendingRequests?: number;
   unreadNotifs?: number;
+  unreadMessages?: number;
   isOpen?: boolean;
   onClose?: () => void;
 }) {
@@ -119,7 +121,7 @@ export default function Sidebar({
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Přehled", icon: <LayoutGridIcon /> },
     { href: "/dashboard/wall", label: "Nástěnka", icon: <LayoutIcon /> },
-    { href: "/dashboard/chat", label: "Chat", icon: <MessageSquareIcon /> },
+    { href: "/dashboard/chat", label: "Chat", icon: <MessageSquareIcon />, badge: unreadMessages },
     { href: "/dashboard/services", label: "Mé služby", icon: <CreditCardIcon /> },
     { href: "/dashboard/discover", label: "Služby přátel", icon: <GlobeIcon /> },
     { href: "/dashboard/wishes", label: "Přání", icon: <StarIcon /> },

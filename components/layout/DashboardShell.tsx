@@ -10,6 +10,7 @@ interface DashboardShellProps {
   user: any;
   pendingRequests: number;
   unreadNotifs: number;
+  unreadMessages?: number;
   children: React.ReactNode;
 }
 
@@ -78,6 +79,7 @@ export default function DashboardShell({
   user, 
   pendingRequests, 
   unreadNotifs, 
+  unreadMessages = 0,
   children 
 }: DashboardShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -135,7 +137,8 @@ export default function DashboardShell({
               : pathname.startsWith(item.href);
           const badge =
             item.href === "/dashboard/requests" ? pendingRequests :
-            item.href === "/dashboard/notifications" ? unreadNotifs : 0;
+            item.href === "/dashboard/notifications" ? unreadNotifs : 
+            item.href === "/dashboard/chat" ? unreadMessages : 0;
 
           return (
             <Link
