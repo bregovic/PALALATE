@@ -47,12 +47,22 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
         console.log("[Email] Resend success:", data?.id);
         return { success: true, data };
       }
-      console.warn("[Email] Resend failed, falling back to SMTP. Error:", JSON.stringify(error));
+      
+      console.warn("[Email] Resend failed. Error:", JSON.stringify(error));
+      
+      // On Railway, SMTP is blocked. If Resend fails, don't even try SMTP 
+      // so we can see the actual Resend error in the UI instead of a timeout.
+      if (process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_STATIC_URL) {
+        return { 
+          success: false, 
+          error: `Resend error: ${error.message || JSON.stringify(error)}. (SMTP fallback skipped on Railway to avoid timeout)` 
+        };
+      }
     } else {
       console.log("[Email] Skipping Resend (no API key found)");
     }
 
-    // 2. Fallback to SMTP (pattern from FotoBuddy)
+    // 2. Fallback to SMTP (only if Resend wasn't attempted or we're not on Railway)
     const smtpHost = process.env.SMTP_HOST || SMTP_DEFAULTS.host;
     const smtpPort = parseInt(process.env.SMTP_PORT || String(SMTP_DEFAULTS.port));
     
