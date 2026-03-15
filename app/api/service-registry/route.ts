@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { 
       name, category, defaultPrice, currency, billingCycle, 
-      description, isShareable, usageMode, requiresBookingApproval, url 
+      description, isShareable, usageMode, requiresBookingApproval, url, iconUrl 
     } = body;
 
     if (!name) {
@@ -29,12 +29,12 @@ export async function POST(req: Request) {
       where: { name },
       update: { 
         category, defaultPrice, currency, billingCycle, description, 
-        isShareable, usageMode, requiresBookingApproval, url,
+        isShareable, usageMode, requiresBookingApproval, url, iconUrl,
         pricingType: body.pricingType 
       },
       create: { 
         name, category, defaultPrice, currency, billingCycle, description, 
-        isShareable, usageMode, requiresBookingApproval, url,
+        isShareable, usageMode, requiresBookingApproval, url, iconUrl,
         pricingType: body.pricingType 
       },
     });

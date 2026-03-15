@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import AvatarEditor from "@/components/common/AvatarEditor";
 
 interface UserData {
   id: string;
@@ -18,10 +19,11 @@ export default function SettingsPage() {
   const [avatar, setAvatar] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [tab, setTab] = useState<"profile" | "security" | "services" | "categories" | "system">("profile");
+  const [tab, setTab] = useState<"profile" | "security" | "services" | "categories" | "system" | "development">("profile");
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [systemUnlocked, setSystemUnlocked] = useState(false);
   const [adminPass, setAdminPass] = useState("");
+  const [editorTarget, setEditorTarget] = useState<null | 'profile' | 'service'>(null);
 
   useEffect(() => {
     fetch("/api/me").then((r) => r.json()).then((data) => {
@@ -76,6 +78,9 @@ export default function SettingsPage() {
             ⚙️ Systém
           </button>
         )}
+        <button className={`tab ${tab === "development" ? "active" : ""}`} onClick={() => setTab("development")}>
+          🛠️ Vývoj
+        </button>
       </div>
 
       {tab === "profile" && (
@@ -90,24 +95,34 @@ export default function SettingsPage() {
               )}
 
               <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 16 }}>
-                <div className="user-avatar" style={{ width: 80, height: 80, fontSize: "1.8rem", border: "4px solid var(--bg-hover)" }}>
+                <div 
+                  className="user-avatar" 
+                  style={{ width: 100, height: 100, fontSize: "2.5rem", border: "4px solid var(--bg-hover)", cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
+                  onClick={() => setEditorTarget('profile')}
+                >
                   {avatar ? (
                     <img src={avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     user?.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"
                   )}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <span style={{ fontSize: '1rem', color: 'white' }}>Změnit</span>
+                  </div>
                 </div>
                 <div className="flex-1">
                   <div className="form-group mb-0">
-                    <label className="form-label">Profilová fotka (URL)</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Sem vlož URL obrázku..."
-                      value={avatar}
-                      onChange={(e) => setAvatar(e.target.value)}
-                    />
-                    <p className="form-hint" style={{ marginTop: 4 }}>Tip: Použij odkaz na fotku z Facebooku, Instagramu nebo třeba Gravatar.</p>
+                    <label className="form-label">Profilová fotka</label>
+                    <div className="flex gap-2">
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditorTarget('profile')}>
+                        📂 Nahrát z počítače
+                      </button>
+                      {avatar && (
+                        <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => setAvatar('')}>
+                          Odstranit
+                        </button>
+                      )}
+                    </div>
+                    <p className="form-hint" style={{ marginTop: 8 }}>Tip: Klikni na kruh nebo tlačítko pro výběr fotky. Můžeš ji pak libovolně vyříznout.</p>
                   </div>
                 </div>
               </div>
@@ -540,6 +555,7 @@ function ServicesTab() {
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showEditor, setShowEditor] = useState(false);
   
   const [svcForm, setSvcForm] = useState({
     name: "",
@@ -553,6 +569,7 @@ function ServicesTab() {
     usageMode: "PRIVATE",
     requiresBookingApproval: false,
     url: "",
+    iconUrl: "",
   });
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
 
@@ -603,6 +620,7 @@ function ServicesTab() {
       usageMode: service.usageMode || "PRIVATE",
       requiresBookingApproval: service.requiresBookingApproval ?? false,
       url: service.url || "",
+      iconUrl: service.iconUrl || "",
     });
     setEditingServiceId(service.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -612,7 +630,7 @@ function ServicesTab() {
     setSvcForm({
       name: "", category: "", defaultPrice: 0, currency: "CZK",
       billingCycle: "MONTHLY", pricingType: "PAID", isShareable: true, description: "",
-      usageMode: "PRIVATE", requiresBookingApproval: false, url: ""
+      usageMode: "PRIVATE", requiresBookingApproval: false, url: "", iconUrl: ""
     });
     setEditingServiceId(null);
   };
@@ -629,6 +647,34 @@ function ServicesTab() {
           )}
         </div>
         <div className="card-body">
+          <div className="flex gap-6 mb-6">
+            <div 
+              className="user-avatar" 
+              style={{ width: 64, height: 64, borderRadius: 'var(--radius-lg)', cursor: 'pointer', background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', position: 'relative', overflow: 'hidden' }}
+              onClick={() => setShowEditor(true)}
+            >
+              {svcForm.iconUrl ? (
+                <img src={svcForm.iconUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ) : (
+                <span style={{ fontSize: '1.2rem' }}>🖼️</span>
+              )}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <span style={{ fontSize: '0.7rem', color: 'white' }}>Nahrát</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <label className="form-label">Logo / Ikona služby</label>
+              <div className="flex gap-2">
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowEditor(true)}>
+                  📂 Nahrát logo
+                </button>
+                {svcForm.iconUrl && (
+                  <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => setSvcForm({...svcForm, iconUrl: ''})}>Odstranit</button>
+                )}
+              </div>
+            </div>
+          </div>
+
           <form onSubmit={saveService} className="grid-1 gap-6">
             <div className="grid-2 gap-4">
               <div className="form-group">
@@ -750,7 +796,21 @@ function ServicesTab() {
             <tbody>
               {services.map(s => (
                 <tr key={s.id}>
-                  <td className="font-bold">{s.name}</td>
+                  <td>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="user-avatar" 
+                        style={{ width: 32, height: 32, borderRadius: 6, fontSize: '0.8rem', background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
+                      >
+                        {s.iconUrl ? (
+                          <img src={s.iconUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        ) : (
+                          categories.find(c => c.name === s.category)?.icon || "📦"
+                        )}
+                      </div>
+                      <span className="font-bold">{s.name}</span>
+                    </div>
+                  </td>
                   <td>
                     <div className="flex items-center gap-2">
                       <span className="text-xl">
@@ -779,7 +839,8 @@ function ServicesTab() {
                               billingCycle: s.billingCycle || "MONTHLY",
                               usageMode: s.usageMode || "PRIVATE",
                               requiresBookingApproval: s.requiresBookingApproval || false,
-                              url: s.url
+                              url: s.url,
+                              iconUrl: s.iconUrl
                             }),
                           });
                           if (res.ok) alert(`Služba ${s.name} byla přidána do tvého seznamu!`);
@@ -808,4 +869,258 @@ function ServicesTab() {
 
 function ManagementTab() {
   return null; // Deprecated
+}
+
+function DevelopmentTab({ user }: { user: UserData | null }) {
+  const [mode, setMode] = useState<"releases" | "bugs">("releases");
+  const [releases, setReleases] = useState<any[]>([]);
+  const [bugs, setBugs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Bug form
+  const [bugTitle, setBugTitle] = useState("");
+  const [bugDesc, setBugDesc] = useState("");
+  const [bugImage, setBugImage] = useState<string | null>(null);
+  const [submittingBug, setSubmittingBug] = useState(false);
+
+  // Release form (admin only)
+  const [relTitle, setRelTitle] = useState("");
+  const [relDesc, setRelDesc] = useState("");
+  const [relVersion, setRelVersion] = useState("");
+  const [submittingRel, setSubmittingRel] = useState(false);
+
+  const isAdmin = user?.role === "ADMIN";
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [relRes, bugRes] = await Promise.all([
+        fetch("/api/development/releases"),
+        fetch("/api/development/bugs")
+      ]);
+      setReleases(await relRes.json());
+      setBugs(await bugRes.json());
+    } catch (err) {
+      console.error("Failed to load dev data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const handleScreenshotPaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image") !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            setBugImage(event.target?.result as string);
+          };
+          reader.readAsDataURL(blob);
+        }
+      }
+    }
+  };
+
+  const submitBug = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bugTitle || !bugDesc) return;
+    setSubmittingBug(true);
+    try {
+      const res = await fetch("/api/development/bugs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: bugTitle, description: bugDesc, screenshot: bugImage })
+      });
+      if (res.ok) {
+        setBugTitle("");
+        setBugDesc("");
+        setBugImage(null);
+        loadData();
+      }
+    } finally {
+      setSubmittingBug(false);
+    }
+  };
+
+  const submitRelease = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!relTitle || !relDesc) return;
+    setSubmittingRel(true);
+    try {
+      const res = await fetch("/api/development/releases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: relTitle, description: relDesc, version: relVersion })
+      });
+      if (res.ok) {
+        setRelTitle("");
+        setRelDesc("");
+        setRelVersion("");
+        loadData();
+      }
+    } finally {
+      setSubmittingRel(false);
+    }
+  };
+
+  const updateBugStatus = async (bugId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/development/bugs/${bugId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) loadData();
+    } catch (err) {
+      console.error("Failed to update bug status", err);
+    }
+  };
+
+  const statusLabels: Record<string, { label: string, color: string }> = {
+    PENDING: { label: "Ke zpracování", color: "badge-blue" },
+    IN_PROGRESS: { label: "V řešení", color: "badge-purple" },
+    DEPLOYED: { label: "Nasazeno", color: "badge-green" },
+    TESTED: { label: "Otestováno", color: "badge-purple" },
+    CLOSED: { label: "Uzavřeno", color: "badge-gray" }
+  };
+
+  return (
+    <div className="flex flex-col gap-6 animate-fade-in">
+      <div className="tabs" style={{ background: "var(--bg-elevated)", padding: 4, borderRadius: "var(--radius-lg)", alignSelf: "flex-start" }}>
+        <button className={`tab ${mode === "releases" ? "active" : ""}`} onClick={() => setMode("releases")} style={{ padding: "8px 16px" }}>
+          🚀 Historie verzí
+        </button>
+        <button className={`tab ${mode === "bugs" ? "active" : ""}`} onClick={() => setMode("bugs")} style={{ padding: "8px 16px" }}>
+          🐛 Bugy & Feedback
+        </button>
+      </div>
+
+      {mode === "releases" && (
+        <div className="flex flex-col gap-6">
+          {isAdmin && (
+            <div className="card">
+              <div className="card-header"><h3>➕ Přidat záznam o vývoji</h3></div>
+              <div className="card-body">
+                <form onSubmit={submitRelease} className="grid-1 gap-4">
+                  <div className="grid-2 gap-4">
+                    <div className="form-group">
+                      <label className="form-label">Verze (volitelné)</label>
+                      <input className="form-input" value={relVersion} onChange={e => setRelVersion(e.target.value)} placeholder="v1.2.0" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Název změny</label>
+                      <input className="form-input" value={relTitle} onChange={e => setRelTitle(e.target.value)} placeholder="Nástěnka a integrace GIFů" required />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Popis změn</label>
+                    <textarea className="form-textarea" value={relDesc} onChange={e => setRelDesc(e.target.value)} placeholder="Co nového jsme dnes nasadili..." required />
+                  </div>
+                  <button className="btn btn-primary" disabled={submittingRel}>
+                    {submittingRel ? "Ukládám..." : "Zveřejnit aktualizaci"}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {loading ? <div className="spinner" /> : releases.map(rel => (
+              <div key={rel.id} className="card">
+                <div className="card-body">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                    <div>
+                      <h4 style={{ margin: 0, color: "var(--text-primary)" }}>{rel.title}</h4>
+                      <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{new Date(rel.createdAt).toLocaleDateString("cs-CZ")}</div>
+                    </div>
+                    {rel.version && <span className="badge badge-blue">{rel.version}</span>}
+                  </div>
+                  <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>{rel.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {mode === "bugs" && (
+        <div className="flex flex-col gap-6">
+          <div className="card">
+            <div className="card-header"><h3>🐞 Reportovat chybu</h3></div>
+            <div className="card-body">
+              <form onSubmit={submitBug} className="grid-1 gap-4">
+                <div className="form-group">
+                  <label className="form-label">Co nefunguje?</label>
+                  <input className="form-input" value={bugTitle} onChange={e => setBugTitle(e.target.value)} placeholder="Stručný titulek..." required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Podrobný popis</label>
+                  <textarea 
+                    className="form-textarea" 
+                    value={bugDesc} 
+                    onChange={e => setBugDesc(e.target.value)} 
+                    onPaste={handleScreenshotPaste}
+                    placeholder="Popiš chybu... (Můžeš sem i vložit Ctrl+V snímek obrazovky)" 
+                    required 
+                  />
+                </div>
+                {bugImage && (
+                  <div style={{ position: "relative", width: "fit-content" }}>
+                    <img src={bugImage} alt="Nahraný snímek" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: "1px solid var(--border-subtle)" }} />
+                    <button type="button" className="btn btn-ghost btn-icon btn-sm" style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.5)" }} onClick={() => setBugImage(null)}>❌</button>
+                  </div>
+                )}
+                <button className="btn btn-primary" disabled={submittingBug}>
+                  {submittingBug ? "Odesílám..." : "Odeslat bug report"}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {loading ? <div className="spinner" /> : bugs.map(bug => (
+              <div key={bug.id} className="card">
+                <div className="card-body">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                      <div className="user-avatar" style={{ width: 32, height: 32, fontSize: "0.8rem" }}>
+                        {bug.reporter.avatar ? <img src={bug.reporter.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : bug.reporter.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, color: "var(--text-primary)" }}>{bug.title}</h4>
+                        <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{bug.reporter.name} • {new Date(bug.createdAt).toLocaleDateString("cs-CZ")}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <span className={`badge ${statusLabels[bug.status].color}`}>{statusLabels[bug.status].label}</span>
+                      <select 
+                        className="form-select text-xs" 
+                        style={{ padding: "4px 8px", width: "auto" }}
+                        value={bug.status}
+                        onChange={(e) => updateBugStatus(bug.id, e.target.value)}
+                      >
+                        {Object.entries(statusLabels).map(([key, val]) => (
+                          <option key={key} value={key}>{val.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: bug.screenshot ? 12 : 0 }}>{bug.description}</p>
+                  {bug.screenshot && (
+                    <a href={bug.screenshot} target="_blank" rel="noreferrer">
+                      <img src={bug.screenshot} alt="Screenshot" style={{ maxWidth: 200, borderRadius: 8, border: "1px solid var(--border-subtle)", cursor: "zoom-in" }} />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -17,6 +17,7 @@ interface Service {
   usageMode: string;
   isTerminated: boolean;
   url: string | null;
+  iconUrl: string | null;
   _count: {
     accessGrants: number;
     accessRequests: number;
@@ -325,7 +326,16 @@ export function ServicesListClient({ initialServices }: Props) {
                     </td>
                     <td>
                       <div className="flex items-center gap-3">
-                        <div className="text-xl w-8 text-center hidden-mobile">{icon}</div>
+                        <div 
+                          className="user-avatar" 
+                          style={{ width: 32, height: 32, borderRadius: 6, fontSize: '0.9rem', background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', flexShrink: 0, overflow: 'hidden' }}
+                        >
+                          {svc.iconUrl ? (
+                            <img src={svc.iconUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          ) : (
+                            icon
+                          )}
+                        </div>
                         <div className="font-bold text-primary">{svc.serviceName}</div>
                       </div>
                     </td>

@@ -72,16 +72,15 @@ export default function WallPage() {
   return (
     <DashboardShell user={user} pendingRequests={0} unreadNotifs={0}>
       <div className="page-content animate-fade-in" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ width: "100%", maxWidth: 1000 }}>
-          <div className="page-header" style={{ paddingLeft: 16 }}>
+        <div style={{ width: "100%", maxWidth: 800 }}>
+          <div className="page-header" style={{ marginBottom: 32 }}>
             <div>
               <h1 className="page-title">Nástěnka</h1>
               <p className="page-subtitle">Sdílej novinky a zajímavosti se svými přáteli 🥑</p>
             </div>
           </div>
-        </div>
 
-        <div style={{ width: "100%", maxWidth: 700 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
           {/* Create Post Area */}
           <div className="card mb-8">
             <div className="card-body">
@@ -137,6 +136,7 @@ export default function WallPage() {
                 </div>
               ))
             )}
+          </div>
           </div>
         </div>
       </div>

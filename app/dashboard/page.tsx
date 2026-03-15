@@ -36,6 +36,7 @@ export default async function DashboardPage() {
       id: true, serviceName: true, providerName: true,
       periodicPrice: true, currency: true, billingCycle: true,
       renewalDate: true, sharingStatus: true, status: true,
+      category: true, iconUrl: true,
       _count: { select: { accessGrants: { where: { status: "ACTIVE" } } } },
     },
   });
@@ -45,7 +46,7 @@ export default async function DashboardPage() {
     where: { granteeId: user.id, status: "ACTIVE" },
     include: {
       service: {
-        select: { id: true, serviceName: true, providerName: true, periodicPrice: true, currency: true },
+        select: { id: true, serviceName: true, providerName: true, periodicPrice: true, currency: true, iconUrl: true },
       },
       grantedBy: { select: { name: true } },
     },
@@ -157,8 +158,12 @@ export default async function DashboardPage() {
                     style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 8px", borderRadius: "var(--radius-md)", transition: "background var(--transition-fast)", textDecoration: "none" }}
                     className="service-row"
                   >
-                    <div style={{ width: 40, height: 40, borderRadius: "var(--radius-md)", background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", flexShrink: 0 }}>
-                      {svc.serviceName.slice(0, 2).toUpperCase()}
+                    <div style={{ width: 40, height: 40, borderRadius: "var(--radius-md)", background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", flexShrink: 0, overflow: 'hidden' }}>
+                      {svc.iconUrl ? (
+                        <img src={svc.iconUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      ) : (
+                        svc.serviceName.slice(0, 2).toUpperCase()
+                      )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{svc.serviceName}</div>
@@ -224,9 +229,18 @@ export default async function DashboardPage() {
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {sharedWithMe.map((g: any) => (
-                    <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
+                    <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border-subtle)" }}>
+                      <div 
+                        style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", justifyContent: "center", overflow: 'hidden', flexShrink: 0 }}
+                      >
+                        {g.service.iconUrl ? (
+                          <img src={g.service.iconUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        ) : (
+                          <span style={{ fontSize: '0.8rem' }}>🤝</span>
+                        )}
+                      </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: "0.85rem" }}>{g.service.serviceName}</div>
+                        <div style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--text-primary)" }}>{g.service.serviceName}</div>
                         <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>od {g.grantedBy.name}</div>
                       </div>
                       <span className="badge badge-green">Aktivní</span>

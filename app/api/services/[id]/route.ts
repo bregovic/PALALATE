@@ -4,10 +4,10 @@ import { requireAuth } from "@/lib/auth";
 import { calculateNextRenewal } from "@/lib/billing";
 
 // GET /api/services/[id]
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth();
-    const { id } = await params;
+    const { id } = params;
 
     const service = await prisma.service.findUnique({
       where: { id },
@@ -57,10 +57,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 // PATCH /api/services/[id]
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth();
-    const { id } = await params;
+    const { id } = params;
     const body = await req.json();
 
     const service = await prisma.service.findUnique({ where: { id } });
@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       billingCycle, pricingType, pricingDetails, renewalDate, startDate,
       description, category, maxSharedSlots,
       usageMode, requiresBookingApproval, isTerminated,
-      priceIntervals
+      priceIntervals, iconUrl, url
     } = body;
 
     let finalRenewalDate = (renewalDate && !isNaN(Date.parse(renewalDate))) ? new Date(renewalDate) : (renewalDate === null ? null : undefined);
@@ -105,6 +105,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         usageMode: usageMode as any,
         requiresBookingApproval: requiresBookingApproval !== undefined ? Boolean(requiresBookingApproval) : undefined,
         isTerminated: isTerminated !== undefined ? Boolean(isTerminated) : undefined,
+        iconUrl,
+        url,
         priceIntervals: Array.isArray(priceIntervals) ? {
           deleteMany: {},
           create: priceIntervals.map((pi: any) => ({
@@ -138,10 +140,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 // DELETE /api/services/[id]
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireAuth();
-    const { id } = await params;
+    const { id } = params;
 
     const service = await prisma.service.findUnique({ where: { id } });
     if (!service) return NextResponse.json({ error: "Not found" }, { status: 404 });

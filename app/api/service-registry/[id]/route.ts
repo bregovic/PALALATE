@@ -4,17 +4,17 @@ import { requireAuth } from "@/lib/auth";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const user = await requireAuth();
+    const { id } = params;
     if (user.role !== "ADMIN") {
       // Allow for now as the user requested to see management for all,
       // but in production this should be ADMIN only.
       // return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { id } = await params;
     const { 
       name, 
       category, 
@@ -25,7 +25,8 @@ export async function PATCH(
       isShareable, 
       description,
       usageMode,
-      requiresBookingApproval
+      requiresBookingApproval,
+      iconUrl
     } = await req.json();
 
     const service = await prisma.serviceRegistry.update({
@@ -41,6 +42,7 @@ export async function PATCH(
         description,
         usageMode,
         requiresBookingApproval,
+        iconUrl
       },
     });
 
@@ -53,13 +55,13 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const user = await requireAuth();
+    const { id } = params;
     // if (user.role !== "ADMIN") return new NextResponse("Unauthorized", { status: 401 });
 
-    const { id } = await params;
     await prisma.serviceRegistry.delete({
       where: { id },
     });

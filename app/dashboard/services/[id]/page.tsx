@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import AvatarEditor from "@/components/common/AvatarEditor";
 
 interface PriceInterval {
   id?: string;
@@ -37,6 +38,7 @@ interface Service {
   requiresBookingApproval: boolean;
   isTerminated: boolean;
   url: string | null;
+  iconUrl: string | null;
   priceIntervals: PriceInterval[];
   manualSlots: any[];
   _count: { accessGrants: number; manualSlots: number };
@@ -99,8 +101,10 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     requiresBookingApproval: false,
     isTerminated: false,
     url: "",
+    iconUrl: "",
     priceIntervals: [] as PriceInterval[],
   });
+  const [showIconEditor, setShowIconEditor] = useState(false);
   const [priceInput, setPriceInput] = useState("");
   const [slotsInput, setSlotsInput] = useState("");
 
@@ -143,6 +147,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         requiresBookingApproval: data.requiresBookingApproval ?? false,
         isTerminated: data.isTerminated ?? false,
         url: data.url || "",
+        iconUrl: data.iconUrl || "",
         priceIntervals: (data.priceIntervals || []).map((pi: any) => ({
           ...pi,
           startDate: pi.startDate ? pi.startDate.split("T")[0] : "",
@@ -413,8 +418,15 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     <div className="page-content animate-fade-in">
       <div className="page-header">
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div className="user-avatar" style={{ width: 56, height: 56, fontSize: "1.5rem", borderRadius: "var(--radius-lg)" }}>
-            {service.serviceName.slice(0, 2).toUpperCase()}
+          <div 
+            className="user-avatar" 
+            style={{ width: 64, height: 64, fontSize: "1.8rem", borderRadius: "var(--radius-lg)", background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)", overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {service.iconUrl ? (
+              <img src={service.iconUrl} alt={service.serviceName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            ) : (
+              service.serviceName.slice(0, 2).toUpperCase()
+            )}
           </div>
           <div>
             <div className="flex items-center gap-3">
@@ -1196,7 +1208,43 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                       </button>
                     </div>
                   </div>
-               </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Logo služby</label>
+                  <div className="flex items-center gap-4 p-4 border border-subtle rounded-xl bg-subtle/30">
+                     <div 
+                       className="w-16 h-16 rounded-lg bg-elevated border border-subtle flex items-center justify-center overflow-hidden cursor-pointer"
+                       onClick={() => setShowIconEditor(true)}
+                      >
+                       {editForm.iconUrl ? (
+                         <img src={editForm.iconUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                       ) : (
+                         <span className="text-2xl">🖼️</span>
+                       )}
+                     </div>
+                     <div className="flex-1">
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowIconEditor(true)}>
+                          📂 Nahrát nové logo
+                        </button>
+                        {editForm.iconUrl && (
+                          <button type="button" className="btn btn-ghost btn-sm text-danger ml-2" onClick={() => setEditForm({...editForm, iconUrl: ''})}>Odstranit</button>
+                        )}
+                        <p className="text-[10px] text-muted mt-2">Doporučujeme čtvercové logo s průhledným pozadím.</p>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">URL služby</label>
+                  <input 
+                    className="form-input" 
+                    value={editForm.url || ""} 
+                    onChange={e => setEditForm({...editForm, url: e.target.value})}
+                    placeholder="https://..."
+                  />
+                </div>
+
                <div className="form-group">
                   <label className="form-label font-bold">Kdo to uvidí?</label>
                   <select 
@@ -1312,6 +1360,14 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
         </div>
+      )}
+
+      {showIconEditor && (
+        <AvatarEditor 
+          onSave={(img) => { setEditForm({...editForm, iconUrl: img}); setShowIconEditor(false); }}
+          onCancel={() => setShowIconEditor(false)}
+          aspect={1}
+        />
       )}
     </div>
   );

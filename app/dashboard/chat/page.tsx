@@ -47,16 +47,13 @@ export default function ChatListPage() {
   return (
     <DashboardShell user={user} pendingRequests={0} unreadNotifs={0}>
       <div className="page-content animate-fade-in" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ width: "100%", maxWidth: 1000 }}>
-          <div className="page-header" style={{ paddingLeft: 16 }}>
+        <div style={{ width: "100%", maxWidth: 700 }}>
+          <div className="page-header" style={{ marginBottom: 32 }}>
             <div>
               <h1 className="page-title">Chat</h1>
               <p className="page-subtitle">Napiš si soukromě se svými přáteli 💬</p>
             </div>
           </div>
-        </div>
-
-        <div style={{ width: "100%", maxWidth: 600 }}>
           {loading ? (
             [1, 2, 3].map((i) => <div key={i} className="skeleton mt-4" style={{ height: 80, borderRadius: "var(--radius-lg)" }} />)
           ) : contacts.length === 0 ? (
