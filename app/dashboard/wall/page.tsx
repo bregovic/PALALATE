@@ -71,15 +71,17 @@ export default function WallPage() {
 
   return (
     <DashboardShell user={user} pendingRequests={0} unreadNotifs={0}>
-      <div className="page-content animate-fade-in">
-        <div className="page-header">
-          <div>
-            <h1 className="page-title">Nástěnka</h1>
-            <p className="page-subtitle">Sdílej novinky a zajímavosti se svými přáteli 🥑</p>
+      <div className="page-content animate-fade-in" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ width: "100%", maxWidth: 1000 }}>
+          <div className="page-header" style={{ paddingLeft: 16 }}>
+            <div>
+              <h1 className="page-title">Nástěnka</h1>
+              <p className="page-subtitle">Sdílej novinky a zajímavosti se svými přáteli 🥑</p>
+            </div>
           </div>
         </div>
 
-        <div style={{ maxWidth: 700, margin: "0 auto" }}>
+        <div style={{ width: "100%", maxWidth: 700 }}>
           {/* Create Post Area */}
           <div className="card mb-8">
             <div className="card-body">
@@ -118,7 +120,7 @@ export default function WallPage() {
                 <div key={post.id} className="post-card">
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
                     <div className="user-avatar" style={{ width: 44, height: 44 }}>
-                      {post.author.name.charAt(0).toUpperCase()}
+                      {post.author.avatar ? <img src={post.author.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : post.author.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{post.author.name}</div>

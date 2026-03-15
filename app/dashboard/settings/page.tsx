@@ -8,12 +8,14 @@ interface UserData {
   email: string;
   role: string;
   bio?: string;
+  avatar?: string;
 }
 
 export default function SettingsPage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
+  const [avatar, setAvatar] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"profile" | "security" | "services" | "categories" | "system">("profile");
@@ -27,6 +29,7 @@ export default function SettingsPage() {
         setUser(data);
         setName(data.name || "");
         setBio(data.bio || "");
+        setAvatar(data.avatar || "");
       }
     });
   }, []);
@@ -37,7 +40,7 @@ export default function SettingsPage() {
     const res = await fetch("/api/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, bio }),
+      body: JSON.stringify({ name, bio, avatar }),
     });
     if (res.ok) {
       setSaved(true);
@@ -86,17 +89,25 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8 }}>
-                <div className="user-avatar" style={{ width: 64, height: 64, fontSize: "1.4rem" }}>
-                  {user?.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+              <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 16 }}>
+                <div className="user-avatar" style={{ width: 80, height: 80, fontSize: "1.8rem", border: "4px solid var(--bg-hover)" }}>
+                  {avatar ? (
+                    <img src={avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    user?.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"
+                  )}
                 </div>
-                <div>
-                  <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{user?.name}</div>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{user?.email}</div>
-                  <div className="mt-2">
-                    <span className={`badge ${user?.role === "ADMIN" ? "badge-purple" : "badge-blue"}`}>
-                      {user?.role === "ADMIN" ? "👑 Admin" : "🙋 Uživatel"}
-                    </span>
+                <div className="flex-1">
+                  <div className="form-group mb-0">
+                    <label className="form-label">Profilová fotka (URL)</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Sem vlož URL obrázku..."
+                      value={avatar}
+                      onChange={(e) => setAvatar(e.target.value)}
+                    />
+                    <p className="form-hint" style={{ marginTop: 4 }}>Tip: Použij odkaz na fotku z Facebooku, Instagramu nebo třeba Gravatar.</p>
                   </div>
                 </div>
               </div>
