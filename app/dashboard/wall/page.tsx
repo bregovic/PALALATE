@@ -71,73 +71,128 @@ export default function WallPage() {
 
   return (
     <DashboardShell user={user} pendingRequests={0} unreadNotifs={0}>
-      <div className="page-content animate-fade-in" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ width: "100%", maxWidth: 800 }}>
-          <div className="page-header" style={{ marginBottom: 32 }}>
-            <div>
-              <h1 className="page-title">Nástěnka</h1>
-              <p className="page-subtitle">Sdílej novinky a zajímavosti se svými přáteli 🥑</p>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          {/* Create Post Area */}
-          <div className="card mb-8">
-            <div className="card-body">
-              <textarea
-                className="form-textarea"
-                placeholder="Co máš na srdci? Napiš něco hezkého..."
-                value={newPostContent}
-                onChange={(e) => setNewPostContent(e.target.value)}
-                style={{ border: "none", padding: 0, minHeight: 80, fontSize: "1.05rem", background: "transparent", boxShadow: "none" }}
-              />
-              <div className="divider" />
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => handleCreatePost()}
-                  disabled={submitting || !newPostContent.trim()}
-                >
-                  {submitting ? "Zveřejňuji..." : "🚀 Zveřejnit"}
-                </button>
+      <div className="page-content animate-fade-in social-layout">
+        <div className="feed-container">
+          
+          <div className="feed-main">
+            <div className="page-header" style={{ marginBottom: 24 }}>
+              <div>
+                <h1 className="page-title">Nástěnka</h1>
+                <p className="page-subtitle">Sdílej novinky a zajímavosti se svými přáteli 🥑</p>
               </div>
             </div>
-          </div>
 
-          {/* Posts Feed */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            {loading ? (
-              [1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 120, borderRadius: "var(--radius-lg)" }} />)
-            ) : posts.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">📮</div>
-                <div className="empty-title">Zatím tu nic není</div>
-                <p className="empty-desc">Zkus napsat první příspěvek a oslovit své kontakty!</p>
-              </div>
-            ) : (
-              posts.map((post) => (
-                <div key={post.id} className="post-card">
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                    <div className="user-avatar" style={{ width: 44, height: 44 }}>
-                      {post.author.avatar ? <img src={post.author.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : post.author.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{post.author.name}</div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                        {new Date(post.createdAt).toLocaleDateString("cs-CZ", {
-                          day: "numeric", month: "long", hour: "2-digit", minute: "2-digit"
-                        })}
-                      </div>
+            {/* Create Post Area */}
+            <div className="card mb-4" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+              <div className="card-body">
+                <div style={{ display: "flex", gap: 12 }}>
+                  <div className="user-avatar" style={{ width: 44, height: 44, flexShrink: 0 }}>
+                    {user?.avatar ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : user?.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <textarea
+                      className="form-textarea"
+                      placeholder="Co máš na srdci? Napiš něco hezkého..."
+                      value={newPostContent}
+                      onChange={(e) => setNewPostContent(e.target.value)}
+                      style={{ border: "none", padding: "8px 0", minHeight: 60, fontSize: "1.05rem", background: "transparent", boxShadow: "none", width: "100%" }}
+                    />
+                    <div className="divider" style={{ margin: "8px 0" }} />
+                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12 }}>
+                      <span className="text-xs text-muted">{newPostContent.length} / 500</span>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => handleCreatePost()}
+                        disabled={submitting || !newPostContent.trim()}
+                        style={{ borderRadius: 'var(--radius-full)', padding: '8px 20px' }}
+                      >
+                        {submitting ? "..." : "Zveřejnit"}
+                      </button>
                     </div>
                   </div>
-                  <p style={{ fontSize: "1rem", color: "var(--text-primary)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
-                    {post.content}
-                  </p>
                 </div>
-              ))
-            )}
+              </div>
+            </div>
+
+            {/* Posts Feed */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {loading ? (
+                [1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 120, borderRadius: "var(--radius-lg)" }} />)
+              ) : posts.length === 0 ? (
+                <div className="empty-state card">
+                  <div className="empty-icon">📮</div>
+                  <div className="empty-title">Zatím tu nic není</div>
+                  <p className="empty-desc">Zkus napsat první příspěvek a oslovit své kontakty!</p>
+                </div>
+              ) : (
+                posts.map((post) => (
+                  <div key={post.id} className="post-card">
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                      <div className="user-avatar" style={{ width: 40, height: 40, flexShrink: 0 }}>
+                        {post.author.avatar ? <img src={post.author.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : post.author.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: '0.95rem' }}>{post.author.name}</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                          {new Date(post.createdAt).toLocaleDateString("cs-CZ", {
+                            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+                          })}
+                        </div>
+                      </div>
+                      <button className="btn btn-ghost btn-sm btn-icon">•••</button>
+                    </div>
+                    <p style={{ fontSize: "0.95rem", color: "var(--text-primary)", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
+                      {post.content}
+                    </p>
+                    <div className="divider" style={{ margin: "16px 0 12px" }} />
+                    <div style={{ display: "flex", gap: 24 }}>
+                      <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text-muted)' }}>❤️ Líbí se</button>
+                      <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text-muted)' }}>💬 Komentovat</button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
+
+          <div className="feed-side">
+            <div className="card">
+              <div className="card-header"><h4>Koho sledovat?</h4></div>
+              <div className="card-body">
+                <p className="text-xs text-muted mb-4">Tady brzy uvidíš doporučení na nové kontakty.</p>
+                <div className="flex flex-col gap-3">
+                  {[1, 2].map(i => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="user-avatar" style={{ width: 32, height: 32 }}>👤</div>
+                      <div className="flex-1 text-xs font-bold">Uživatel {i}</div>
+                      <button className="btn btn-secondary btn-xs" style={{ fontSize: '0.65rem' }}>Přidat</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="card-header"><h4>Tvá aktivita</h4></div>
+              <div className="card-body">
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted">Příspěvky</span>
+                    <span className="font-bold">{posts.filter(p => p.author.id === user?.id).length}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted">Kontakty</span>
+                    <span className="font-bold">12</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs text-muted px-4">
+              © 2026 Palalate • <span className="cursor-pointer hover:underline">O nás</span> • <span className="cursor-pointer hover:underline">Podpora</span>
+            </div>
           </div>
+
         </div>
       </div>
     </DashboardShell>
