@@ -148,8 +148,8 @@ export default function ChatConversationPage() {
 
   return (
     <DashboardShell user={user} pendingRequests={0} unreadNotifs={0}>
-      <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden items-center" style={{ background: "var(--bg-base)" }}>
-        <div style={{ width: "100%", maxWidth: 800, background: "var(--bg-surface)", display: "flex", flexDirection: "column", height: "100%", borderLeft: "1px solid var(--border-subtle)", borderRight: "1px solid var(--border-subtle)" }}>
+      <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden social-layout" style={{ background: "var(--bg-base)" }}>
+        <div className="shadow-lg" style={{ width: "100%", maxWidth: 800, background: "var(--bg-surface)", display: "flex", flexDirection: "column", height: "100%", borderRight: "1px solid var(--border-subtle)", borderRadius: '0 0 12px 0' }}>
           {/* Chat Header */}
           <div className="topbar" style={{ position: "static", background: "var(--bg-surface)", justifyContent: "flex-start", gap: 16, borderBottom: "1px solid var(--border-subtle)" }}>
             <Link href="/dashboard/chat" className="btn btn-ghost btn-icon">
@@ -225,8 +225,8 @@ export default function ChatConversationPage() {
           </div>
 
           {/* Input Bar */}
-          <div className="chat-input-area" style={{ background: "var(--bg-surface)" }}>
-            <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          <div className="chat-input-area" style={{ background: "var(--bg-surface)", padding: '16px 24px' }}>
+            <div style={{ width: "100%" }}>
               {showGifs && (
                 <div className="card mb-4 animate-slide-up" style={{ maxHeight: 300, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                   <div className="card-header" style={{ padding: '8px 16px' }}>
