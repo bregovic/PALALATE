@@ -44,6 +44,8 @@ model User {
   sentMessages      ChatMessage[] @relation("SentMessages")
   receivedMessages  ChatMessage[] @relation("ReceivedMessages")
   posts             Post[]        @relation("UserPosts")
+  likes             Like[]
+  comments          Comment[]
   bugReports        BugReport[]   @relation("BugReporter")
 
   @@map("users")
@@ -606,8 +608,37 @@ model Post {
   updatedAt   DateTime  @updatedAt
 
   author      User      @relation("UserPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  likes       Like[]
+  comments    Comment[]
 
   @@map("posts")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("post_likes")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("post_comments")
 }
 
 // ─── DEVELOPMENT ─────────────────────────────────────────────────────────────

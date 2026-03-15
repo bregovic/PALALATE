@@ -28,11 +28,29 @@ export async function GET() {
       },
       include: {
         author: { select: { id: true, name: true, avatar: true } },
+        likes: {
+          select: { userId: true }
+        },
+        comments: {
+          include: {
+            user: { select: { id: true, name: true, avatar: true } }
+          },
+          orderBy: { createdAt: "asc" }
+        },
+        _count: {
+          select: { likes: true, comments: true }
+        }
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ posts });
+    // Enriched with likedByMe flag
+    const enrichedPosts = posts.map(p => ({
+      ...p,
+      likedByMe: p.likes.some(l => l.userId === user.id)
+    }));
+
+    return NextResponse.json({ posts: enrichedPosts });
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

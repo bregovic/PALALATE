@@ -116,40 +116,20 @@ export default function WallPage() {
 
             {/* Posts Feed */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {loading ? (
-                [1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 120, borderRadius: "var(--radius-lg)" }} />)
-              ) : posts.length === 0 ? (
+              {posts.length === 0 ? (
                 <div className="empty-state card">
                   <div className="empty-icon">📮</div>
                   <div className="empty-title">Zatím tu nic není</div>
                   <p className="empty-desc">Zkus napsat první příspěvek a oslovit své kontakty!</p>
                 </div>
               ) : (
-                posts.map((post) => (
-                  <div key={post.id} className="post-card">
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                      <div className="user-avatar" style={{ width: 40, height: 40, flexShrink: 0 }}>
-                        {post.author.avatar ? <img src={post.author.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : post.author.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: '0.95rem' }}>{post.author.name}</div>
-                        <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                          {new Date(post.createdAt).toLocaleDateString("cs-CZ", {
-                            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
-                          })}
-                        </div>
-                      </div>
-                      <button className="btn btn-ghost btn-sm btn-icon">•••</button>
-                    </div>
-                    <p style={{ fontSize: "0.95rem", color: "var(--text-primary)", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
-                      {post.content}
-                    </p>
-                    <div className="divider" style={{ margin: "16px 0 12px" }} />
-                    <div style={{ display: "flex", gap: 24 }}>
-                      <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text-muted)' }}>❤️ Líbí se</button>
-                      <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text-muted)' }}>💬 Komentovat</button>
-                    </div>
-                  </div>
+                posts.map((post: any) => (
+                  <PostCard 
+                    key={post.id} 
+                    post={post} 
+                    currentUser={user} 
+                    onDelete={() => setPosts(prev => prev.filter(p => p.id !== post.id))}
+                  />
                 ))
               )}
             </div>
@@ -162,5 +142,143 @@ export default function WallPage() {
         </div>
       </div>
     </DashboardShell>
+  );
+}
+function PostCard({ post: initialPost, currentUser, onDelete }: { post: any, currentUser: any, onDelete: () => void }) {
+  const [post, setPost] = useState(initialPost);
+  const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [isLiking, setIsLiking] = useState(false);
+  const [isCommenting, setIsCommenting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function handleLike() {
+    setIsLiking(true);
+    try {
+      const res = await fetch(`/api/social/posts/${post.id}/like`, { method: "POST" });
+      if (res.ok) {
+        const { liked } = await res.json();
+        setPost((prev: any) => ({
+          ...prev,
+          likedByMe: liked,
+          _count: {
+            ...prev._count,
+            likes: liked ? prev._count.likes + 1 : prev._count.likes - 1
+          }
+        }));
+      }
+    } finally {
+      setIsLiking(false);
+    }
+  }
+
+  async function handleComment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newComment.trim() || isCommenting) return;
+    setIsCommenting(true);
+    try {
+      const res = await fetch(`/api/social/posts/${post.id}/comment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newComment })
+      });
+      if (res.ok) {
+        const comment = await res.json();
+        setPost((prev: any) => ({
+          ...prev,
+          comments: [...(prev.comments || []), comment],
+          _count: { ...prev._count, comments: (prev._count.comments || 0) + 1 }
+        }));
+        setNewComment("");
+      }
+    } finally {
+      setIsCommenting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm("Opravdu smazat příspěvek?")) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/social/posts/${post.id}`, { method: "DELETE" });
+      if (res.ok) onDelete();
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  return (
+    <div className="post-card animate-fade-in" style={{ opacity: isDeleting ? 0.5 : 1 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+        <div className="user-avatar" style={{ width: 40, height: 40, flexShrink: 0 }}>
+          {post.author.avatar ? <img src={post.author.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : post.author.name.charAt(0).toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: '0.95rem' }}>{post.author.name}</div>
+          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+            {new Date(post.createdAt).toLocaleDateString("cs-CZ", {
+              day: "numeric", month: "long", hour: "2-digit", minute: "2-digit"
+            })}
+          </div>
+        </div>
+        {(post.authorId === currentUser?.id || currentUser?.role === 'ADMIN') && (
+          <button className="btn btn-ghost btn-sm btn-icon text-muted hover:text-danger" onClick={handleDelete} disabled={isDeleting}>🗑️</button>
+        )}
+      </div>
+      
+      <p style={{ fontSize: "0.95rem", color: "var(--text-primary)", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
+        {post.content}
+      </p>
+
+      <div className="divider" style={{ margin: "16px 0 12px" }} />
+      
+      <div style={{ display: "flex", gap: 16 }}>
+        <button 
+          className={`btn btn-ghost btn-sm flex items-center gap-2 ${post.likedByMe ? 'text-brand-600' : 'text-muted'}`}
+          onClick={handleLike}
+          disabled={isLiking}
+        >
+          {post.likedByMe ? '❤️' : '🤍'} {post._count?.likes || 0}
+        </button>
+        <button 
+          className="btn btn-ghost btn-sm flex items-center gap-2 text-muted"
+          onClick={() => setShowComments(!showComments)}
+        >
+          💬 {post._count?.comments || 0}
+        </button>
+      </div>
+
+      {showComments && (
+        <div className="mt-4 animate-slide-down">
+          <div className="divider" style={{ margin: "0 0 16px" }} />
+          <div className="flex flex-col gap-4 mb-4">
+            {post.comments?.map((c: any) => (
+              <div key={c.id} className="flex gap-3">
+                <div className="user-avatar" style={{ width: 28, height: 28, flexShrink: 0, fontSize: '0.7rem' }}>
+                  {c.user.avatar ? <img src={c.user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : c.user.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 bg-muted p-3 rounded-2xl" style={{ borderRadius: '0 16px 16px 16px' }}>
+                  <div className="font-bold text-xs mb-1">{c.user.name}</div>
+                  <div className="text-sm">{c.content}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleComment} className="flex gap-2">
+            <input 
+              className="form-input flex-1" 
+              placeholder="Napiš komentář..." 
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              style={{ borderRadius: 'var(--radius-full)', background: 'var(--bg-elevated)' }}
+            />
+            <button className="btn btn-primary btn-sm btn-icon" style={{ borderRadius: '50%' }} disabled={!newComment.trim() || isCommenting}>
+              {isCommenting ? "..." : "✈️"}
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
   );
 }

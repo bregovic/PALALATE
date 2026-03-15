@@ -119,10 +119,6 @@ export default function ChatConversationPage() {
   const [gifs, setGifs] = useState<any[]>([]);
   const [searchingGifs, setSearchingGifs] = useState(false);
 
-  if (authLoading || loading) {
-    return <div className="p-8 text-center text-gray-400">Načítám konverzaci...</div>;
-  }
-
   const handleGifSearch = async (query: string) => {
     if (!query.trim()) return;
     setSearchingGifs(true);
@@ -156,6 +152,10 @@ export default function ChatConversationPage() {
     { id: "wow", label: "😮 Úžas" },
     { id: "thanks", label: "🙏 Díky" },
   ];
+
+  if (authLoading || loading) {
+    return <div className="p-8 text-center text-gray-400">Načítám konverzaci...</div>;
+  }
 
   const sendGif = (url: string) => {
     handleSendMessage(undefined, `[GIF] ${url}`);
