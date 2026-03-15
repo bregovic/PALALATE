@@ -7,10 +7,11 @@ interface AvatarEditorProps {
   onSave: (base64Image: string) => void;
   onCancel: () => void;
   aspect?: number;
+  initialImage?: string | null;
 }
 
-export default function AvatarEditor({ onSave, onCancel, aspect = 1 }: AvatarEditorProps) {
-  const [image, setImage] = useState<string | null>(null);
+export default function AvatarEditor({ onSave, onCancel, aspect = 1, initialImage = null }: AvatarEditorProps) {
+  const [image, setImage] = useState<string | null>(initialImage);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);

@@ -100,7 +100,7 @@ export default function CostsPage() {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid-3 mb-8">
+      <div className="grid-2 md:grid-4 gap-4 mb-8">
         <div className="stat-card" style={{ borderLeft: "4px solid var(--brand-500)" }}>
           <div className="stat-label">Aktuální měsíc</div>
           <div className="stat-value">{data.currentMonthly.toLocaleString()} Kč</div>
@@ -127,9 +127,18 @@ export default function CostsPage() {
         <div className="stat-card" style={{ borderLeft: "4px solid #8b5cf6" }}>
           <div className="stat-label">Celkové náklady</div>
           <div className="stat-value">{data.lifetimeTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })} Kč</div>
-          <div className="stat-change">za celou dobu používání</div>
+          <div className="stat-change">za celou dobu</div>
           <div className="stat-icon" style={{ background: "rgba(139, 92, 246, 0.1)" }}>
             <History className="text-purple-500" size={20} />
+          </div>
+        </div>
+
+        <div className="stat-card" style={{ borderLeft: "4px solid var(--accent-600)", background: 'linear-gradient(to bottom right, white, #f0fdf4)' }}>
+          <div className="stat-label">Modelace rok {now.getFullYear()}</div>
+          <div className="stat-value text-accent-700">{projectedYearTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })} Kč</div>
+          <div className="stat-change font-bold text-accent-600">Aktuální trend (forecast)</div>
+          <div className="stat-icon" style={{ background: "rgba(16, 185, 129, 0.2)" }}>
+            <BarChart2 className="text-accent-600" size={20} />
           </div>
         </div>
       </div>
@@ -333,34 +342,6 @@ export default function CostsPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Prediction Card */}
-        <div className="card" style={{ background: 'linear-gradient(135deg, var(--brand-600) 0%, var(--brand-800) 100%)', color: 'white' }}>
-          <div className="card-body flex flex-col justify-center items-center text-center p-8">
-            <div className="p-4 bg-white/10 rounded-full mb-6 ring-4 ring-white/5">
-              <BarChart2 size={32} />
-            </div>
-            <h3 className="text-white opacity-90 mb-2">Modelace konce roku</h3>
-            <div className="text-4xl font-black mb-4">
-              {projectedYearTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })} Kč
-            </div>
-            <p className="text-sm opacity-70 leading-relaxed">
-              Při zachování aktuálního trendu utratíš za rok {now.getFullYear()} celkem tuto částku.
-            </p>
-            <div className="mt-8 pt-8 border-t border-white/10 w-full">
-              <div className="flex justify-between text-xs opacity-60 mb-1">
-                <span>Dosud utraceno</span>
-                <span>{((currentYearTotal / projectedYearTotal) * 100).toFixed(0)}%</span>
-              </div>
-              <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-white rounded-full transition-all duration-1000" 
-                  style={{ width: `${(currentYearTotal / projectedYearTotal) * 100}%` }}
-                />
-              </div>
             </div>
           </div>
         </div>

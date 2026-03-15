@@ -24,6 +24,18 @@ export default function SettingsPage() {
   const [systemUnlocked, setSystemUnlocked] = useState(false);
   const [adminPass, setAdminPass] = useState("");
   const [editorTarget, setEditorTarget] = useState<null | 'profile' | 'service'>(null);
+  const [editorImage, setEditorImage] = useState<string | null>(null);
+
+  const onFileSelectForAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setEditorImage(reader.result?.toString() || null);
+        setEditorTarget('profile');
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
 
   useEffect(() => {
     fetch("/api/me").then((r) => r.json()).then((data) => {
@@ -36,13 +48,16 @@ export default function SettingsPage() {
     });
   }, []);
 
-  async function saveProfile(e: React.FormEvent) {
-    e.preventDefault();
+  async function updateProfile(partialData: { name?: string; bio?: string; avatar?: string }) {
     setSaving(true);
     const res = await fetch("/api/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, bio, avatar }),
+      body: JSON.stringify({
+        name: partialData.name ?? name,
+        bio: partialData.bio ?? bio,
+        avatar: partialData.avatar ?? avatar,
+      }),
     });
     if (res.ok) {
       setSaved(true);
@@ -51,8 +66,14 @@ export default function SettingsPage() {
     setSaving(false);
   }
 
+  async function saveProfile(e: React.FormEvent) {
+    if (e) e.preventDefault();
+    await updateProfile({ name, bio, avatar });
+  }
+
   return (
-    <div className="page-content animate-fade-in">
+    <>
+      <div className="page-content animate-fade-in">
       <div className="page-header">
         <div>
           <h1 className="page-title">Nastavení</h1>
@@ -98,7 +119,7 @@ export default function SettingsPage() {
                 <div 
                   className="user-avatar" 
                   style={{ width: 100, height: 100, fontSize: "2.5rem", border: "4px solid var(--bg-hover)", cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
-                  onClick={() => setEditorTarget('profile')}
+                  onClick={() => document.getElementById('avatar-upload')?.click()}
                 >
                   {avatar ? (
                     <img src={avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -109,15 +130,22 @@ export default function SettingsPage() {
                     <span style={{ fontSize: '1rem', color: 'white' }}>Změnit</span>
                   </div>
                 </div>
+                <input 
+                  type="file" 
+                  id="avatar-upload" 
+                  hidden 
+                  accept="image/*" 
+                  onChange={onFileSelectForAvatar} 
+                />
                 <div className="flex-1">
                   <div className="form-group mb-0">
                     <label className="form-label">Profilová fotka</label>
                     <div className="flex gap-2">
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditorTarget('profile')}>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => document.getElementById('avatar-upload')?.click()}>
                         📂 Nahrát z počítače
                       </button>
                       {avatar && (
-                        <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => setAvatar('')}>
+                        <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => { setAvatar(''); updateProfile({ avatar: '' }); }}>
                           Odstranit
                         </button>
                       )}
@@ -241,17 +269,21 @@ export default function SettingsPage() {
 
       {tab === "development" && <DevelopmentTab user={user} />}
 
+      </div>
+
       {editorTarget === 'profile' && (
         <AvatarEditor 
-          onCancel={() => setEditorTarget(null)}
-          onSave={(base64) => {
+          initialImage={editorImage}
+          onCancel={() => { setEditorTarget(null); setEditorImage(null); }}
+          onSave={async (base64) => {
             setAvatar(base64);
             setEditorTarget(null);
+            setEditorImage(null);
+            await updateProfile({ avatar: base64 });
           }}
-          aspect={1}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -585,6 +617,18 @@ function ServicesTab() {
     iconUrl: "",
   });
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [editorImage, setEditorImage] = useState<string | null>(null);
+
+  const onFileSelectForService = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setEditorImage(reader.result?.toString() || null);
+        setShowEditor(true);
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -664,7 +708,7 @@ function ServicesTab() {
             <div 
               className="user-avatar" 
               style={{ width: 64, height: 64, borderRadius: 'var(--radius-lg)', cursor: 'pointer', background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', position: 'relative', overflow: 'hidden' }}
-              onClick={() => setShowEditor(true)}
+              onClick={() => document.getElementById('logo-upload')?.click()}
             >
               {svcForm.iconUrl ? (
                 <img src={svcForm.iconUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -678,9 +722,10 @@ function ServicesTab() {
             <div className="flex-1">
               <label className="form-label">Logo / Ikona služby</label>
               <div className="flex gap-2">
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowEditor(true)}>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => document.getElementById('logo-upload')?.click()}>
                   📂 Nahrát logo
                 </button>
+                <input type="file" id="logo-upload" hidden accept="image/*" onChange={onFileSelectForService} />
                 {svcForm.iconUrl && (
                   <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => setSvcForm({...svcForm, iconUrl: ''})}>Odstranit</button>
                 )}
@@ -795,10 +840,12 @@ function ServicesTab() {
 
       {showEditor && (
         <AvatarEditor 
-          onCancel={() => setShowEditor(false)}
+          initialImage={editorImage}
+          onCancel={() => { setShowEditor(false); setEditorImage(null); }}
           onSave={(base64) => {
             setSvcForm(prev => ({ ...prev, iconUrl: base64 }));
             setShowEditor(false);
+            setEditorImage(null);
           }}
           aspect={1}
         />
@@ -994,7 +1041,6 @@ function DevelopmentTab({ user }: { user: UserData | null }) {
       setSubmittingRel(false);
     }
   };
-
   const updateBugStatus = async (bugId: string, newStatus: string) => {
     try {
       const res = await fetch(`/api/development/bugs/${bugId}`, {
@@ -1008,9 +1054,19 @@ function DevelopmentTab({ user }: { user: UserData | null }) {
     }
   };
 
+  const [bugFilter, setBugFilter] = useState<string>("ALL");
+
+  const filteredBugs = (Array.isArray(bugs) ? bugs : []).filter(bug => {
+    if (bugFilter === "ALL") return true;
+    if (bugFilter === "OPEN") return ["PENDING", "IN_PROGRESS", "FIXED", "READY_FOR_TEST", "DEPLOYED"].includes(bug.status);
+    return bug.status === bugFilter;
+  });
+
   const statusLabels: Record<string, { label: string, color: string }> = {
     PENDING: { label: "Ke zpracování", color: "badge-blue" },
     IN_PROGRESS: { label: "V řešení", color: "badge-purple" },
+    FIXED: { label: "Opraveno", color: "badge-blue" },
+    READY_FOR_TEST: { label: "K testování", color: "badge-accent" },
     DEPLOYED: { label: "Nasazeno", color: "badge-green" },
     TESTED: { label: "Otestováno", color: "badge-purple" },
     CLOSED: { label: "Uzavřeno", color: "badge-gray" }
@@ -1109,8 +1165,20 @@ function DevelopmentTab({ user }: { user: UserData | null }) {
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {loading ? <div className="spinner" /> : (Array.isArray(bugs) ? bugs.map(bug => (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap gap-2 items-center bg-white p-2 rounded-xl border border-subtle shadow-sm">
+              <span className="text-xs font-bold text-muted ml-2 mr-1">FILTROVAT:</span>
+              <button onClick={() => setBugFilter("ALL")} className={`btn btn-xs ${bugFilter === "ALL" ? "btn-primary" : "btn-ghost"}`}>Vše</button>
+              <button onClick={() => setBugFilter("OPEN")} className={`btn btn-xs ${bugFilter === "OPEN" ? "btn-primary" : "btn-ghost"}`}>Otevřené</button>
+              <div className="w-px h-4 bg-slate-200 mx-1" />
+              <button onClick={() => setBugFilter("PENDING")} className={`btn btn-xs ${bugFilter === "PENDING" ? "btn-primary" : "btn-ghost"}`}>Nové</button>
+              <button onClick={() => setBugFilter("FIXED")} className={`btn btn-xs ${bugFilter === "FIXED" ? "btn-primary" : "btn-ghost"}`}>Opraveno</button>
+              <button onClick={() => setBugFilter("READY_FOR_TEST")} className={`btn btn-xs ${bugFilter === "READY_FOR_TEST" ? "btn-primary" : "btn-ghost"}`}>K testu</button>
+              <button onClick={() => setBugFilter("CLOSED")} className={`btn btn-xs ${bugFilter === "CLOSED" ? "btn-primary" : "btn-ghost"}`}>Uzavřeno</button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {loading ? <div className="spinner" /> : (filteredBugs.length > 0 ? filteredBugs.map(bug => (
               <div key={bug.id} className="card">
                 <div className="card-body">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
@@ -1145,7 +1213,8 @@ function DevelopmentTab({ user }: { user: UserData | null }) {
                   )}
                 </div>
               </div>
-            )) : null)}
+            )) : <div className="p-8 text-center text-muted bg-slate-50 rounded-xl border border-dashed border-subtle">Žádné bugy odpovídající filtru nebyly nalezeny.</div>)}
+            </div>
           </div>
         </div>
       )}

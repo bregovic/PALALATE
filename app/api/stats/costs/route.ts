@@ -137,7 +137,7 @@ export async function GET(_req: NextRequest) {
 
     // Current service monthly costs (for ranking by actual monthly expense)
     const currentServiceCosts = services
-      .filter(s => s.status !== "ARCHIVED" && !s.isTerminated)
+      .filter(s => s.status !== "ARCHIVED" && !s.isTerminated && s.billingCycle !== "ONEOFF")
       .map(s => ({
         id: s.id,
         name: s.serviceName,

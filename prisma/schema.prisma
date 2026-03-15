@@ -638,9 +638,11 @@ model BugReport {
 }
 
 enum BugStatus {
-  PENDING      // Ke zpracování
-  IN_PROGRESS  // V řešení
-  DEPLOYED     // Nasazeno
-  TESTED       // Otestováno
-  CLOSED       // Uzavřeno
+  PENDING           // Ke zpracování
+  IN_PROGRESS       // V řešení
+  FIXED             // Opraveno
+  READY_FOR_TEST    // K testování
+  DEPLOYED          // Nasazeno
+  TESTED            // Otestováno
+  CLOSED            // Uzavřeno
 }
