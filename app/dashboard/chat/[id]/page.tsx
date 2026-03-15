@@ -161,7 +161,7 @@ export default function ChatConversationPage() {
               {partner?.avatar ? (
                 <img src={partner.avatar} alt={partner.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
               ) : (
-                partner?.name.charAt(0).toUpperCase()
+                partner?.name?.charAt(0).toUpperCase() || "?"
               )}
             </div>
             <div>

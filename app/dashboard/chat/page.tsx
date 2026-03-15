@@ -119,30 +119,7 @@ export default function ChatListPage() {
           </div>
 
           <div className="feed-side">
-            <div className="card">
-              <div className="card-header"><h4>Aktivní teď</h4></div>
-              <div className="card-body">
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="user-avatar" style={{ width: 10, height: 10, background: 'var(--success-500)', border: 'none' }} />
-                    <span className="text-sm font-medium">Tonička</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="user-avatar" style={{ width: 10, height: 10, background: 'var(--success-500)', border: 'none' }} />
-                    <span className="text-sm font-medium">Venca</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="card">
-              <div className="card-body text-center p-6">
-                <div className="mb-4" style={{ fontSize: '2rem' }}>📞</div>
-                <h4 className="mb-2">Hromadné hovory</h4>
-                <p className="text-xs text-muted mb-4">Chceš si zavolat s více přáteli najednou? Brzy spustíme testovací verzi!</p>
-                <button className="btn btn-secondary btn-sm w-full">Chci vyzkoušet</button>
-              </div>
-            </div>
+            {/* Boční sekce odstraněny na žádost uživatele */}
           </div>
 
         </div>

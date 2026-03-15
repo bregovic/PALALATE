@@ -156,41 +156,7 @@ export default function WallPage() {
           </div>
 
           <div className="feed-side">
-            <div className="card">
-              <div className="card-header"><h4>Koho sledovat?</h4></div>
-              <div className="card-body">
-                <p className="text-xs text-muted mb-4">Tady brzy uvidíš doporučení na nové kontakty.</p>
-                <div className="flex flex-col gap-3">
-                  {[1, 2].map(i => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="user-avatar" style={{ width: 32, height: 32 }}>👤</div>
-                      <div className="flex-1 text-xs font-bold">Uživatel {i}</div>
-                      <button className="btn btn-secondary btn-xs" style={{ fontSize: '0.65rem' }}>Přidat</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="card-header"><h4>Tvá aktivita</h4></div>
-              <div className="card-body">
-                <div className="flex flex-col gap-4">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted">Příspěvky</span>
-                    <span className="font-bold">{posts.filter(p => p.author.id === user?.id).length}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted">Kontakty</span>
-                    <span className="font-bold">12</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-xs text-muted px-4">
-              © 2026 Palalate • <span className="cursor-pointer hover:underline">O nás</span> • <span className="cursor-pointer hover:underline">Podpora</span>
-            </div>
+            {/* Boční sekce odstraněny na žádost uživatele */}
           </div>
 
         </div>
