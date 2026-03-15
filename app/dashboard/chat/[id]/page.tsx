@@ -120,15 +120,15 @@ export default function ChatConversationPage() {
 
   return (
     <DashboardShell user={user} pendingRequests={0} unreadNotifs={0}>
-      <div className="flex flex-col h-[calc(100vh-80px)] max-w-4xl mx-auto overflow-hidden">
+      <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden" style={{ background: "var(--bg-base)" }}>
         {/* Chat Header */}
-        <div className="flex items-center gap-4 p-4 bg-gray-900 border-b border-gray-800">
-          <Link href="/dashboard/chat" className="btn btn-ghost btn-icon mr-2">
+        <div className="topbar" style={{ position: "static", background: "var(--bg-surface)", justifyContent: "flex-start", gap: 16 }}>
+          <Link href="/dashboard/chat" className="btn btn-ghost btn-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </Link>
-          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold overflow-hidden">
+          <div className="user-avatar" style={{ width: 40, height: 40, fontSize: "1rem" }}>
             {partner?.avatar ? (
               <Image src={partner.avatar} alt={partner.name} width={40} height={40} />
             ) : (
@@ -136,53 +136,51 @@ export default function ChatConversationPage() {
             )}
           </div>
           <div>
-            <h2 className="font-bold text-white mb-0.5">{partner?.name}</h2>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Online</span>
+            <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "1rem" }}>{partner?.name}</div>
+            <div className="flex items-center gap-1.5" style={{ marginTop: 2 }}>
+              <span className="notif-dot" style={{ width: 6, height: 6, background: "var(--success-500)", boxShadow: "0 0 4px var(--success-400)" }} />
+              <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Online</span>
             </div>
           </div>
         </div>
 
         {/* Messages Chamber */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black/40">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-gray-600">
-              <div className="text-4xl mb-4">👋</div>
-              <p>Pozdravte {partner?.name}!</p>
+            <div className="empty-state">
+              <div className="empty-icon">👋</div>
+              <p className="empty-title">Pozdravte {partner?.name}!</p>
             </div>
           ) : (
             messages.map((msg, idx) => {
-              const isMine = msg.senderId === user.id;
+              const isMine = msg.senderId === user?.id;
               const prevMsg = messages[idx - 1];
               const showDate = !prevMsg || 
                 new Date(msg.createdAt).toDateString() !== new Date(prevMsg.createdAt).toDateString();
 
               return (
-                <div key={msg.id}>
+                <div key={msg.id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   {showDate && (
-                    <div className="text-center my-6">
-                      <span className="bg-gray-800 text-gray-400 text-[10px] px-3 py-1 rounded-full uppercase tracking-tighter">
+                    <div style={{ textAlign: "center", margin: "24px 0" }}>
+                      <span className="badge badge-gray" style={{ background: "var(--bg-elevated)", color: "var(--text-muted)", fontWeight: 500 }}>
                         {new Date(msg.createdAt).toLocaleDateString("cs-CZ", {
                           day: "numeric", month: "long"
                         })}
                       </span>
                     </div>
                   )}
-                  <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                    <div 
-                      className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed shadow-lg ${
-                        isMine 
-                          ? "bg-purple-600 text-white rounded-tr-none" 
-                          : "bg-gray-800 text-gray-200 rounded-tl-none border border-gray-700"
-                      }`}
-                    >
-                      {msg.content}
-                      <div className={`text-[9px] mt-1 ${isMine ? "text-purple-200" : "text-gray-500"}`}>
-                        {new Date(msg.createdAt).toLocaleTimeString("cs-CZ", {
-                          hour: "2-digit", minute: "2-digit"
-                        })}
-                      </div>
+                  <div className={`chat-bubble ${isMine ? "right" : "left"}`}>
+                    {msg.content}
+                    <div style={{ 
+                      fontSize: "0.65rem", 
+                      marginTop: 4, 
+                      textAlign: isMine ? "right" : "left",
+                      opacity: 0.7,
+                      color: isMine ? "white" : "var(--text-muted)"
+                    }}>
+                      {new Date(msg.createdAt).toLocaleTimeString("cs-CZ", {
+                        hour: "2-digit", minute: "2-digit"
+                      })}
                     </div>
                   </div>
                 </div>
@@ -193,36 +191,41 @@ export default function ChatConversationPage() {
         </div>
 
         {/* Input Bar */}
-        <div className="p-4 bg-gray-900 border-t border-gray-800">
-          <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
-            {commonEmojis.map(emoji => (
-              <button 
-                key={emoji}
-                onClick={() => handleEmoji(emoji)}
-                className="w-8 h-8 flex items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg text-lg transition-colors border border-gray-700/50"
+        <div className="chat-input-area">
+          <div style={{ maxWidth: 800, margin: "0 auto" }}>
+            <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+              {commonEmojis.map(emoji => (
+                <button 
+                  key={emoji}
+                  onClick={() => handleEmoji(emoji)}
+                  className="btn btn-ghost btn-sm"
+                  style={{ minWidth: 40, height: 40, padding: 0, fontSize: "1.2rem", background: "var(--bg-elevated)" }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+            <form onSubmit={handleSendMessage} className="flex gap-3">
+              <input
+                className="form-input"
+                placeholder="Napište zprávu..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                disabled={sending}
+                style={{ borderRadius: "var(--radius-full)", padding: "12px 20px" }}
+              />
+              <button
+                type="submit"
+                className="btn btn-primary btn-icon"
+                disabled={sending || !newMessage.trim()}
+                style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0 }}
               >
-                {emoji}
+                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                  <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" />
+                </svg>
               </button>
-            ))}
+            </form>
           </div>
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <input
-              className="flex-1 bg-black border border-gray-700 rounded-full px-5 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all placeholder-gray-600"
-              placeholder="Napište zprávu..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              disabled={sending}
-            />
-            <button
-              type="submit"
-              className="w-12 h-12 bg-purple-600 hover:bg-purple-500 text-white rounded-full flex items-center justify-center transition-all active:scale-95 disabled:opacity-50"
-              disabled={sending || !newMessage.trim()}
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" />
-              </svg>
-            </button>
-          </form>
         </div>
       </div>
     </DashboardShell>
