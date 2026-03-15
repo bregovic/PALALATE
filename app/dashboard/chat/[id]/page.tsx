@@ -123,27 +123,10 @@ export default function ChatConversationPage() {
     if (!query.trim()) return;
     setSearchingGifs(true);
     try {
-      // Reverting to GIPHY as Tenor has restricted public API access in 2026
-      // dc6zaTOxFJmzC is a well known public beta key for prototyping
-      const apiKey = "dc6zaTOxFJmzC";
-      const limit = 21;
-      const endpoint = query === "trending" 
-        ? `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=${limit}` 
-        : `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=${limit}`;
-        
-      const res = await fetch(endpoint);
+      // Using our own internal resilient proxy
+      const res = await fetch(`/api/social/gifs?q=${encodeURIComponent(query)}&limit=21`);
       const data = await res.json();
-      
-      if (data.data) {
-        const formattedGifs = data.data.map((gif: any) => ({
-          id: gif.id,
-          url: gif.images.fixed_height.url,
-          previewUrl: gif.images.fixed_height_small.url
-        }));
-        setGifs(formattedGifs);
-      } else {
-        setGifs([]);
-      }
+      setGifs(data.results || []);
     } catch (err) {
       console.error("GIF search failed", err);
       setGifs([]);
