@@ -4,7 +4,16 @@ import nodemailer from "nodemailer";
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Transporter logic moved inside function
-const FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM || "onboarding@resend.dev";
+// Hardcoded defaults from working FotoBuddy configuration
+const SMTP_DEFAULTS = {
+  host: "smtp.gmail.com",
+  port: 465,
+  user: "ja.nepalalate@gmail.com",
+  pass: "dyaangpuyukbkbgb",
+  from: "ja.nepalalate@gmail.com"
+};
+
+const FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM || SMTP_DEFAULTS.from;
 
 interface SendEmailOptions {
   to: string;
@@ -14,8 +23,8 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   try {
-    // 1. Try Resend if fully configured
-    if (resend) {
+    // 1. Try Resend if fully configured (Highest priority on Railway)
+    if (resend && process.env.RESEND_API_KEY) {
       console.log("[Email] Attempting to send via Resend...");
       const { data, error } = await resend.emails.send({
         from: FROM,
@@ -28,23 +37,25 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
         console.log("[Email] Resend success:", data?.id);
         return { success: true, data };
       }
-      console.warn("[Email] Resend failed, falling back to SMTP if available:", error);
+      console.warn("[Email] Resend failed, falling back to SMTP:", error);
     }
 
-    // 2. Fallback to SMTP or use SMTP as primary if configured
-    if (process.env.SMTP_HOST) {
-      console.log("[Email] Attempting to send via SMTP...");
+    // 2. Fallback to SMTP using Environment variables OR Hardcoded defaults
+    const smtpHost = process.env.SMTP_HOST || SMTP_DEFAULTS.host;
+    
+    if (smtpHost) {
+      console.log("[Email] Attempting to send via SMTP (Gmail)...");
       
-      const port = parseInt(process.env.SMTP_PORT || "587");
+      const port = parseInt(process.env.SMTP_PORT || String(SMTP_DEFAULTS.port));
       const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
+        host: smtpHost,
         port: port,
         secure: port === 465,
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
+          user: process.env.SMTP_USER || SMTP_DEFAULTS.user,
+          pass: process.env.SMTP_PASS || SMTP_DEFAULTS.pass,
         },
-        // Better timeouts for Railway/Gmail
+        // Better timeouts for Railway/Gmail (FotoBuddy pattern)
         connectionTimeout: 20000, 
         greetingTimeout: 20000,
         socketTimeout: 30000,
