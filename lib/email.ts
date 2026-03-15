@@ -113,7 +113,7 @@ export const emailTemplates = {
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
         <div style="text-align: center; margin-bottom: 32px;">
-          <img src="${APP_URL}/logo_sent.png" alt="Palalate" style="height: 48px;" />
+          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 48px;" />
         </div>
         <h2 style="color: #a78bfa;">Nová žádost o přístup</h2>
         <p>Ahoj <strong>${ownerName}</strong>,</p>
@@ -169,7 +169,7 @@ export const emailTemplates = {
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
         <div style="text-align: center; margin-bottom: 32px;">
-          <img src="${APP_URL}/logo_sent.png" alt="Palalate" style="height: 48px;" />
+          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 48px;" />
         </div>
         <h2 style="color: #a78bfa; text-align: center;">Zapomenuté heslo?</h2>
         <p>Ahoj,</p>
@@ -198,7 +198,7 @@ export const emailTemplates = {
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
         <div style="text-align: center; margin-bottom: 32px;">
-          <img src="${APP_URL}/logo_sent.png" alt="Palalate" style="height: 48px;" />
+          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 48px;" />
         </div>
         <h2 style="color: #a78bfa;">Nová žádost o přátelství</h2>
         <p>Ahoj <strong>${addresseeName}</strong>,</p>
@@ -222,7 +222,7 @@ export const emailTemplates = {
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 40px; border-radius: 20px; border: 1px solid #2d2a3d;">
         <div style="text-align: center; margin-bottom: 40px;">
-          <img src="${APP_URL}/logo_sent.png" alt="Palalate" style="height: 56px;" />
+          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 56px;" />
         </div>
         <p style="font-size: 16px; line-height: 1.6;">Ahoj!</p>
         <p style="font-size: 16px; line-height: 1.6;"><strong>${inviterName}</strong> tě zve do aplikace <strong>Palalate</strong> – místa pro evidenci výdajů za předplatné a případné sdílení.</p>
