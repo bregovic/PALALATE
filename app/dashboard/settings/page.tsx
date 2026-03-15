@@ -18,6 +18,8 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"profile" | "security" | "services" | "categories" | "system">("profile");
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [systemUnlocked, setSystemUnlocked] = useState(false);
+  const [adminPass, setAdminPass] = useState("");
 
   useEffect(() => {
     fetch("/api/me").then((r) => r.json()).then((data) => {
@@ -172,7 +174,44 @@ export default function SettingsPage() {
 
       {tab === "services" && <ServicesTab />}
       {tab === "categories" && <CategoriesTab />}
-      {tab === "system" && <SystemTab user={user} />}
+      {tab === "system" && (
+        !systemUnlocked ? (
+          <div className="card animate-fade-in" style={{ maxWidth: 400, margin: "0 auto" }}>
+            <div className="card-header"><h3>🔐 Chráněná sekce</h3></div>
+            <div className="card-body">
+              <p className="text-sm text-muted mb-4">Vstup do systémového nastavení vyžaduje heslo správce.</p>
+              <div className="form-group">
+                <input 
+                  type="password" 
+                  className="form-input text-center" 
+                  placeholder="Zadejte heslo..." 
+                  value={adminPass}
+                  onChange={(e) => setAdminPass(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && adminPass === "Admin123") {
+                      setSystemUnlocked(true);
+                    }
+                  }}
+                />
+              </div>
+              <button 
+                className="btn btn-primary w-full mt-4"
+                onClick={() => {
+                  if (adminPass === "Admin123") {
+                    setSystemUnlocked(true);
+                  } else {
+                    alert("Špatné heslo! ❌");
+                  }
+                }}
+              >
+                Odemknout
+              </button>
+            </div>
+          </div>
+        ) : (
+          <SystemTab user={user} />
+        )
+      )}
     </div>
   );
 }
@@ -226,7 +265,7 @@ function SystemTab({ user }: { user: any }) {
         <div>
           <h4 className="mb-2">📧 Test odesílání emailů</h4>
           <p className="text-sm text-muted mb-4">
-            Tato funkce ověří, zda je správně nastaveno SMTP (Gmail) nebo Resend na Railway. 
+            Tato funkce ověří doručení přes <strong>Resend API</strong> (aktuálně aktivní) nebo záložní <strong>Gmail SMTP</strong>. 
             Testovací email bude odeslán na adresu: <strong>{user?.email}</strong>.
           </p>
           
@@ -298,9 +337,13 @@ function SystemTab({ user }: { user: any }) {
             <div>Node version: {typeof process !== 'undefined' ? process.version : 'unknown'}</div>
             <div className="mt-2 pt-2 border-t border-subtle">
               <div className="font-bold mb-1">Environment status:</div>
-              {debug ? Object.entries(debug).map(([k, v]: any) => (
-                <div key={k}>{k}: {v === true ? "✅ set" : (v === false ? "❌ missing" : v)}</div>
-              )) : "Loading config..."}
+              {debug ? Object.entries(debug).map(([k, v]: any) => {
+                // Better status for SMTP when Resend is present
+                if (debug.RESEND_API_KEY && k.startsWith('SMTP_') && v === false && k !== 'SMTP_FROM') {
+                  return <div key={k}>{k}: <span className="text-muted opacity-50">💤 inactive (Resend is active)</span></div>;
+                }
+                return <div key={k}>{k}: {v === true ? "✅ set" : (v === false ? "❌ missing" : v)}</div>;
+              }) : "Loading config..."}
             </div>
           </div>
         </div>
