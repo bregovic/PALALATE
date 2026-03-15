@@ -7,7 +7,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 // Hardcoded defaults from working FotoBuddy configuration
 const SMTP_DEFAULTS = {
   host: "smtp.gmail.com",
-  port: 465,
+  port: 587, // Changed to 587 as it might be less likely to be blocked than 465
   user: "ja.nepalalate@gmail.com",
   pass: "dyaangpuyukbkbgb",
   from: "ja.nepalalate@gmail.com"
@@ -23,9 +23,9 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   try {
-    // 1. Try Resend if fully configured (Highest priority on Railway)
+    // 1. Try Resend if fully configured (API based - bypasses SMTP blocks)
     if (resend && process.env.RESEND_API_KEY) {
-      console.log("[Email] Attempting to send via Resend...");
+      console.log("[Email] Attempting to send via Resend API...");
       const { data, error } = await resend.emails.send({
         from: FROM,
         to,
@@ -40,36 +40,35 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
       console.warn("[Email] Resend failed, falling back to SMTP:", error);
     }
 
-    // 2. Fallback to SMTP using Environment variables OR Hardcoded defaults
+    // 2. Fallback to SMTP (pattern from FotoBuddy)
     const smtpHost = process.env.SMTP_HOST || SMTP_DEFAULTS.host;
+    const smtpPort = parseInt(process.env.SMTP_PORT || String(SMTP_DEFAULTS.port));
     
-    if (smtpHost) {
-      console.log("[Email] Attempting to send via SMTP (Gmail)...");
-      
-      const port = parseInt(process.env.SMTP_PORT || String(SMTP_DEFAULTS.port));
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: port,
-        secure: port === 465,
-        auth: {
-          user: process.env.SMTP_USER || SMTP_DEFAULTS.user,
-          pass: process.env.SMTP_PASS || SMTP_DEFAULTS.pass,
-        },
-        // Better timeouts for Railway/Gmail (FotoBuddy pattern)
-        connectionTimeout: 20000, 
-        greetingTimeout: 20000,
-        socketTimeout: 30000,
-      });
+    console.log(`[Email] Attempting to send via SMTP (${smtpHost}:${smtpPort})...`);
+    
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: {
+        user: process.env.SMTP_USER || SMTP_DEFAULTS.user,
+        pass: process.env.SMTP_PASS || SMTP_DEFAULTS.pass,
+      },
+      tls: {
+        // This is often needed on restricted environments
+        rejectUnauthorized: false
+      }
+    });
 
-      const info = await transporter.sendMail({
-        from: FROM,
-        to,
-        subject,
-        html,
-      });
-      console.log("[Email] SMTP success:", info.messageId);
-      return { success: true, data: info };
-    }
+    const info = await transporter.sendMail({
+      from: `"Palalate 🥑" <${process.env.SMTP_USER || SMTP_DEFAULTS.user}>`,
+      to,
+      subject,
+      html,
+    });
+    
+    console.log("[Email] SMTP success:", info.messageId);
+    return { success: true, data: info };
 
     console.warn("[Email] No email provider configured (missing RESEND_API_KEY or SMTP_HOST)");
     return { success: false, error: "No email provider configured" };
