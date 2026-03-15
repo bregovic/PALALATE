@@ -41,6 +41,9 @@ model User {
   bookings          Booking[]
   invitations       Invitation[] @relation("Inviter")
   wishes            Wish[]       @relation("UserWishes")
+  sentMessages      ChatMessage[] @relation("SentMessages")
+  receivedMessages  ChatMessage[] @relation("ReceivedMessages")
+  posts             Post[]        @relation("UserPosts")
 
   @@map("users")
 }
@@ -502,6 +505,8 @@ enum NotificationType {
   FRIEND_REQUEST_RECEIVED
   FRIEND_REQUEST_ACCEPTED
   CREDENTIAL_VIEWED
+  CHAT_MESSAGE_RECEIVED
+  NEW_POST_FRIEND
 }
 
 // ─── AUDIT LOG ────────────────────────────────────────────────────────────────
@@ -573,4 +578,33 @@ enum WishStatus {
   WANTED
   FULFILLED
   ARCHIVED
+}
+
+// ─── SOCIAL ──────────────────────────────────────────────────────────────────
+
+model ChatMessage {
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  content     String
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  sender    User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver  User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId])
+  @@map("chat_messages")
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  authorId    String
+  content     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  author      User      @relation("UserPosts", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("posts")
 }

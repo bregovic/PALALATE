@@ -81,6 +81,18 @@ const GlobeIcon = () => (
   </svg>
 );
 
+const MessageSquareIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+const LayoutIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="3" rx="2" /><path d="M3 9h18" /><path d="M9 21V9" />
+  </svg>
+);
+
 const StarIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -106,6 +118,8 @@ export default function Sidebar({
 
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Přehled", icon: <LayoutGridIcon /> },
+    { href: "/dashboard/wall", label: "Nástěnka", icon: <LayoutIcon /> },
+    { href: "/dashboard/chat", label: "Chat", icon: <MessageSquareIcon /> },
     { href: "/dashboard/services", label: "Mé služby", icon: <CreditCardIcon /> },
     { href: "/dashboard/discover", label: "Služby přátel", icon: <GlobeIcon /> },
     { href: "/dashboard/wishes", label: "Přání", icon: <StarIcon /> },

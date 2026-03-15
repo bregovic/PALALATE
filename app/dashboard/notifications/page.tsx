@@ -22,6 +22,8 @@ const NOTIF_ICONS: Record<string, string> = {
   FRIEND_REQUEST_RECEIVED: "👋",
   FRIEND_REQUEST_ACCEPTED: "🤝",
   CREDENTIAL_VIEWED: "👁️",
+  CHAT_MESSAGE_RECEIVED: "💬",
+  NEW_POST_FRIEND: "📢",
 };
 
 const NOTIF_LABELS: Record<string, string> = {
@@ -35,6 +37,8 @@ const NOTIF_LABELS: Record<string, string> = {
   FRIEND_REQUEST_RECEIVED: "Nová žádost o kontakt",
   FRIEND_REQUEST_ACCEPTED: "Kontakt přijat",
   CREDENTIAL_VIEWED: "Zobrazení přihlašovacích údajů",
+  CHAT_MESSAGE_RECEIVED: "Nová zpráva v chatu",
+  NEW_POST_FRIEND: "Nový příspěvek na nástěnce",
 };
 
 export default function NotificationsPage() {
@@ -156,6 +160,10 @@ export default function NotificationsPage() {
                   <div style={{ fontWeight: n.readAt ? 400 : 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>
                     {n.type === 'FRIEND_REQUEST_ACCEPTED' && n.payload?.friendName 
                       ? `${n.payload.friendName} přijal(a) váš kontakt`
+                      : n.type === 'CHAT_MESSAGE_RECEIVED' && n.payload?.senderName
+                      ? `Nová zpráva od ${n.payload.senderName}`
+                      : n.type === 'NEW_POST_FRIEND' && n.payload?.authorName
+                      ? `${n.payload.authorName} přidal(a) příspěvek`
                       : (NOTIF_LABELS[n.type] || n.type)}
                   </div>
                   {n.payload?.serviceName && (

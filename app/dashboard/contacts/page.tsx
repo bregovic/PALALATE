@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface Friendship {
   id: string;
@@ -203,6 +204,16 @@ export default function ContactsPage() {
                       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{other.email}</div>
                     </div>
                     <span className="badge badge-green" style={{ flexShrink: 0 }}>Propojeni</span>
+                    <Link
+                      href={`/dashboard/chat/${other.id}`}
+                      className="btn btn-ghost btn-icon btn-sm"
+                      style={{ color: "var(--brand-400)" }}
+                      data-tooltip="Napsat zprávu"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                    </Link>
                     <button
                       id={`remove-${f.id}`}
                       className="btn btn-ghost btn-icon btn-sm"
