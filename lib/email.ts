@@ -23,7 +23,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   const resend = resendKey ? new Resend(resendKey) : null;
   
   const fromAddress = resendKey 
-    ? (process.env.SMTP_FROM || "onboarding@resend.dev") 
+    ? (process.env.SMTP_FROM || "ja.nepalalate@hollyhop.cz") 
     : (process.env.SMTP_FROM || process.env.EMAIL_FROM || SMTP_DEFAULTS.from);
 
   try {
