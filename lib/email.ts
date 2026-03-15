@@ -83,7 +83,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
     });
 
     const info = await transporter.sendMail({
-      from: `"Palalate 🥑" <${process.env.SMTP_USER || SMTP_DEFAULTS.user}>`,
+      from: `"Palalate" <${process.env.SMTP_USER || SMTP_DEFAULTS.user}>`,
       to,
       subject,
       html,
@@ -194,7 +194,7 @@ export const emailTemplates = {
     requesterName: string,
     contactsUrl: string
   ) => ({
-    subject: `👋 Nová žádost o přátelství od ${requesterName}`,
+    subject: `Nová žádost o přátelství od ${requesterName}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
         <div style="text-align: center; margin-bottom: 32px;">
@@ -208,32 +208,31 @@ export const emailTemplates = {
             Zobrazit žádost
           </a>
         </div>
-        <p style="color: #6b7280; font-size: 12px; text-align: center;">Palalate – Tvá aplikace pro férové sdílení</p>
+        <p style="color: #6b7280; font-size: 12px; text-align: center;">Palalate – místa pro evidenci výdajů za předplatné</p>
       </div>
     `,
   }),
-
+ 
   invitationReceived: (
     inviterName: string,
     registerUrl: string,
     message?: string
   ) => ({
-    subject: `🥑 Pozvánka do aplikace Palalate od ${inviterName}`,
+    subject: `Pozvánka do aplikace Palalate od ${inviterName}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 40px; border-radius: 20px; border: 1px solid #2d2a3d;">
         <div style="text-align: center; margin-bottom: 40px;">
           <img src="${APP_URL}/logo.png" alt="Palalate" style="height: 56px;" />
         </div>
-        <h1 style="color: #a78bfa; text-align: center; font-size: 24px;">Pojď sdílet s námi!</h1>
         <p style="font-size: 16px; line-height: 1.6;">Ahoj!</p>
-        <p style="font-size: 16px; line-height: 1.6;"><strong>${inviterName}</strong> tě zve do aplikace <strong>Palalate</strong> – nejlepšího místa pro správu a férové rozpočítání sdílených předplatných (Netflix, Spotify, HBO a další).</p>
+        <p style="font-size: 16px; line-height: 1.6;"><strong>${inviterName}</strong> tě zve do aplikace <strong>Palalate</strong> – místa pro evidenci výdajů za předplatné a případné sdílení.</p>
         
         ${message ? `
         <div style="background: #1a162e; border-left: 4px solid #7c3aed; padding: 16px; margin: 24px 0; font-style: italic;">
           "${message}"
         </div>
         ` : ''}
-
+ 
         <p style="font-size: 16px; line-height: 1.6;">Zaregistruj se a automaticky se propojíte jako přátelé.</p>
         
         <div style="text-align: center; margin: 40px 0;">
@@ -243,7 +242,7 @@ export const emailTemplates = {
         </div>
         
         <p style="color: #9ca3af; font-size: 14px; text-align: center; margin-top: 40px;">
-          Palalate – Tvá aplikace pro férové sdílení.
+          Palalate – správa sdílených předplatných
         </p>
       </div>
     `,
