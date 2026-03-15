@@ -135,11 +135,22 @@ export async function GET(_req: NextRequest) {
       iterDate.setMonth(iterDate.getMonth() + 1);
     }
 
+    // Current service monthly costs (for ranking by actual monthly expense)
+    const currentServiceCosts = services
+      .filter(s => s.status !== "ARCHIVED" && !s.isTerminated)
+      .map(s => ({
+        id: s.id,
+        name: s.serviceName,
+        monthlyCost: getPriceForDate(s, now)
+      }))
+      .sort((a, b) => b.monthlyCost - a.monthlyCost);
+
     return NextResponse.json({
       lifetimeTotal,
       yearlyStats,
       monthlyStats,
       serviceRankings: Object.values(serviceRankings).sort((a, b: any) => b.total - a.total),
+      currentServiceCosts,
       categoryRankings: Object.entries(categoryRankings)
         .map(([name, total]) => ({ name, total }))
         .sort((a, b) => b.total - a.total),

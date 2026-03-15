@@ -19,6 +19,7 @@ interface CostStats {
   yearlyStats: Record<string, number>;
   monthlyStats: Record<string, { total: number; byCategory: Record<string, number> }>;
   serviceRankings: Array<{ name: string; total: number }>;
+  currentServiceCosts: Array<{ id: string; name: string; monthlyCost: number }>;
   categoryRankings: Array<{ name: string; total: number }>;
 }
 
@@ -59,15 +60,21 @@ export default function CostsPage() {
   const now = new Date();
   const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const monthEntries = Object.entries(data.monthlyStats)
+  const monthEntries = Object.entries(data.monthlyStats || {})
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(-12);
 
-  const yearEntries = Object.entries(data.yearlyStats)
+  const yearEntries = Object.entries(data.yearlyStats || {})
     .sort((a, b) => a[0].localeCompare(b[0]));
 
   const chartEntries = view === "monthly" ? monthEntries : yearEntries;
-  const maxVal = Math.max(...chartEntries.map(e => typeof e[1] === 'number' ? e[1] : e[1].total), 1);
+  
+  // Projection logic
+  const monthsPassed = now.getMonth() + 1;
+  const currentYearTotal = data.yearlyStats[now.getFullYear()] || 0;
+  const projectedYearTotal = (currentYearTotal / monthsPassed) * 12;
+
+  const maxVal = Math.max(...chartEntries.map(e => typeof e[1] === 'number' ? e[1] : e[1].total), 1, view === 'yearly' ? projectedYearTotal : 0);
 
   return (
     <div className="page-content animate-fade-in">
@@ -188,6 +195,22 @@ export default function CostsPage() {
                   strokeLinejoin="round"
                 />
 
+                {/* Projection Line (Yearly only) */}
+                {view === 'yearly' && (
+                  <path 
+                    d={`
+                      M ${ ((chartEntries.length - 1) / (chartEntries.length - 1)) * 1000 } ${ 200 - (currentYearTotal / maxVal) * 190 }
+                      C ${ ((chartEntries.length - 1) / (chartEntries.length - 1)) * 1000 + 40 } ${ 200 - (currentYearTotal / maxVal) * 190 },
+                        ${ ((chartEntries.length - 1) / (chartEntries.length - 1)) * 1000 + 60 } ${ 200 - (projectedYearTotal / maxVal) * 190 },
+                        ${ ((chartEntries.length - 1) / (chartEntries.length - 1)) * 1000 + 100 } ${ 200 - (projectedYearTotal / maxVal) * 190 }
+                    `}
+                    fill="none"
+                    stroke="var(--accent-500)"
+                    strokeWidth="2"
+                    strokeDasharray="6 4"
+                  />
+                )}
+
                 {/* Data Points */}
                 {chartEntries.map((e, i) => {
                   const val = typeof e[1] === 'number' ? e[1] : e[1].total;
@@ -268,6 +291,77 @@ export default function CostsPage() {
                   );
                 })}
              </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid-3 mb-8">
+        {/* Monthly Cost Ranking (New) */}
+        <div className="card md:col-span-2">
+          <div className="card-header flex justify-between items-center">
+            <h3>📈 Měsíční žebříček (aktuální platby)</h3>
+            <span className="badge badge-blue">Odhad měsíčního dopadu</span>
+          </div>
+          <div className="card-body p-0">
+            <div className="table-wrap" style={{ border: 'none', borderRadius: 0 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Služba</th>
+                    <th className="text-right">Měsíční náklad</th>
+                    <th className="text-right">Roční dopad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.currentServiceCosts.slice(0, 8).map((svc, idx) => (
+                    <tr key={svc.id}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                           <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-bold ${idx < 3 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                             {idx + 1}
+                           </span>
+                           <span className="font-semibold">{svc.name}</span>
+                        </div>
+                      </td>
+                      <td className="text-right font-bold text-slate-700">
+                        {svc.monthlyCost.toLocaleString()} Kč
+                      </td>
+                      <td className="text-right text-muted text-xs">
+                        ~ {(svc.monthlyCost * 12).toLocaleString()} Kč
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Prediction Card */}
+        <div className="card" style={{ background: 'linear-gradient(135deg, var(--brand-600) 0%, var(--brand-800) 100%)', color: 'white' }}>
+          <div className="card-body flex flex-col justify-center items-center text-center p-8">
+            <div className="p-4 bg-white/10 rounded-full mb-6 ring-4 ring-white/5">
+              <BarChart2 size={32} />
+            </div>
+            <h3 className="text-white opacity-90 mb-2">Modelace konce roku</h3>
+            <div className="text-4xl font-black mb-4">
+              {projectedYearTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })} Kč
+            </div>
+            <p className="text-sm opacity-70 leading-relaxed">
+              Při zachování aktuálního trendu utratíš za rok {now.getFullYear()} celkem tuto částku.
+            </p>
+            <div className="mt-8 pt-8 border-t border-white/10 w-full">
+              <div className="flex justify-between text-xs opacity-60 mb-1">
+                <span>Dosud utraceno</span>
+                <span>{((currentYearTotal / projectedYearTotal) * 100).toFixed(0)}%</span>
+              </div>
+              <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-white rounded-full transition-all duration-1000" 
+                  style={{ width: `${(currentYearTotal / projectedYearTotal) * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
