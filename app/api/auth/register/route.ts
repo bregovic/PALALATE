@@ -66,33 +66,21 @@ export async function POST(req: NextRequest) {
 
       if (pendingInvites.length > 0) {
         for (const invite of pendingInvites) {
-          // Create ACCEPTED friendship (automatic as it's from an invitation)
+          // Create PENDING friendship (user must explicitly accept after joining)
           await prisma.friendship.create({
             data: {
               requesterId: invite.inviterId,
               addresseeId: user.id,
-              status: "ACCEPTED",
-              acceptedAt: new Date(),
+              status: "PENDING",
               message: invite.message || "Propojení přes pozvánku",
             },
           });
 
-          // Mark invite as ACCEPTED (user registered)
+          // Mark invite as ACCEPTED (the invitation itself was used, 
+          // but friendship still needs confirmation)
           await prisma.invitation.update({
             where: { id: invite.id },
             data: { status: "ACCEPTED" },
-          });
-
-          // Optional: Notify inviter that the friend joined
-          await prisma.notification.create({
-            data: {
-              userId: invite.inviterId,
-              type: "FRIEND_REQUEST_ACCEPTED",
-              payload: {
-                friendId: user.id,
-                friendName: user.name,
-              },
-            },
           });
         }
       }
