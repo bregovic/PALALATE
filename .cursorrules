@@ -1,0 +1,11 @@
+# Palalate Development Cursor Rules
+
+Vítej v projektu Palalate. Při práci na této aplikaci dodržuj následující pravidla:
+
+1. **Jazyk**: Veškerý text v UI musí být v češtině. Formátování čísel a dat také (cs-CZ).
+2. **Mobilní telefony**: Design musí být vždy perfektní na mobilu (Mobile-First).
+3. **Estetika**: Cílíme na premium look. Dark mode, zaoblené rohy, jemné stíny a gradienty.
+4. **Dokumentace změn**: Každou důležitou funkci nebo opravu zapiš do databáze v sekci "Nastavení -> Vývoj".
+5. **Chyby**: Bugy se reportují s screenshotem v sekci "Bugy & Feedback" v nastavení.
+6. **CSS**: Preferuj globální CSS třídy z `globals.css` (.card, .btn-primary, .page-header) před ad-hoc stylem.
+7. **Prisma**: Po změně schématu vždy spusť `npx prisma db push`.
