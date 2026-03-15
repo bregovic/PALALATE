@@ -238,6 +238,19 @@ export default function SettingsPage() {
           <SystemTab user={user} />
         )
       )}
+
+      {tab === "development" && <DevelopmentTab user={user} />}
+
+      {editorTarget === 'profile' && (
+        <AvatarEditor 
+          onCancel={() => setEditorTarget(null)}
+          onSave={(base64) => {
+            setAvatar(base64);
+            setEditorTarget(null);
+          }}
+          aspect={1}
+        />
+      )}
     </div>
   );
 }
@@ -780,6 +793,17 @@ function ServicesTab() {
         </div>
       </div>
 
+      {showEditor && (
+        <AvatarEditor 
+          onCancel={() => setShowEditor(false)}
+          onSave={(base64) => {
+            setSvcForm(prev => ({ ...prev, iconUrl: base64 }));
+            setShowEditor(false);
+          }}
+          aspect={1}
+        />
+      )}
+
       <div className="card">
         <div className="card-header"><h3>📋 Seznam služeb v systému</h3></div>
         <div className="table-wrap">
@@ -898,10 +922,14 @@ function DevelopmentTab({ user }: { user: UserData | null }) {
         fetch("/api/development/releases"),
         fetch("/api/development/bugs")
       ]);
-      setReleases(await relRes.json());
-      setBugs(await bugRes.json());
+      const relData = await relRes.json();
+      setReleases(Array.isArray(relData) ? relData : []);
+      const bugData = await bugRes.json();
+      setBugs(Array.isArray(bugData) ? bugData : []);
     } catch (err) {
       console.error("Failed to load dev data", err);
+      setReleases([]);
+      setBugs([]);
     } finally {
       setLoading(false);
     }
@@ -1029,7 +1057,7 @@ function DevelopmentTab({ user }: { user: UserData | null }) {
           )}
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {loading ? <div className="spinner" /> : releases.map(rel => (
+            {loading ? <div className="spinner" /> : (Array.isArray(releases) ? releases.map(rel => (
               <div key={rel.id} className="card">
                 <div className="card-body">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
@@ -1042,7 +1070,7 @@ function DevelopmentTab({ user }: { user: UserData | null }) {
                   <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>{rel.description}</p>
                 </div>
               </div>
-            ))}
+            )) : null)}
           </div>
         </div>
       )}
@@ -1082,7 +1110,7 @@ function DevelopmentTab({ user }: { user: UserData | null }) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {loading ? <div className="spinner" /> : bugs.map(bug => (
+            {loading ? <div className="spinner" /> : (Array.isArray(bugs) ? bugs.map(bug => (
               <div key={bug.id} className="card">
                 <div className="card-body">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
@@ -1117,7 +1145,7 @@ function DevelopmentTab({ user }: { user: UserData | null }) {
                   )}
                 </div>
               </div>
-            ))}
+            )) : null)}
           </div>
         </div>
       )}
