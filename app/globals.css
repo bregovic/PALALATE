@@ -1209,37 +1209,40 @@ tbody tr:hover { background: var(--bg-elevated); }
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1px;
-    padding: 4px 10px;
-    border-radius: var(--radius-full);
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
     text-decoration: none;
     color: var(--text-muted);
     white-space: nowrap;
     flex-shrink: 0;
     transition: all var(--transition-fast);
     position: relative;
-    min-width: 52px;
+    min-width: 64px;
   }
 
   .mobile-nav-item.active {
-    background: rgba(139, 92, 246, 0.12);
-    color: var(--brand-400);
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--brand-600);
   }
 
-  .mobile-nav-item:not(.active):active {
-    background: var(--bg-elevated);
+  .mobile-nav-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .mobile-nav-emoji {
-    font-size: 1.05rem;
-    line-height: 1;
-    display: block;
+  .mobile-nav-icon svg {
+    width: 20px;
+    height: 20px;
   }
 
   .mobile-nav-label {
-    font-size: 0.58rem;
+    font-size: 0.65rem;
     display: block;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 0.01em;
   }
 
