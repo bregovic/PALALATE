@@ -7,13 +7,16 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 // Hardcoded defaults from working FotoBuddy configuration
 const SMTP_DEFAULTS = {
   host: "smtp.gmail.com",
-  port: 587, // Changed to 587 as it might be less likely to be blocked than 465
+  port: 587,
   user: "ja.nepalalate@gmail.com",
   pass: "dyaangpuyukbkbgb",
   from: "ja.nepalalate@gmail.com"
 };
 
-const FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM || SMTP_DEFAULTS.from;
+// Resend requires onboarding@resend.dev for unverified domains
+const FROM = process.env.RESEND_API_KEY 
+  ? (process.env.SMTP_FROM || "onboarding@resend.dev") 
+  : (process.env.SMTP_FROM || process.env.EMAIL_FROM || SMTP_DEFAULTS.from);
 
 interface SendEmailOptions {
   to: string;
@@ -24,7 +27,7 @@ interface SendEmailOptions {
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   try {
     // 1. Try Resend if fully configured (API based - bypasses SMTP blocks)
-    if (resend && process.env.RESEND_API_KEY) {
+    if (resend) {
       console.log("[Email] Attempting to send via Resend API...");
       const { data, error } = await resend.emails.send({
         from: FROM,
