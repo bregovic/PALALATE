@@ -5,8 +5,8 @@ export async function GET(request: Request) {
   const q = searchParams.get("q") || "trending";
   const limit = searchParams.get("limit") || "21";
 
-  // Try GIPHY first if a key is provided in env
-  const giphyKey = process.env.GIPHY_API_KEY;
+  // Try GIPHY first if a key is provided in env or use the provided fallback
+  const giphyKey = process.env.GIPHY_API_KEY || "XXnx7Mya5GBCNCj6WpiRDHG9oV0xhrQC";
   
   if (giphyKey) {
     try {
