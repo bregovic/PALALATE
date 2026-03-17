@@ -56,15 +56,15 @@ export async function POST(req: Request) {
       const itemName = item.name.toLowerCase();
       
       // 1. Check exact prefix (minimum 3 chars)
-      const isPrefixMatch = itemName.length >= 3 && words.some(w => itemName.startsWith(w) || w.startsWith(itemName));
+      const isPrefixMatch = itemName.length >= 3 && words.some((w: string) => itemName.startsWith(w) || w.startsWith(itemName));
       
       // 2. Check overlap tokens
-      const isTokenMatch = words.some(w => w.length >= 3 && itemName.includes(w));
+      const isTokenMatch = words.some((w: string) => w.length >= 3 && itemName.includes(w));
 
       // 3. Fuzzy match (75% threshold)
       let maxSim = 0;
       // Compare item name against each word OR sliding windows of words
-      words.forEach(w => {
+      words.forEach((w: string) => {
         if (w.length < 3) return;
         const sim = getSimilarity(itemName, w);
         if (sim > maxSim) maxSim = sim;
