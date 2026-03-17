@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ServiceGridPicker } from "@/components/services/ServiceGridPicker";
 import { ImportExportTools } from "@/components/services/ImportExportTools";
+import { VoiceServiceAssigner } from "@/components/services/VoiceServiceAssigner";
 import { ServicesListClient } from "./ServicesListClient";
 
 export const metadata: Metadata = { title: "Mé služby" };
@@ -46,7 +47,8 @@ export default async function ServicesPage() {
             {totalMonthly > 2000 ? "Na tvém místě bychom začali škrtat. 💸" : "Pohoda! 😎"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <VoiceServiceAssigner />
           <ImportExportTools />
         </div>
       </div>
