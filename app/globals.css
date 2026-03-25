@@ -1387,8 +1387,11 @@ tbody tr:hover { background: var(--bg-elevated); }
   margin-bottom: 24px;
   gap: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
 }
 
 .tabs::-webkit-scrollbar { display: none; }
