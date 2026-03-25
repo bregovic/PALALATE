@@ -104,6 +104,7 @@ export default function Sidebar({
   pendingRequests = 0, 
   unreadNotifs = 0,
   unreadMessages = 0,
+  pendingFriends = 0,
   isOpen = false,
   onClose
 }: { 
@@ -111,6 +112,7 @@ export default function Sidebar({
   pendingRequests?: number;
   unreadNotifs?: number;
   unreadMessages?: number;
+  pendingFriends?: number;
   isOpen?: boolean;
   onClose?: () => void;
 }) {
@@ -131,7 +133,7 @@ export default function Sidebar({
         <line x1="6" y1="20" x2="6" y2="14" />
       </svg>
     ) },
-    { href: "/dashboard/contacts", label: "Kontakty", icon: <UsersIcon /> },
+    { href: "/dashboard/contacts", label: "Kontakty", icon: <UsersIcon />, badge: pendingFriends },
     { href: "/dashboard/requests", label: "Žádosti", icon: <InboxIcon />, badge: pendingRequests },
     { href: "/dashboard/settlements", label: "Vyúčtování", icon: <WalletIcon /> },
     { href: "/dashboard/notifications", label: "Notifikace", icon: <BellIcon />, badge: unreadNotifs },

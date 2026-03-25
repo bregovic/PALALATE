@@ -445,13 +445,17 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
-          {service.isOwner && (
+          {service.isOwner ? (
             <button 
               className="btn btn-secondary btn-sm"
               onClick={() => setShowEditModal(true)}
             >
               ⚙️ Editovat službu
             </button>
+          ) : (
+             <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-500 rounded-xl text-xs font-bold uppercase tracking-wider border border-slate-200">
+                🔒 Pouze pro čtení
+             </div>
           )}
           <Link href="/dashboard/services" className="btn btn-ghost btn-sm">← Zpět</Link>
         </div>

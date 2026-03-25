@@ -16,8 +16,10 @@ interface Service {
   sharingStatus: string;
   usageMode: string;
   isTerminated: boolean;
+  isShared?: boolean; // New flag for shared services
   url: string | null;
   iconUrl: string | null;
+  owner?: { name: string; avatar: string | null };
   _count: {
     accessGrants: number;
     accessRequests: number;
@@ -292,15 +294,15 @@ export function ServicesListClient({ initialServices }: Props) {
                 <th onClick={() => toggleSort("name")} className="cursor-pointer hover:text-brand-600">
                   Služba {sortCol === "name" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th onClick={() => toggleSort("category")} className="cursor-pointer hover:text-brand-600">
+                <th onClick={() => toggleSort("category")} className="cursor-pointer hover:text-brand-600 mobile-hide">
                   Kategorie {sortCol === "category" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
                 <th onClick={() => toggleSort("price")} className="cursor-pointer hover:text-brand-600 text-right">
                   Cena {sortCol === "price" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="text-center">Perioda</th>
-                <th className="text-center">Stav</th>
-                <th onClick={() => toggleSort("sharing")} className="cursor-pointer hover:text-brand-600 text-center">
+                <th className="text-center mobile-hide">Perioda</th>
+                <th className="text-center mobile-hide">Stav</th>
+                <th onClick={() => toggleSort("sharing")} className="cursor-pointer hover:text-brand-600 text-center mobile-hide">
                   Sdílení {sortCol === "sharing" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
                 <th className="text-center">Uživatelé</th>
@@ -315,14 +317,16 @@ export function ServicesListClient({ initialServices }: Props) {
                   : null;
 
                 return (
-                  <tr key={svc.id} className={selectedIds.includes(svc.id) ? "bg-brand-50/30" : ""}>
+                  <tr key={svc.id} className={selectedIds.includes(svc.id) ? "bg-brand-50/30" : (svc.isShared ? "bg-slate-50/50" : "")}>
                     <td style={{ width: 40, paddingRight: 0 }}>
-                       <input 
-                         type="checkbox" 
-                         className="w-4 h-4 cursor-pointer"
-                         checked={selectedIds.includes(svc.id)}
-                         onChange={() => toggleSelect(svc.id)}
-                       />
+                       {!svc.isShared && (
+                         <input 
+                           type="checkbox" 
+                           className="w-4 h-4 cursor-pointer"
+                           checked={selectedIds.includes(svc.id)}
+                           onChange={() => toggleSelect(svc.id)}
+                         />
+                       )}
                     </td>
                     <td>
                       <div className="flex items-center gap-3">
@@ -336,10 +340,16 @@ export function ServicesListClient({ initialServices }: Props) {
                             icon
                           )}
                         </div>
-                        <div className="font-bold text-primary">{svc.serviceName}</div>
+                        <div>
+                          <div className="font-bold text-primary flex items-center gap-2">
+                             {svc.serviceName}
+                             {svc.isShared && <span className="text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 bg-brand-100 text-brand-600 rounded">Host</span>}
+                          </div>
+                          {svc.isShared && <span className="text-[10px] text-muted italic">Vlastní {svc.owner?.name}</span>}
+                        </div>
                       </div>
                     </td>
-                    <td className="text-center">
+                    <td className="text-center mobile-hide">
                        <span className="text-xs font-medium text-muted bg-muted px-2 py-0.5 rounded-full">
                          {svc.category || "Ostatní"}
                        </span>
@@ -347,34 +357,46 @@ export function ServicesListClient({ initialServices }: Props) {
                     <td className="font-bold text-primary text-right">
                       {Number(svc.periodicPrice).toFixed(2)} {svc.currency}
                     </td>
-                    <td className="text-sm text-center">{billingLabels[svc.billingCycle]}</td>
-                    <td className="text-center">
+                    <td className="text-sm text-center mobile-hide">{billingLabels[svc.billingCycle]}</td>
+                    <td className="text-center mobile-hide">
                       {svc.isTerminated ? (
                         <span className="badge badge-red">Ukončeno</span>
                       ) : (
                         statusBadge(svc.status)
                       )}
                     </td>
-                    <td className="text-center">{sharingBadge((svc as any).usageMode)}</td>
+                    <td className="text-center mobile-hide">
+                       {svc.isShared ? (
+                         <span className="sharing-indicator sharing-disabled" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b' }}>👀 Čtení</span>
+                       ) : sharingBadge((svc as any).usageMode)}
+                    </td>
                     <td className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-sm font-bold text-primary">{svc._count.accessGrants}</span>
-                        {svc._count.accessRequests > 0 && (
-                          <div 
-                            title={`${svc._count.accessRequests} nových žádostí`}
-                            className="w-5 h-5 bg-brand-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-sm animate-pulse"
-                          >
-                            {svc._count.accessRequests}
+                       {!svc.isShared ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-sm font-bold text-primary">{svc._count.accessGrants}</span>
+                          {svc._count.accessRequests > 0 && (
+                            <div 
+                              title={`${svc._count.accessRequests} nových žádostí`}
+                              className="w-5 h-5 bg-brand-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-sm animate-pulse"
+                            >
+                              {svc._count.accessRequests}
+                            </div>
+                          )}
+                        </div>
+                       ) : (
+                          <div className="flex justify-center" title={`Vlastní ${svc.owner?.name}`}>
+                             <div className="w-6 h-6 rounded-full bg-slate-200 border border-white shadow-sm overflow-hidden flex items-center justify-center text-[10px] font-bold text-slate-500">
+                                {svc.owner?.avatar ? <img src={svc.owner.avatar} alt="" className="w-full h-full object-cover" /> : svc.owner?.name.charAt(0)}
+                             </div>
                           </div>
-                        )}
-                      </div>
+                       )}
                     </td>
                     <td>
                       <Link
                         href={`/dashboard/services/${svc.id}`}
                         className="btn btn-ghost btn-sm"
                       >
-                        Detail →
+                        {svc.isShared ? "Prohlédnout →" : "Detail →"}
                       </Link>
                     </td>
                   </tr>

@@ -13,9 +13,11 @@ export default async function ServicesPage() {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  const services = await prisma.service.findMany({
+  // 1. Fetch owned services
+  const ownedServices = await prisma.service.findMany({
     where: { ownerId: user.id, status: { not: "ARCHIVED" } },
     include: {
+      owner: { select: { name: true, avatar: true } },
       _count: {
         select: {
           accessGrants: { where: { status: "ACTIVE" } },
@@ -26,7 +28,29 @@ export default async function ServicesPage() {
     orderBy: { serviceName: "asc" },
   });
 
-  const totalMonthly = services
+  // 2. Fetch services where user has an active grant
+  const sharedGrants = await prisma.accessGrant.findMany({
+    where: { granteeId: user.id, status: "ACTIVE" },
+    include: {
+      service: {
+        include: {
+          owner: { select: { name: true, avatar: true } },
+        }
+      }
+    }
+  });
+
+  const sharedServices = sharedGrants.map(g => ({
+    ...g.service,
+    isShared: true, // Mark for UI as read-only
+  }));
+
+  const allServices = [
+    ...ownedServices.map(s => ({ ...s, isShared: false })),
+    ...sharedServices
+  ];
+
+  const totalMonthly = allServices
     .filter((s: any) => s.status === "ACTIVE")
     .reduce((sum: number, s: any) => {
       let monthly = Number(s.periodicPrice);
@@ -53,13 +77,14 @@ export default async function ServicesPage() {
         </div>
       </div>
 
-      <ServiceGridPicker activeServiceNames={services.map((s: import("@prisma/client").Service) => s.serviceName)} />
+      <ServiceGridPicker activeServiceNames={allServices.map((s: any) => s.serviceName)} />
 
-      <ServicesListClient initialServices={services.map((s: import("@prisma/client").Service) => ({
+      <ServicesListClient initialServices={allServices.map((s: any) => ({
         ...s,
         periodicPrice: s.periodicPrice.toString(),
         renewalDate: s.renewalDate?.toISOString() || null,
-        isTerminated: s.isTerminated
+        isTerminated: s.isTerminated,
+        isShared: s.isShared
       })) as any} />
     </div>
   );

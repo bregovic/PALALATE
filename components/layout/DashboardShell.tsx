@@ -11,6 +11,7 @@ interface DashboardShellProps {
   pendingRequests: number;
   unreadNotifs: number;
   unreadMessages?: number;
+  pendingFriends?: number;
   children: React.ReactNode;
 }
 
@@ -80,6 +81,7 @@ export default function DashboardShell({
   pendingRequests, 
   unreadNotifs, 
   unreadMessages = 0,
+  pendingFriends = 0,
   children 
 }: DashboardShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -138,6 +140,7 @@ export default function DashboardShell({
           const badge =
             item.href === "/dashboard/requests" ? pendingRequests :
             item.href === "/dashboard/notifications" ? unreadNotifs : 
+            item.href === "/dashboard/discover" ? pendingFriends : 
             item.href === "/dashboard/chat" ? unreadMessages : 0;
 
           return (
@@ -158,6 +161,7 @@ export default function DashboardShell({
         user={user} 
         pendingRequests={pendingRequests} 
         unreadNotifs={unreadNotifs} 
+        pendingFriends={pendingFriends}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />

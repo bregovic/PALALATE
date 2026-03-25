@@ -96,11 +96,9 @@ export default function SettingsPage() {
         <button className={`tab ${tab === "categories" ? "active" : ""}`} onClick={() => setTab("categories")}>
           📁 Kategorie
         </button>
-        {user && (
-          <button className={`tab ${tab === "system" ? "active" : ""}`} onClick={() => setTab("system")}>
-            ⚙️ Systém
-          </button>
-        )}
+        <button className={`tab ${tab === "system" ? "active" : ""}`} onClick={() => setTab("system")}>
+          ⚙️ Systém
+        </button>
         <button className={`tab ${tab === "development" ? "active" : ""}`} onClick={() => setTab("development")}>
           🛠️ Vývoj
         </button>
@@ -231,42 +229,75 @@ export default function SettingsPage() {
       {tab === "services" && <ServicesTab />}
       {tab === "categories" && <CategoriesTab />}
       {tab === "system" && (
-        !systemUnlocked ? (
-          <div className="card animate-fade-in" style={{ maxWidth: 400, margin: "0 auto" }}>
-            <div className="card-header"><h3>🔐 Chráněná sekce</h3></div>
-            <div className="card-body">
-              <p className="text-sm text-muted mb-4">Vstup do systémového nastavení vyžaduje heslo správce.</p>
-              <div className="form-group">
-                <input 
-                  type="password" 
-                  className="form-input text-center" 
-                  placeholder="Zadejte heslo..." 
-                  value={adminPass}
-                  onChange={(e) => setAdminPass(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && adminPass === "Admin123") {
-                      setSystemUnlocked(true);
-                    }
-                  }}
-                />
+        <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
+          {/* PWA Section for Everyone */}
+          <div className="card animate-fade-in shadow-xl bg-gradient-to-br from-white to-brand-50" style={{ border: '1px solid var(--brand-100)' }}>
+            <div className="card-header pb-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-brand-100 rounded-xl text-brand-600">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
+                    <rect x="5" y="2" width="14" height="20" rx="4" /><path d="M12 18h.01" />
+                  </svg>
+                </div>
+                <h3>Instalace webové aplikace</h3>
               </div>
-              <button 
-                className="btn btn-primary w-full mt-4"
-                onClick={() => {
-                  if (adminPass === "Admin123") {
-                    setSystemUnlocked(true);
-                  } else {
-                    alert("Špatné heslo! ❌");
-                  }
-                }}
-              >
-                Odemknout
-              </button>
+            </div>
+            <div className="card-body">
+              <p className="text-sm text-balance leading-relaxed mb-6">
+                Chceš Palalate používat jako aplikaci přímo z plochy? Získáš tak čistou obrazovku bez řádku prohlížeče a rychlejší přístup k tvým výkazům. ✨
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <InstallPwaCard />
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-2 right-2 opacity-5 scale-150 rotate-12 group-hover:rotate-0 transition-transform">🍏</div>
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Instrukce pro iOS</h4>
+                  <p className="text-[11px] leading-relaxed">V prohlížeči <strong>Safari</strong> klepni na tlačítko <strong>Sdílet</strong> (obdélník se šipkou nahoru) a vyber <strong>"Přidat na plochu"</strong>.</p>
+                </div>
+              </div>
             </div>
           </div>
-        ) : (
-          <SystemTab user={user} />
-        )
+
+          <hr style={{ border: 0, borderTop: "1px solid var(--border-subtle)", margin: "8px 24px" }} />
+
+          {/* Admin Protected Section */}
+          {!systemUnlocked ? (
+            <div className="card animate-fade-in" style={{ maxWidth: 500, margin: "0 auto" }}>
+              <div className="card-header"><h3>🔐 Chráněná sekce pro správce</h3></div>
+              <div className="card-body">
+                <p className="text-sm text-muted mb-4">Vstup do pokročilého systémového nastavení a debugu vyžaduje heslo správce.</p>
+                <div className="form-group flex gap-2">
+                  <input 
+                    type="password" 
+                    className="form-input flex-1 px-4 text-center rounded-xl" 
+                    placeholder="Zadejte heslo..." 
+                    value={adminPass}
+                    onChange={(e) => setAdminPass(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && adminPass === "Admin123") {
+                        setSystemUnlocked(true);
+                      }
+                    }}
+                  />
+                  <button 
+                    className="btn btn-primary px-8 rounded-xl"
+                    onClick={() => {
+                      if (adminPass === "Admin123") {
+                        setSystemUnlocked(true);
+                      } else {
+                        alert("Špatné heslo! ❌");
+                      }
+                    }}
+                  >
+                    Odemknout
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <SystemTab user={user} />
+          )}
+        </div>
       )}
 
       {tab === "development" && <DevelopmentTab user={user} />}
@@ -1275,6 +1306,60 @@ function DevelopmentTab({ user }: { user: UserData | null }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+function InstallPwaCard() {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
+  if (isInstalled) {
+    return (
+      <div className="p-4 rounded-2xl bg-brand-50 border border-brand-100 shadow-sm flex flex-col justify-center items-center text-center">
+        <div className="text-2xl mb-1">✅</div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-brand-600">Aplikace je nainstalována</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between group hover:border-brand-300 transition-colors">
+      <div>
+        <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Android / Chrome</h4>
+        <p className="text-[11px] leading-relaxed mb-4">Instalace jedním kliknutím. Rychlé, snadné a bezpečné.</p>
+      </div>
+      <button 
+        className="btn btn-primary w-full text-xs py-2 rounded-xl disabled:opacity-50 disabled:grayscale transition-all"
+        disabled={!deferredPrompt}
+        onClick={handleInstall}
+      >
+        {deferredPrompt ? "📲 Instalovat aplikaci" : "⌛ Čekám na prohlížeč..."}
+      </button>
+      {!deferredPrompt && <p className="text-[9px] text-muted mt-2 text-center">Pokud tlačítko nesvítí, tvůj prohlížeč instalaci nepodporuje nebo už je hotovo.</p>}
     </div>
   );
 }
