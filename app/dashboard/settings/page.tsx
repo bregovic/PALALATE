@@ -10,6 +10,11 @@ interface UserData {
   role: string;
   bio?: string;
   avatar?: string;
+  emailNotifyGlobal?: boolean;
+  emailNotifyRequests?: boolean;
+  emailNotifyChat?: boolean;
+  emailNotifyNewService?: boolean;
+  emailNotifyGrants?: boolean;
 }
 
 export default function SettingsPage() {
@@ -57,6 +62,7 @@ export default function SettingsPage() {
         name: partialData.name ?? name,
         bio: partialData.bio ?? bio,
         avatar: partialData.avatar ?? avatar,
+        ...partialData
       }),
     });
     if (res.ok) {
@@ -188,6 +194,79 @@ export default function SettingsPage() {
                   style={{ opacity: 0.7 }}
                 />
                 <span className="form-hint">Email zatím nelze změnit</span>
+              </div>
+
+              <div className="divider" style={{ margin: "16px 0" }} />
+              
+              <div className="form-group">
+                <label className="form-label" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  ✉️ Emailová oznámení
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-xl">
+                    <div>
+                      <div className="font-bold text-sm">Povolit emaily</div>
+                      <div className="text-xs text-muted">Globální vypínač pro všechna oznámení</div>
+                    </div>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={user?.emailNotifyGlobal ?? true} 
+                        onChange={(e) => updateProfile({ emailNotifyGlobal: e.target.checked } as any)}
+                      />
+                      <span className="slider round"></span>
+                    </label>
+                  </div>
+
+                  {(user?.emailNotifyGlobal ?? true) && (
+                    <div className="flex flex-col gap-3 pl-2 border-l-2 border-subtle animate-fade-in">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">Žádosti o přístup</div>
+                        <label className="switch switch-sm">
+                          <input 
+                            type="checkbox" 
+                            checked={user?.emailNotifyRequests ?? true} 
+                            onChange={(e) => updateProfile({ emailNotifyRequests: e.target.checked } as any)}
+                          />
+                          <span className="slider round"></span>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">Nové zprávy v chatu</div>
+                        <label className="switch switch-sm">
+                          <input 
+                            type="checkbox" 
+                            checked={user?.emailNotifyChat ?? true} 
+                            onChange={(e) => updateProfile({ emailNotifyChat: e.target.checked } as any)}
+                          />
+                          <span className="slider round"></span>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">Nová služba u přátel</div>
+                        <label className="switch switch-sm">
+                          <input 
+                            type="checkbox" 
+                            checked={user?.emailNotifyNewService ?? true} 
+                            onChange={(e) => updateProfile({ emailNotifyNewService: e.target.checked } as any)}
+                          />
+                          <span className="slider round"></span>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">Udělení / odebrání přístupu</div>
+                        <label className="switch switch-sm">
+                          <input 
+                            type="checkbox" 
+                            checked={user?.emailNotifyGrants ?? true} 
+                            onChange={(e) => updateProfile({ emailNotifyGrants: e.target.checked } as any)}
+                          />
+                          <span className="slider round"></span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div className="card-footer" style={{ justifyContent: "flex-end" }}>
