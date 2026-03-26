@@ -183,8 +183,9 @@ code {
   margin: 0 !important;
   max-width: 100% !important;
   padding-left: 0 !important;
-  display: flex;
-  justify-content: center;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
 }
 
 .feed-container {
@@ -490,15 +491,16 @@ code {
 
 .stat-icon {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 40px;
-  height: 40px;
+  top: 16px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.7;
+  opacity: 0.9;
+  z-index: 2;
 }
 
 /* ─── BUTTONS ──────────────────────────────────────────────────────────────── */
@@ -1121,10 +1123,10 @@ tbody tr:hover { background: var(--bg-elevated); }
     transform: translateX(0); 
   }
   
-  .main-content { margin-left: 0; padding-top: var(--topbar-height); }
-  .social-layout { padding-top: 0 !important; padding-left: 0 !important; }
-  .feed-container { margin-top: 0 !important; justify-content: center; }
-  .feed-main { padding-top: 8px !important; width: 100%; max-width: 100%; }
+  .main-content { margin-left: 0 !important; padding-top: var(--topbar-height); width: 100% !important; }
+  .social-layout { padding-top: 0 !important; padding-left: 0 !important; margin-left: 0 !important; width: 100% !important; }
+  .feed-container { margin-top: 0 !important; justify-content: center; width: 100% !important; }
+  .feed-main { padding-top: 8px !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; }
   .mobile-header-divider { display: block; height: 1.5px; background: rgba(0,0,0,1); width: 100%; margin-top: 0; }
   
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
