@@ -1090,6 +1090,21 @@ function ServicesTab() {
                       >
                         ✏️
                       </button>
+                      <button 
+                        className="btn btn-ghost btn-icon btn-sm text-danger"
+                        title="Smazat z číselníku"
+                        onClick={async () => {
+                          if (!confirm(`Opravdu smazat „${s.name}" z číselníku? Tato akce je nevratná.`)) return;
+                          const res = await fetch(`/api/service-registry/${s.id}`, { method: "DELETE" });
+                          if (res.ok) {
+                            load();
+                          } else {
+                            alert("Nepodařilo se smazat službu. Možná ji někdo používá.");
+                          }
+                        }}
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </td>
                 </tr>
