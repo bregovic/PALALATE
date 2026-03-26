@@ -195,8 +195,12 @@ export default function WishesPage() {
                     <tr key={wish.id} style={{ borderBottom: "1px solid var(--border-subtle)" }} className="hover:bg-muted/30 transition-colors">
                       <td style={{ padding: "14px 16px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div className="user-avatar" style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', flexShrink: 0 }}>
-                            {wish.serviceName[0].toUpperCase()}
+                          <div className="user-avatar" style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', flexShrink: 0, overflow: 'hidden' }}>
+                            {wish.link?.includes('netflix') ? <img src="https://www.google.com/s2/favicons?domain=netflix.com&sz=64" alt="" /> :
+                             wish.link?.includes('spotify') ? <img src="https://www.google.com/s2/favicons?domain=spotify.com&sz=64" alt="" /> :
+                             wish.link?.includes('hbomax') ? <img src="https://www.google.com/s2/favicons?domain=hbomax.com&sz=64" alt="" /> :
+                             wish.link?.includes('disneyplus') ? <img src="https://www.google.com/s2/favicons?domain=disneyplus.com&sz=64" alt="" /> :
+                             wish.serviceName[0].toUpperCase()}
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div className="font-bold text-sm truncate" style={{ color: "var(--text-primary)" }}>{wish.serviceName}</div>

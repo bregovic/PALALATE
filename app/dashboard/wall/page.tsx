@@ -95,7 +95,7 @@ export default function WallPage() {
                       placeholder="Co máš na srdci? Napiš něco hezkého..."
                       value={newPostContent}
                       onChange={(e) => setNewPostContent(e.target.value)}
-                      style={{ border: "none", padding: "8px 0", minHeight: 60, fontSize: "1.05rem", background: "transparent", boxShadow: "none", width: "100%" }}
+                      style={{ border: "none", padding: "4px 0", minHeight: 40, fontSize: "1rem", background: "transparent", boxShadow: "none", width: "100%", resize: 'none' }}
                     />
                     <div className="divider" style={{ margin: "8px 0" }} />
                     <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12 }}>

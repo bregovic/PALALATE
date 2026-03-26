@@ -158,21 +158,22 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
 
   return (
     <div className="mb-8">
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: isOpen ? 24 : 0 }}>
+      <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: isOpen ? 24 : 0 }}>
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className={`btn ${isOpen ? 'btn-secondary' : 'btn-primary'} shadow-lg animate-bounce-subtle`}
+          className={`btn ${isOpen ? 'btn-secondary' : 'btn-primary'} shadow-lg`}
           style={{ 
-            width: 64, 
-            height: 64, 
-            borderRadius: "50%", 
+            width: 44, 
+            height: 44, 
+            borderRadius: "12px", 
             display: "flex", 
             alignItems: "center", 
             justifyContent: "center",
             padding: 0,
-            fontSize: "2rem",
+            fontSize: "1.4rem",
             transform: isOpen ? 'rotate(45deg)' : 'none',
-            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            marginLeft: '4px'
           }}
           title={isOpen ? "Zavřít číselník" : "Přidat službu z číselníku"}
         >
