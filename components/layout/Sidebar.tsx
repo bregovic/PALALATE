@@ -74,13 +74,6 @@ const BellIcon = () => (
   </svg>
 );
 
-const GlobeIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" /><line x1="2" x2="22" y1="12" y2="12" />
-    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-  </svg>
-);
-
 const MessageSquareIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -124,8 +117,7 @@ export default function Sidebar({
     { href: "/dashboard", label: "Přehled", icon: <LayoutGridIcon /> },
     { href: "/dashboard/wall", label: "Nástěnka", icon: <LayoutIcon /> },
     { href: "/dashboard/chat", label: "Chat", icon: <MessageSquareIcon />, badge: unreadMessages },
-    { href: "/dashboard/services", label: "Mé služby", icon: <CreditCardIcon /> },
-    { href: "/dashboard/discover", label: "Služby přátel", icon: <GlobeIcon /> },
+    { href: "/dashboard/services", label: "Služby", icon: <CreditCardIcon /> },
     { href: "/dashboard/wishes", label: "Přání", icon: <StarIcon /> },
     { href: "/dashboard/costs", label: "Náklady", icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -160,7 +152,6 @@ export default function Sidebar({
       )}
       
       <aside className={`sidebar ${isOpen ? "open" : ""}`} id="sidebar">
-        {/* Logo & Close */}
         <div className="sidebar-logo" style={{ justifyContent: 'space-between', padding: '24px 20px' }}>
           <Link href="/dashboard" className="flex transition-opacity hover:opacity-80" onClick={onClose}>
             <Image src="/logo.png" alt="PalalateLogo" width={140} height={60} style={{ objectFit: 'contain', height: 'auto' }} priority />
@@ -175,14 +166,10 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="sidebar-nav" role="navigation" aria-label="Hlavní navigace">
           <span className="nav-section-label">Hlavní menu</span>
           {navItems.map((item) => {
-            const isActive =
-              item.href === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname.startsWith(item.href);
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
 
             return (
               <Link
@@ -213,7 +200,6 @@ export default function Sidebar({
           </Link>
         </nav>
 
-        {/* User footer */}
         <div className="sidebar-footer">
           <div className="user-card" id="sidebar-user-card">
             <div className="user-avatar">

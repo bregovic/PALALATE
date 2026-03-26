@@ -1553,8 +1553,8 @@ tbody tr:hover { background: var(--bg-elevated); }
   .table-wrap td, .table-wrap th { padding: 12px 10px; }
   .table-wrap .user-avatar { width: 28px !important; height: 28px !important; }
 
-  /* Wall/Chat Header optimization */
-  .wall-header { display: none !important; }
+  /* Wall/Chat/Wishes Header optimization */
+  .wall-header, .chat-header, .wishes-header { display: none !important; }
   .social-layout { padding-top: 10px !important; }
 }
 

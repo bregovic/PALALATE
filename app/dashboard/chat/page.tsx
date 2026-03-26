@@ -50,7 +50,7 @@ export default function ChatListPage() {
         <div className="feed-container">
           
           <div className="feed-main">
-            <div className="page-header" style={{ marginBottom: 24 }}>
+            <div className="page-header chat-header" style={{ marginBottom: 24 }}>
               <div>
                 <h1 className="page-title">Chat</h1>
                 <p className="page-subtitle">Napiš si soukromě se svými přáteli 💬</p>

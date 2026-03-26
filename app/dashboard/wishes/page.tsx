@@ -30,7 +30,8 @@ export default function WishesPage() {
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewScope, setViewScope] = useState<string>("me"); // "me", "friends" (aggregated), or "userId"
+  const [viewScope, setViewScope] = useState<string>("all"); // "all", "me", "friends"
+  const [searchTerm, setSearchTerm] = useState("");
   
   const [currentUser, setCurrentUser] = useState<any>(null);
 
@@ -68,12 +69,18 @@ export default function WishesPage() {
       let url = "/api/wishes";
       if (viewScope === "friends") {
         url += "?scope=friends";
-      } else if (viewScope !== "me") {
+      } else if (viewScope !== "me" && viewScope !== "all") {
         url += `?userId=${viewScope}`;
+      } else if (viewScope === "all") {
+        // We'll fetch both or handle on FE if API supports all
+        url += "?scope=all"; // Assuming API will be updated or we'll aggregate
       }
       
       const res = await fetch(url);
-      if (res.ok) setWishes(await res.json());
+      if (res.ok) {
+        let data = await res.json();
+        setWishes(data);
+      }
     } finally {
       setLoading(false);
     }
@@ -85,169 +92,169 @@ export default function WishesPage() {
     if (res.ok) loadWishes();
   }
 
-  const activeWishNames = useMemo(() => {
-    // Only block adding if it's already in MY wishes
-    if (viewScope !== "me") return [];
-    return wishes.map(w => w.serviceName);
-  }, [wishes, viewScope]);
+  const filteredWishes = useMemo(() => {
+    return wishes.filter(w => {
+      const matchesSearch = w.serviceName.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
+  }, [wishes, searchTerm]);
 
   return (
     <div className="page-content animate-fade-in">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">✨ Přání</h1>
-          <p className="page-subtitle">Služby, které si {viewScope === 'me' ? 'přeješ ty' : 'přejí ostatní'}. Společně to vyjde levněji!</p>
-        </div>
-        
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          {viewScope === "me" && (
-            <button 
-              className="btn btn-primary"
-              onClick={() => {
-                // We'll toggle the picker which is now just below
-                const picker = document.getElementById('wish-picker-container');
-                if (picker) picker.scrollIntoView({ behavior: 'smooth' });
-                // If it's a modal or similar, we'd trigger it here. 
-                // For now, I'll just keep the picker below the header but hidden/visible.
-              }}
-            >
-              ＋ Přidat přání
-            </button>
-          )}
-          <select 
-            className="form-select w-auto" 
-            style={{ minWidth: 200 }}
-            value={viewScope}
-            onChange={(e) => setViewScope(e.target.value)}
+      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 8, width: "100%" }}>
+          <button 
+            onClick={() => setViewScope("all")} 
+            className={`btn btn-sm px-4 rounded-full border-none whitespace-nowrap ${viewScope === "all" ? "btn-primary" : "bg-muted text-muted"}`}
           >
-            <option value="me">👤 Moje přání</option>
-            <option value="friends">🌐 Všechna přání přátel</option>
-            {friends.length > 0 && <optgroup label="Konkrétní přátelé">
-              {friends.map(f => (
-                <option key={f.id} value={f.id}>{f.name}</option>
-              ))}
-            </optgroup>}
-          </select>
+            🌟 Všechna přání
+          </button>
+          <button 
+            onClick={() => setViewScope("me")} 
+            className={`btn btn-sm px-4 rounded-full border-none whitespace-nowrap ${viewScope === "me" ? "btn-primary" : "bg-muted text-muted"}`}
+          >
+            👤 Moje
+          </button>
+          <button 
+            onClick={() => setViewScope("friends")} 
+            className={`btn btn-sm px-4 rounded-full border-none whitespace-nowrap ${viewScope === "friends" ? "btn-primary" : "bg-muted text-muted"}`}
+          >
+            🌐 Přátelé
+          </button>
+          <div style={{ width: 1, height: 24, background: "var(--border-subtle)", margin: "0 8px", flexShrink: 0 }} />
+          {friends.map(f => (
+            <button 
+              key={f.id}
+              onClick={() => setViewScope(f.id)} 
+              className={`btn btn-sm px-4 rounded-full border-none whitespace-nowrap flex items-center gap-2 ${viewScope === f.id ? "btn-primary" : "bg-muted text-muted"}`}
+            >
+              <div className="user-avatar" style={{ width: 18, height: 18, fontSize: '0.5rem' }}>
+                {f.avatar ? <img src={f.avatar} alt="" /> : f.name[0]}
+              </div>
+              {f.name}
+            </button>
+          ))}
         </div>
+
+      <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+        <div className="input-with-icon flex-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input 
+            type="text" 
+            placeholder="Hledat v přání..." 
+            className="form-input"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <button 
+          className="btn btn-primary"
+          onClick={() => {
+            setViewScope("me");
+            setTimeout(() => {
+               const picker = document.getElementById('wish-picker-container');
+               if (picker) picker.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }}
+        >
+          ＋ Přidat
+        </button>
       </div>
 
       {viewScope === "me" && (
-        <div id="wish-picker-container">
-          <WishGridPicker activeWishNames={activeWishNames} onWishAdded={loadWishes} />
+        <div id="wish-picker-container" className="mb-6">
+          <WishGridPicker activeWishNames={wishes.filter(w => w.user.id === currentUser?.id).map(w => w.serviceName)} onWishAdded={loadWishes} />
         </div>
       )}
 
       {loading ? (
         <div className="skeleton" style={{ height: 300, borderRadius: "var(--radius-xl)" }} />
-      ) : wishes.length === 0 ? (
+      ) : filteredWishes.length === 0 ? (
         <div className="card empty-state">
           <div className="empty-icon">✨</div>
-          <h3 className="empty-title">
-            {viewScope === "me" ? "Zatím nemáš žádná přání" : "Tento uživatel zatím nemá žádná přání"}
-          </h3>
-          <p className="empty-desc">
-            {viewScope === "me" 
-              ? "Klikni na plus výše a přidej si služby, které bys chtěl sdílet."
-              : "Alespoň tě to nebude nic stát! 😁"}
-          </p>
+          <h3 className="empty-title">Žádná přání nenalezena</h3>
+          <p className="empty-desc">Zkus změnit filtr nebo přidat vlastní přání.</p>
         </div>
       ) : (
-        <div className="card">
+        <div className="card animate-fade-in" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="table-wrap">
-            <table style={{ tableLayout: "fixed", width: "100%", borderCollapse: "collapse" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                  <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Služba</th>
-                  <th className="hidden-mobile" style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "120px" }}>Priorita</th>
-                  <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Poznámka / Odkaz</th>
-                  {viewScope !== "me" && <th style={{ textAlign: "left", padding: "16px", color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", width: "140px" }}>Přeje si</th>}
-                  <th style={{ width: viewScope === "me" ? "80px" : "130px" }}></th>
+                <tr style={{ background: "var(--bg-muted)", borderBottom: "1px solid var(--border-subtle)" }}>
+                  <th style={{ textAlign: "left", padding: "14px 16px", color: "var(--text-muted)", fontSize: "0.65rem", fontWeight: 800, textTransform: "uppercase" }}>Služba</th>
+                  <th className="mobile-hide" style={{ textAlign: "left", padding: "14px 16px", color: "var(--text-muted)", fontSize: "0.65rem", fontWeight: 800, textTransform: "uppercase", width: "100px" }}>Priorita</th>
+                  <th className="mobile-hide" style={{ textAlign: "left", padding: "14px 16px", color: "var(--text-muted)", fontSize: "0.65rem", fontWeight: 800, textTransform: "uppercase" }}>Poznámka</th>
+                  <th style={{ textAlign: "left", padding: "14px 16px", color: "var(--text-muted)", fontSize: "0.65rem", fontWeight: 800, textTransform: "uppercase", width: "140px" }}>Kdo si přeje</th>
+                  <th style={{ width: "80px" }}></th>
                 </tr>
               </thead>
               <tbody>
-                {wishes.map((wish) => (
-                  <tr key={wish.id} style={{ borderBottom: "1px solid var(--border-subtle)", verticalAlign: "middle" }}>
-                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div 
-                          className="user-avatar" 
-                          style={{ 
-                            width: 32, height: 32, borderRadius: 8, 
-                            background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                            overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            flexShrink: 0 
-                          }}
-                        >
-                          {wish.link && (wish.link.startsWith('data:image') || wish.link.includes('cloudinary') || wish.link.includes('storage')) ? (
-                            <img src={wish.link} alt={wish.serviceName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                          ) : (
-                            <span style={{ color: 'var(--brand-600)', fontSize: '0.9rem' }}>{wish.serviceName[0].toUpperCase()}</span>
-                          )}
-                        </div>
-                        <div style={{ overflow: "hidden" }}>
-                          <div className="font-bold text-sm" style={{ lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{wish.serviceName}</div>
-                          <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase" }}>{new Date(wish.createdAt).toLocaleDateString()}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="hidden-mobile" style={{ padding: "16px", verticalAlign: "middle" }}>
-                      {wish.priority === 3 && <span className="badge badge-red">🔥 Vysoká</span>}
-                      {wish.priority === 2 && <span className="badge badge-yellow">⭐ Střední</span>}
-                      {wish.priority <= 1 && <span className="badge badge-gray">Nízká</span>}
-                    </td>
-                    <td style={{ padding: "16px", verticalAlign: "middle" }}>
-                      <div className="flex flex-col gap-1" style={{ overflow: "hidden" }}>
-                        {wish.description && <div className="text-sm italic text-secondary" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>"{wish.description}"</div>}
-                        {wish.link && !wish.link.startsWith('data:image') && !wish.link.includes('cloudinary') && !wish.link.includes('storage') && (
-                          <a href={wish.link} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-600 hover:underline flex items-center gap-1">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="10" height="10">
-                              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                            </svg>
-                            Odkaz
-                          </a>
-                        )}
-                      </div>
-                    </td>
-                    {viewScope !== "me" && (
-                      <td style={{ padding: "16px", verticalAlign: "middle" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <div className="user-avatar" style={{ width: 22, height: 22, fontSize: '0.6rem', flexShrink: 0 }}>
-                            {wish.user.name[0].toUpperCase()}
+                {filteredWishes.map((wish) => {
+                  const isMine = wish.user.id === currentUser?.id;
+                  return (
+                    <tr key={wish.id} style={{ borderBottom: "1px solid var(--border-subtle)" }} className="hover:bg-muted/30 transition-colors">
+                      <td style={{ padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div className="user-avatar" style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+                            {wish.serviceName[0].toUpperCase()}
                           </div>
-                          <span className="text-xs font-semibold text-primary" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{wish.user.name}</span>
+                          <div style={{ minWidth: 0 }}>
+                            <div className="font-bold text-sm truncate" style={{ color: "var(--text-primary)" }}>{wish.serviceName}</div>
+                            <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>{new Date(wish.createdAt).toLocaleDateString()}</div>
+                          </div>
                         </div>
                       </td>
-                    )}
-                    <td style={{ padding: "16px", verticalAlign: "middle", textAlign: "right" }}>
-                      <div className="flex gap-2 justify-end">
-                        {viewScope !== "me" && (
+                      <td className="mobile-hide" style={{ padding: "14px 16px" }}>
+                        {wish.priority === 3 ? <span className="badge badge-red text-[10px]">🔥 Vysoká</span> :
+                         wish.priority === 2 ? <span className="badge badge-yellow text-[10px]">⭐ Střední</span> :
+                         <span className="badge badge-gray text-[10px]">Nízká</span>}
+                      </td>
+                      <td className="mobile-hide" style={{ padding: "14px 16px" }}>
+                        <div className="text-xs text-secondary truncate max-w-[200px]" title={wish.description || ""}>
+                          {wish.description || "—"}
+                        </div>
+                      </td>
+                      <td style={{ padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div className="user-avatar" style={{ width: 24, height: 24, fontSize: '0.65rem', flexShrink: 0 }}>
+                            {wish.user.avatar ? <img src={wish.user.avatar} alt="" /> : wish.user.name[0]}
+                          </div>
+                          <span className={`text-[11px] font-bold ${isMine ? 'text-brand-600' : 'text-primary'}`}>
+                            {isMine ? 'Já' : wish.user.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "14px 16px", textAlign: "right" }}>
+                        {isMine ? (
                           <button 
-                            className="btn btn-primary btn-sm" 
-                            onClick={() => alert("Tahle funkce bude v další verzi! 😉")}
-                          >
-                            🤝 Nabídnout
-                          </button>
-                        )}
-                        {viewScope === "me" && (
-                          <button 
-                            className="btn btn-ghost btn-icon btn-sm text-muted hover:text-danger"
+                            className="btn btn-ghost btn-sm btn-icon text-muted hover:text-danger"
                             onClick={() => handleDeleteWish(wish.id)}
-                            title="Smazat přání"
                           >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
                               <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                             </svg>
                           </button>
+                        ) : (
+                          <button 
+                            className="btn btn-ghost btn-sm text-brand-600 font-bold p-0 px-2"
+                            onClick={() => alert("Nabídka sdílení bude v další verzi!")}
+                          >
+                            🤝
+                          </button>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
       )}
+    </div>
+  );
+}
     </div>
   );
 }
