@@ -55,17 +55,9 @@ export default async function ServicesPage() {
 
   return (
     <div className="page-content animate-fade-in">
-      <div className="page-header services-header">
-        <div className="hidden-mobile">
-          <h1 className="page-title">Služby</h1>
-          <p className="page-subtitle">
-            Tvůj kompletní přehled předplatných a sdílení.
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-          <VoiceServiceAssigner />
-          <ImportExportTools />
-        </div>
+      <div style={{ display: "flex", gap: 12, alignItems: "center", width: "100%", justifyContent: "flex-end", marginBottom: 16 }}>
+        <VoiceServiceAssigner />
+        <ImportExportTools />
       </div>
 
       <div style={{ marginBottom: 16 }}>

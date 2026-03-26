@@ -55,12 +55,7 @@ export default function WallPage() {
         <div className="feed-container">
           
           <div className="feed-main">
-            <div className="page-header wall-header" style={{ marginBottom: 16 }}>
-              <div>
-                <h1 className="page-title">Nástěnka</h1>
-                <p className="page-subtitle">Sdílej novinky a zajímavosti se svými přáteli 🥑</p>
-              </div>
-            </div>
+
 
             {/* Redesigned Composer */}
             <PostComposer 

@@ -78,11 +78,7 @@ export default function CostsPage() {
 
   return (
     <div className="page-content animate-fade-in">
-      <div className="page-header mb-8">
-        <div>
-          <h1 className="page-title">Analýza nákladů</h1>
-          <p className="page-subtitle">Kompletní přehled tvých výdajů za předplatná v čase.</p>
-        </div>
+      <div className="flex justify-between items-center mb-6">
         <div className="flex gap-2 bg-white p-1 rounded-lg border border-subtle shadow-sm">
           <button 
             onClick={() => setView("monthly")}

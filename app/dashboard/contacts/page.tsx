@@ -113,14 +113,7 @@ export default function ContactsPage() {
 
   return (
     <div className="page-content animate-fade-in">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Kontakty</h1>
-          <p className="page-subtitle">
-            Tvoji důvěryhodní přátelé a partneři ve sdílení.{" "}
-            {accepted.length === 0 ? "Zatím jsi tu sám. Osamělý vlk. 🐺" : `${accepted.length} kontaktů ✓`}
-          </p>
-        </div>
+      <div className="flex justify-end mb-6">
         <button
           id="add-contact-btn"
           className="btn btn-primary"
