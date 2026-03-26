@@ -193,10 +193,10 @@ code {
 
 .feed-main {
   width: 100%;
-  max-width: 650px;
+  max-width: 680px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .feed-side {
@@ -1321,7 +1321,7 @@ tbody tr:hover { background: var(--bg-elevated); }
   border-radius: var(--radius-xl);
   padding: 40px;
   width: 100%;
-  max-width: 440px;
+  max-width: 480px;
   position: relative;
   z-index: 1;
   box-shadow: var(--shadow-lg);
