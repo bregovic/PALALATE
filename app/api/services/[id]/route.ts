@@ -135,7 +135,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       // Fill in missing info in registry from this user's data
       if (!registryEntry.description && description) registryUpdate.description = description;
-      if (!registryEntry.iconUrl && iconUrl) registryUpdate.iconUrl = iconUrl;
+      // Always sync icon to registry if user provided one (overwrite so best icon wins)
+      if (iconUrl) registryUpdate.iconUrl = iconUrl;
       if (!registryEntry.url && url) registryUpdate.url = url;
       if (!registryEntry.category && category) registryUpdate.category = category;
       
@@ -148,6 +149,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           where: { id: registryEntry.id },
           data: registryUpdate
         });
+
+        // Propagate new icon to all other users' services that don't have their own icon yet
+        if (registryUpdate.iconUrl) {
+          await prisma.service.updateMany({
+            where: {
+              serviceName: registryEntry.name,
+              ownerId: { not: user.id }, // don't touch the current user's service
+              OR: [{ iconUrl: null }, { iconUrl: "" }],
+            },
+            data: { iconUrl: registryUpdate.iconUrl },
+          });
+        }
       }
     }
 

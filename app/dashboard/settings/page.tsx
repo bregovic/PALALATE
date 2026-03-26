@@ -828,13 +828,34 @@ function ServicesTab() {
           <h3>{editingServiceId ? "✏️ Upravit službu" : "➕ Přidat do číselníku"}</h3>
           <div className="flex gap-2">
             {!editingServiceId && (
-              <button 
-                className="btn btn-secondary btn-sm" 
-                onClick={onSync} 
-                disabled={syncing}
-              >
-                {syncing ? "🔄 Synchronizuji..." : "🔗 Sjednotit s mými službami"}
-              </button>
+              <>
+                <button 
+                  className="btn btn-secondary btn-sm" 
+                  onClick={onSync} 
+                  disabled={syncing}
+                >
+                  {syncing ? "🔄 Synchronizuji..." : "🔗 Sjednotit s mými službami"}
+                </button>
+                <button 
+                  className="btn btn-ghost btn-sm"
+                  title="Sloučit záznamy se stejným názvem a rozeslat ikony uživatelům"
+                  onClick={async () => {
+                    if (!confirm("Odebrat duplicity z číselníku? Záznamy se stejným názvem budou sloučeny a ikony rozeslány uživatelům.")) return;
+                    setSyncing(true);
+                    try {
+                      const res = await fetch("/api/admin/sync-services", { method: "DELETE" });
+                      const data = await res.json();
+                      alert(data.message || "Hotovo!");
+                      load();
+                    } finally {
+                      setSyncing(false);
+                    }
+                  }}
+                  disabled={syncing}
+                >
+                  🧹 Odebrat duplikáty
+                </button>
+              </>
             )}
             {editingServiceId && (
               <button className="btn btn-ghost btn-sm" onClick={cancelEdit}>Zrušit editaci</button>

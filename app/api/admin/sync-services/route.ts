@@ -2,12 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 
+// POST /api/admin/sync-services — sync user services → registry + propagate icons back
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
-    if (user.role !== "ADMIN") {
-      // return new NextResponse("Unauthorized", { status: 401 });
-    }
 
     console.log('🚀 Starting service synchronization via API...');
 
@@ -17,10 +15,11 @@ export async function POST(req: Request) {
 
     let createdCount = 0;
     let updatedCount = 0;
+    let iconsPropagated = 0;
 
     for (const svc of userServices) {
-      const registryEntry = await prisma.serviceRegistry.findUnique({
-        where: { name: svc.serviceName }
+      const registryEntry = await prisma.serviceRegistry.findFirst({
+        where: { name: { equals: svc.serviceName, mode: "insensitive" } }
       });
 
       if (!registryEntry) {
@@ -33,7 +32,6 @@ export async function POST(req: Request) {
             billingCycle: svc.billingCycle,
             description: svc.description,
             iconUrl: svc.iconUrl,
-            websiteUrl: svc.websiteUrl,
             url: svc.url,
             usageMode: svc.usageMode,
             requiresBookingApproval: svc.requiresBookingApproval,
@@ -47,25 +45,38 @@ export async function POST(req: Request) {
         const svcPrice = Number(svc.periodicPrice || 0);
 
         if (regPrice === 0 && svcPrice > 0) updates.defaultPrice = svcPrice;
+        // Always propagate icon if user has one and registry is missing it
         if (!registryEntry.iconUrl && svc.iconUrl) updates.iconUrl = svc.iconUrl;
         if (!registryEntry.description && svc.description) updates.description = svc.description;
         if (!registryEntry.category && svc.category) updates.category = svc.category;
         if (!registryEntry.url && svc.url) updates.url = svc.url;
-        if (!registryEntry.websiteUrl && svc.websiteUrl) updates.websiteUrl = svc.websiteUrl;
 
         if (Object.keys(updates).length > 0) {
           await prisma.serviceRegistry.update({
             where: { id: registryEntry.id },
-            data: updates
+            data: updates,
           });
           updatedCount++;
+        }
+
+        // Propagate registry icon back to all user services without icon
+        if (registryEntry.iconUrl || updates.iconUrl) {
+          const iconToUse = updates.iconUrl || registryEntry.iconUrl;
+          const result = await prisma.service.updateMany({
+            where: {
+              serviceName: { equals: registryEntry.name, mode: "insensitive" },
+              OR: [{ iconUrl: null }, { iconUrl: "" }],
+            },
+            data: { iconUrl: iconToUse },
+          });
+          iconsPropagated += result.count;
         }
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `Sync complete. Created: ${createdCount}, Updated: ${updatedCount}` 
+    return NextResponse.json({
+      success: true,
+      message: `Sync complete. Created: ${createdCount}, Updated: ${updatedCount}, Icons propagated: ${iconsPropagated}`
     });
 
   } catch (error) {
@@ -73,3 +84,81 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
+
+// DELETE /api/admin/sync-services — deduplicate registry (merge duplicates by case-insensitive name)
+export async function DELETE() {
+  try {
+    const user = await requireAuth();
+
+    const allEntries = await prisma.serviceRegistry.findMany({
+      orderBy: { createdAt: "asc" }, // keep oldest as canonical
+    });
+
+    // Group by lowercase name
+    const groups: Record<string, typeof allEntries> = {};
+    for (const entry of allEntries) {
+      const key = entry.name.toLowerCase().trim();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(entry);
+    }
+
+    let mergedCount = 0;
+    let deletedCount = 0;
+
+    for (const [, entries] of Object.entries(groups)) {
+      if (entries.length <= 1) continue;
+
+      // Canonical = first (oldest). Merge best data into it.
+      const canonical = entries[0];
+      const duplicates = entries.slice(1);
+
+      // Build best merged data from all duplicates
+      const merged: any = {};
+      for (const dup of duplicates) {
+        if (!canonical.iconUrl && dup.iconUrl) merged.iconUrl = dup.iconUrl;
+        if (!canonical.description && dup.description) merged.description = dup.description;
+        if (!canonical.url && dup.url) merged.url = dup.url;
+        if (!canonical.category && dup.category) merged.category = dup.category;
+        if (Number(canonical.defaultPrice || 0) === 0 && Number(dup.defaultPrice || 0) > 0) {
+          merged.defaultPrice = dup.defaultPrice;
+        }
+      }
+
+      if (Object.keys(merged).length > 0) {
+        await prisma.serviceRegistry.update({ where: { id: canonical.id }, data: merged });
+        mergedCount++;
+      }
+
+      // Delete all duplicates
+      const dupIds = duplicates.map(d => d.id);
+      await prisma.serviceRegistry.deleteMany({ where: { id: { in: dupIds } } });
+      deletedCount += dupIds.length;
+    }
+
+    // After dedup, do a full icon propagation pass
+    const registryEntries = await prisma.serviceRegistry.findMany({
+      where: { iconUrl: { not: null } },
+    });
+    let iconsPropagated = 0;
+    for (const reg of registryEntries) {
+      const r = await prisma.service.updateMany({
+        where: {
+          serviceName: { equals: reg.name, mode: "insensitive" },
+          OR: [{ iconUrl: null }, { iconUrl: "" }],
+        },
+        data: { iconUrl: reg.iconUrl },
+      });
+      iconsPropagated += r.count;
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Deduplicated: merged ${mergedCount} groups, deleted ${deletedCount} duplicates, propagated icons to ${iconsPropagated} user services.`
+    });
+
+  } catch (error) {
+    console.error("Dedup error:", error);
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  }
+}
+
