@@ -56,7 +56,7 @@ export default async function ServicesPage() {
   return (
     <div className="page-content animate-fade-in">
       <div className="page-header services-header">
-        <div>
+        <div className="hidden-mobile">
           <h1 className="page-title">Služby</h1>
           <p className="page-subtitle">
             Tvůj kompletní přehled předplatných a sdílení.
@@ -68,19 +68,21 @@ export default async function ServicesPage() {
         </div>
       </div>
 
-      <ServiceGridPicker activeServiceNames={allServices.map((s: any) => s.serviceName)} />
+      <div style={{ marginBottom: 16 }}>
+        <ServicesListClient initialServices={allServices.map((s: any) => ({
+          ...s,
+          periodicPrice: s.periodicPrice.toString(),
+          renewalDate: s.renewalDate?.toISOString() || null,
+          isTerminated: s.isTerminated,
+          isShared: s.isShared,
+          isAvailable: s.isAvailable,
+          hasPendingRequest: (s as any).hasPendingRequest,
+          hasActiveGrant: (s as any).hasActiveGrant,
+          freeSlots: (s as any).freeSlots
+        })) as any} />
+      </div>
 
-      <ServicesListClient initialServices={allServices.map((s: any) => ({
-        ...s,
-        periodicPrice: s.periodicPrice.toString(),
-        renewalDate: s.renewalDate?.toISOString() || null,
-        isTerminated: s.isTerminated,
-        isShared: s.isShared,
-        isAvailable: s.isAvailable,
-        hasPendingRequest: (s as any).hasPendingRequest,
-        hasActiveGrant: (s as any).hasActiveGrant,
-        freeSlots: (s as any).freeSlots
-      })) as any} />
+      <ServiceGridPicker activeServiceNames={allServices.map((s: any) => s.serviceName)} />
     </div>
   );
 }

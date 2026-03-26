@@ -166,9 +166,11 @@ export function VoiceServiceAssigner() {
         style={{ 
           display: "flex", 
           alignItems: "center", 
-          gap: 8,
+          justifyContent: "center",
           borderRadius: "var(--radius-full)",
-          padding: "8px 20px",
+          width: 44,
+          height: 44,
+          padding: 0,
           boxShadow: isRecording ? "0 0 15px var(--danger-400)" : "var(--shadow-sm)",
           ...(isRecording ? { 
             animation: "pulse 1.5s infinite",
@@ -177,17 +179,15 @@ export function VoiceServiceAssigner() {
             borderColor: "var(--danger-600)"
           } : {})
         }}
+        title={isAdding ? "Přidávám vše..." : isRecording ? "Nahrávám..." : "Přidat hlasem"}
       >
         {isAdding ? (
-          <Loader2 size={16} className="animate-spin" />
+          <Loader2 size={20} className="animate-spin" />
         ) : isRecording ? (
-          <MicOff size={16} />
+          <MicOff size={20} />
         ) : (
-          <Mic size={16} />
+          <Mic size={20} />
         )}
-        <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>
-          {isAdding ? "Přidávám vše..." : isRecording ? "Nahrávám..." : "Přidat hlasem (chytré)"}
-        </span>
       </button>
       
       {isRecording && transcript && (
