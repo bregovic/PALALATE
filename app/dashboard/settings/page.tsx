@@ -123,7 +123,7 @@ export default function SettingsPage() {
 
               <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 16 }}>
                 <div 
-                  className="user-avatar" 
+                  className="user-avatar group" 
                   style={{ width: 100, height: 100, fontSize: "2.5rem", border: "4px solid var(--bg-hover)", cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
                   onClick={() => document.getElementById('avatar-upload')?.click()}
                 >
@@ -132,8 +132,10 @@ export default function SettingsPage() {
                   ) : (
                     user?.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"
                   )}
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <span style={{ fontSize: '1rem', color: 'white' }}>Změnit</span>
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20" style={{ color: 'white' }}>
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+                    </svg>
                   </div>
                 </div>
                 <input 

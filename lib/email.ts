@@ -92,8 +92,6 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
     console.log("[Email] SMTP success:", info.messageId);
     return { success: true, data: info };
 
-    console.warn("[Email] No email provider configured (missing RESEND_API_KEY or SMTP_HOST)");
-    return { success: false, error: "No email provider configured" };
   } catch (err) {
     console.error("[Email] Unexpected error:", err);
     return { success: false, error: err };
@@ -101,6 +99,18 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+const sharedStyles = `
+  background: #f8fafc; 
+  color: #0f172a; 
+  padding: 40px; 
+  border-radius: 20px; 
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+`;
+
+const buttonGradient = "linear-gradient(135deg, #3b82f6, #2563eb)";
+const buttonShadow = "0 4px 12px rgba(37, 99, 235, 0.2)";
 
 export const emailTemplates = {
   accessRequestReceived: (
@@ -111,19 +121,19 @@ export const emailTemplates = {
   ) => ({
     subject: `🔔 Nová žádost o přístup ke službě ${serviceName}`,
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; ${sharedStyles}">
         <div style="text-align: center; margin-bottom: 32px;">
-          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 80px;" />
+          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 60px;" />
         </div>
-        <h2 style="color: #a78bfa;">Nová žádost o přístup</h2>
+        <h2 style="color: #1e40af; text-align: center;">Nová žádost o přístup</h2>
         <p>Ahoj <strong>${ownerName}</strong>,</p>
         <p><strong>${requesterName}</strong> tě žádá o přístup ke službě <strong>${serviceName}</strong>.</p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${requestUrl}" style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          <a href="${requestUrl}" style="background: ${buttonGradient}; color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; box-shadow: ${buttonShadow}; display: inline-block;">
             Zobrazit žádost
           </a>
         </div>
-        <p style="color: #6b7280; font-size: 12px;">Palalate – správa sdílených předplatných</p>
+        <p style="color: #64748b; font-size: 12px; text-align: center; margin-top: 32px;">Palalate – správa sdílených předplatných</p>
       </div>
     `,
   }),
@@ -131,14 +141,18 @@ export const emailTemplates = {
   accessApproved: (serviceName: string, dashboardUrl: string) => ({
     subject: `✅ Přístup ke službě ${serviceName} byl schválen`,
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
-        <h2 style="color: #34d399;">Přístup schválen! 🎉</h2>
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; ${sharedStyles}">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 60px;" />
+        </div>
+        <h2 style="color: #059669; text-align: center;">Přístup schválen! 🎉</h2>
         <p>Tvůj přístup ke službě <strong>${serviceName}</strong> byl schválen.</p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${dashboardUrl}" style="background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          <a href="${dashboardUrl}" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); display: inline-block;">
             Přejít do aplikace
           </a>
         </div>
+        <p style="color: #64748b; font-size: 12px; text-align: center; margin-top: 32px;">Palalate – správa sdílených předplatných</p>
       </div>
     `,
   }),
@@ -151,12 +165,15 @@ export const emailTemplates = {
   ) => ({
     subject: `⏰ Upozornění: Obnova ${serviceName} za 7 dní`,
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
-        <h2 style="color: #fbbf24;">Blíží se obnova předplatného</h2>
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; ${sharedStyles}">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 60px;" />
+        </div>
+        <h2 style="color: #d97706; text-align: center;">Blíží se obnova předplatného</h2>
         <p>Ahoj <strong>${ownerName}</strong>,</p>
         <p>Předplatné <strong>${serviceName}</strong> bude obnoveno <strong>${renewalDate}</strong>.</p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${dashboardUrl}" style="background: linear-gradient(135deg, #d97706, #fbbf24); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          <a href="${dashboardUrl}" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2); display: inline-block;">
             Spravovat předplatné
           </a>
         </div>
@@ -167,24 +184,24 @@ export const emailTemplates = {
   passwordReset: (resetUrl: string) => ({
     subject: "🔑 Obnova hesla - Palalate",
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; ${sharedStyles}">
         <div style="text-align: center; margin-bottom: 32px;">
-          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 80px;" />
+          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 60px;" />
         </div>
-        <h2 style="color: #a78bfa; text-align: center;">Zapomenuté heslo?</h2>
+        <h2 style="color: #1e40af; text-align: center;">Zapomenuté heslo?</h2>
         <p>Ahoj,</p>
         <p>Dostali jsme žádost o obnovu hesla pro tvůj účet na Palalate. Pokud jsi to nebyl/a ty, můžeš tento email v klidu ignorovat.</p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${resetUrl}" style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+          <a href="${resetUrl}" style="background: ${buttonGradient}; color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; box-shadow: ${buttonShadow}; display: inline-block;">
             Nastavit nové heslo
           </a>
         </div>
-        <p style="font-size: 13px; color: #9ca3af; margin-top: 32px;">
+        <p style="font-size: 13px; color: #64748b; margin-top: 32px; text-align: center;">
           Pokud tlačítko nefunguje, zkopíruj tento odkaz do prohlížeče:<br />
-          <span style="word-break: break-all; color: #6d28d9;">${resetUrl}</span>
+          <span style="word-break: break-all; color: #3b82f6;">${resetUrl}</span>
         </p>
-        <hr style="border: 0; border-top: 1px solid #1f2937; margin: 32px 0;" />
-        <p style="color: #6b7280; font-size: 12px; text-align: center;">Palalate – Tvá aplikace pro férové sdílení</p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0;" />
+        <p style="color: #94a3b8; font-size: 12px; text-align: center;">Palalate – Tvá aplikace pro férové sdílení</p>
       </div>
     `,
   }),
@@ -196,19 +213,19 @@ export const emailTemplates = {
   ) => ({
     subject: `Nová žádost o přátelství od ${requesterName}`,
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 32px; border-radius: 16px;">
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; ${sharedStyles}">
         <div style="text-align: center; margin-bottom: 32px;">
-          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 80px;" />
+          <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 60px;" />
         </div>
-        <h2 style="color: #a78bfa;">Nová žádost o přátelství</h2>
+        <h2 style="color: #1e40af; text-align: center;">Nová žádost o přátelství</h2>
         <p>Ahoj <strong>${addresseeName}</strong>,</p>
         <p><strong>${requesterName}</strong> si tě chce přidat do kontaktů na Palalate.</p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${contactsUrl}" style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          <a href="${contactsUrl}" style="background: ${buttonGradient}; color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: bold; box-shadow: ${buttonShadow}; display: inline-block;">
             Zobrazit žádost
           </a>
         </div>
-        <p style="color: #6b7280; font-size: 12px; text-align: center;">Palalate – místa pro evidenci výdajů za předplatné</p>
+        <p style="color: #64748b; font-size: 12px; text-align: center;">Palalate – místa pro evidenci výdajů za předplatné</p>
       </div>
     `,
   }),
@@ -220,7 +237,7 @@ export const emailTemplates = {
   ) => ({
     subject: `Pozvánka do aplikace Palalate od ${inviterName}`,
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f0d1a; color: #e5e1f0; padding: 40px; border-radius: 20px; border: 1px solid #2d2a3d;">
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; ${sharedStyles}">
         <div style="text-align: center; margin-bottom: 40px;">
           <img src="${APP_URL}/logo_sent.png?v=2" alt="Palalate" style="height: 80px;" />
         </div>
@@ -228,20 +245,32 @@ export const emailTemplates = {
         <p style="font-size: 16px; line-height: 1.6;"><strong>${inviterName}</strong> tě zve do aplikace <strong>Palalate</strong> – místa pro evidenci výdajů za předplatné a případné sdílení.</p>
         
         ${message ? `
-        <div style="background: #1a162e; border-left: 4px solid #7c3aed; padding: 16px; margin: 24px 0; font-style: italic;">
+        <div style="background: #f1f5f9; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0; font-style: italic; color: #475569;">
           "${message}"
         </div>
         ` : ''}
  
         <p style="font-size: 16px; line-height: 1.6;">Zaregistruj se a automaticky se propojíte jako přátelé.</p>
         
-        <div style="text-align: center; margin: 40px 0;">
-          <a href="${registerUrl}" style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 18px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${registerUrl}" style="background: ${buttonGradient}; color: white; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: bold; font-size: 18px; box-shadow: ${buttonShadow}; display: inline-block;">
             Vytvořit účet
           </a>
         </div>
+
+        <div style="margin-top: 48px; padding-top: 32px; border-top: 1px solid #e2e8f0; text-align: center;">
+          <p style="font-size: 14px; font-weight: bold; color: #475569; margin-bottom: 16px;">📲 Instaluj jako aplikaci:</p>
+          <div style="display: flex; justify-content: center; gap: 20px;">
+             <a href="${APP_URL}/dashboard/settings" style="text-decoration: none; display: inline-block; padding: 10px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b; font-size: 13px; font-weight: 600;">
+                <img src="${APP_URL}/and-logo.png" style="height: 16px; vertical-align: middle; margin-right: 8px;" /> Android (Kliknout)
+             </a>
+             <div style="display: inline-block; padding: 10px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b; font-size: 13px; font-weight: 600;">
+                🍏 iOS (Safari -> Sdílet)
+             </div>
+          </div>
+        </div>
         
-        <p style="color: #9ca3af; font-size: 14px; text-align: center; margin-top: 40px;">
+        <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 48px;">
           Palalate – správa sdílených předplatných
         </p>
       </div>
