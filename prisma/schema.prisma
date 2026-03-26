@@ -24,6 +24,13 @@ model User {
   passwordResetToken  String?   @unique
   passwordResetExpires DateTime?
 
+  // Email Notification Settings
+  emailNotifyRequests   Boolean @default(true)
+  emailNotifyChat       Boolean @default(true)
+  emailNotifyNewService Boolean @default(true)
+  emailNotifyGrants     Boolean @default(true)
+  emailNotifyGlobal     Boolean @default(true)
+
   // Relations
   ownedServices     Service[]         @relation("ServiceOwner")
   friendshipsAsRequester Friendship[] @relation("FriendshipRequester")
