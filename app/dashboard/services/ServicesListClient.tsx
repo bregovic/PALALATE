@@ -16,7 +16,11 @@ interface Service {
   sharingStatus: string;
   usageMode: string;
   isTerminated: boolean;
-  isShared?: boolean; // New flag for shared services
+  isShared?: boolean;
+  isAvailable?: boolean;
+  hasPendingRequest?: boolean;
+  hasActiveGrant?: boolean;
+  freeSlots?: number | null;
   url: string | null;
   iconUrl: string | null;
   owner?: { name: string; avatar: string | null };
@@ -61,6 +65,8 @@ export function ServicesListClient({ initialServices }: Props) {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [sortCol, setSortCol] = useState<"name" | "price" | "renewal" | "category" | "sharing">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [viewFilter, setViewFilter] = useState<"ALL" | "MANAGED" | "AVAILABLE" | "SHARED">("ALL");
+  const [requestingId, setRequestingId] = useState<string | null>(null);
 
   const [showFilters, setShowFilters] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -79,7 +85,13 @@ export function ServicesListClient({ initialServices }: Props) {
       const matchesSearch = s.serviceName.toLowerCase().includes(search.toLowerCase()) || 
                            s.providerName.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = !categoryFilter || s.category === categoryFilter;
-      return matchesSearch && matchesCategory;
+      
+      let matchesView = true;
+      if (viewFilter === "MANAGED") matchesView = !s.isShared && !s.isAvailable;
+      if (viewFilter === "AVAILABLE") matchesView = s.isAvailable === true;
+      if (viewFilter === "SHARED") matchesView = s.isShared === true;
+
+      return matchesSearch && matchesCategory && matchesView;
     });
 
     result.sort((a, b) => {
@@ -188,7 +200,14 @@ export function ServicesListClient({ initialServices }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3 mb-2">
-        <div className="input-with-icon flex-1">
+        <div className="flex bg-muted p-1 rounded-xl gap-1">
+          <button onClick={() => setViewFilter("ALL")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "ALL" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Vše</button>
+          <button onClick={() => setViewFilter("MANAGED")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "MANAGED" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Mnou spravované</button>
+          <button onClick={() => setViewFilter("AVAILABLE")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "AVAILABLE" ? "btn-primary shadow-sm" : "btn-ghost"}`}>K dispozici</button>
+          <button onClick={() => setViewFilter("SHARED")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "SHARED" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Držím přístup</button>
+        </div>
+
+        <div className="input-with-icon flex-1 ml-4">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -340,13 +359,14 @@ export function ServicesListClient({ initialServices }: Props) {
                             icon
                           )}
                         </div>
-                        <div>
-                          <div className="font-bold text-primary flex items-center gap-2">
-                             {svc.serviceName}
-                             {svc.isShared && <span className="text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 bg-brand-100 text-brand-600 rounded">Host</span>}
+                          <div>
+                            <div className="font-bold text-primary flex items-center gap-2">
+                               {svc.serviceName}
+                               {svc.isShared && <span className="text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 bg-brand-100 text-brand-600 rounded">Host</span>}
+                               {svc.isAvailable && <span className="text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded">Nabídka</span>}
+                            </div>
+                            {(svc.isShared || svc.isAvailable) && <span className="text-[10px] text-muted italic">Vlastní {svc.owner?.name}</span>}
                           </div>
-                          {svc.isShared && <span className="text-[10px] text-muted italic">Vlastní {svc.owner?.name}</span>}
-                        </div>
                       </div>
                     </td>
                     <td className="text-center mobile-hide">
@@ -365,11 +385,15 @@ export function ServicesListClient({ initialServices }: Props) {
                         statusBadge(svc.status)
                       )}
                     </td>
-                    <td className="text-center mobile-hide">
-                       {svc.isShared ? (
-                         <span className="sharing-indicator sharing-disabled" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b' }}>👀 Čtení</span>
-                       ) : sharingBadge((svc as any).usageMode)}
-                    </td>
+                     <td className="text-center mobile-hide">
+                        {svc.isShared ? (
+                          <span className="sharing-indicator sharing-disabled" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b' }}>👀 Čtení</span>
+                        ) : svc.isAvailable ? (
+                          <span className={`badge ${svc.freeSlots ? 'badge-blue' : 'badge-red'}`}>
+                            {svc.freeSlots ? `${svc.freeSlots} volná místa` : 'Plno'}
+                          </span>
+                        ) : sharingBadge((svc as any).usageMode)}
+                     </td>
                     <td className="text-center">
                        {!svc.isShared ? (
                         <div className="flex items-center justify-center gap-2">
@@ -392,12 +416,32 @@ export function ServicesListClient({ initialServices }: Props) {
                        )}
                     </td>
                     <td>
-                      <Link
-                        href={`/dashboard/services/${svc.id}`}
-                        className="btn btn-ghost btn-sm"
-                      >
-                        {svc.isShared ? "Prohlédnout →" : "Detail →"}
-                      </Link>
+                      {svc.isAvailable ? (
+                        <button
+                          className={`btn ${svc.hasPendingRequest ? 'btn-glow' : 'btn-primary'} btn-sm w-full`}
+                          onClick={async () => {
+                             if (svc.hasPendingRequest || requestingId) return;
+                             setRequestingId(svc.id);
+                             const res = await fetch(`/api/services/${svc.id}/access-requests`, {
+                               method: "POST",
+                               headers: { "Content-Type": "application/json" },
+                               body: JSON.stringify({ message: "Zájem o sdílení ze seznamu služeb." }),
+                             });
+                             if (res.ok) alert("Žádost odeslána!");
+                             setRequestingId(null);
+                          }}
+                          disabled={requestingId === svc.id || svc.freeSlots === 0 || svc.hasPendingRequest}
+                        >
+                          {requestingId === svc.id ? "..." : (svc.hasPendingRequest ? "Požádáno" : "Požádat")}
+                        </button>
+                      ) : (
+                        <Link
+                          href={`/dashboard/services/${svc.id}`}
+                          className="btn btn-ghost btn-sm"
+                        >
+                          {svc.isShared ? "Prohlédnout →" : "Detail →"}
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 );

@@ -136,32 +136,7 @@ export default function DashboardShell({
         <div style={{ width: 40, flexShrink: 0 }} /> {/* Right spacer for balance */}
       </header>
 
-      {/* Mobile horizontal scroll nav */}
-      <nav className="mobile-bottom-nav" aria-label="Mobilní navigace">
-        {navItems.map((item) => {
-          const isActive =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname.startsWith(item.href);
-          const badge =
-            item.href === "/dashboard/requests" ? pendingRequests :
-            item.href === "/dashboard/notifications" ? unreadNotifs : 
-            item.href === "/dashboard/discover" ? pendingFriends : 
-            item.href === "/dashboard/chat" ? unreadMessages : 0;
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`mobile-nav-item ${isActive ? "active" : ""}`}
-            >
-              <div className="mobile-nav-icon">{item.icon}</div>
-              <span className="mobile-nav-label">{item.label}</span>
-              {badge > 0 && <span className="mobile-nav-badge">{badge}</span>}
-            </Link>
-          );
-        })}
-      </nav>
 
       <Sidebar 
         user={user} 

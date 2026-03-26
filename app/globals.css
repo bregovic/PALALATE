@@ -1552,6 +1552,10 @@ tbody tr:hover { background: var(--bg-elevated); }
   .mobile-hide { display: none !important; }
   .table-wrap td, .table-wrap th { padding: 12px 10px; }
   .table-wrap .user-avatar { width: 28px !important; height: 28px !important; }
+
+  /* Wall/Chat Header optimization */
+  .wall-header { display: none !important; }
+  .social-layout { padding-top: 10px !important; }
 }
 
 .table-wrap .mobile-hide { transition: opacity 0.2s; }
