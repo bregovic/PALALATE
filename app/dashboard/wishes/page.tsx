@@ -53,7 +53,7 @@ export default function WishesPage() {
       const meData = await meRes.json();
       setCurrentUser(meData);
       
-      const acceptedFriends = fsData.friendships
+      const acceptedFriends = (fsData.friendships || [])
         .filter((f: any) => f.status === "ACCEPTED")
         .map((f: any) => f.requesterId === meData.id ? f.addressee : f.requester);
       
@@ -72,8 +72,7 @@ export default function WishesPage() {
       } else if (viewScope !== "me" && viewScope !== "all") {
         url += `?userId=${viewScope}`;
       } else if (viewScope === "all") {
-        // We'll fetch both or handle on FE if API supports all
-        url += "?scope=all"; // Assuming API will be updated or we'll aggregate
+        url += "?scope=all";
       }
       
       const res = await fetch(url);
@@ -93,7 +92,7 @@ export default function WishesPage() {
   }
 
   const filteredWishes = useMemo(() => {
-    return wishes.filter(w => {
+    return (wishes || []).filter(w => {
       const matchesSearch = w.serviceName.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesSearch;
     });
@@ -252,9 +251,6 @@ export default function WishesPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
     </div>
   );
 }
