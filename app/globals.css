@@ -1112,7 +1112,7 @@ tbody tr:hover { background: var(--bg-elevated); }
     transform: translateX(0); 
   }
   
-  .main-content { margin-left: 0; padding-top: calc(var(--topbar-height) + 52px); }
+  .main-content { margin-left: 0; padding-top: var(--topbar-height); }
   
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   
@@ -1557,12 +1557,13 @@ tbody tr:hover { background: var(--bg-elevated); }
   .wall-header, .chat-header, .wishes-header, .services-header, .page-header { display: none !important; }
   .social-layout { padding-top: 5px !important; }
   .tabs { margin-top: -15px; margin-bottom: 12px; }
-  .page-content { padding: 12px 12px !important; }
-  .card { padding: 16px !important; }
+  .page-content { padding: 8px 8px !important; }
+  .card { padding: 12px !important; }
   .page-subtitle { display: none !important; }
-  .feed-container { gap: 12px !important; }
-  .chat-list-item { padding: 12px !important; }
-  .user-avatar { width: 44px !important; height: 44px !important; }
+  .feed-container { gap: 8px !important; }
+  .chat-list-item { padding: 10px !important; }
+  .user-avatar { width: 38px !important; height: 38px !important; }
+  .mb-8 { margin-bottom: 12px !important; }
 }
 
 .table-wrap .mobile-hide { transition: opacity 0.2s; }

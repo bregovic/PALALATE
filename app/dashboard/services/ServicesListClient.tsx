@@ -89,7 +89,7 @@ export function ServicesListClient({ initialServices }: Props) {
       let matchesView = true;
       if (viewFilter === "MANAGED") matchesView = !s.isShared && !s.isAvailable;
       if (viewFilter === "AVAILABLE") matchesView = s.isAvailable === true;
-      if (viewFilter === "SHARED") matchesView = s.isShared === true;
+      if (viewFilter === "SHARED") matchesView = s.isShared === true; // Active subscriptions I have access to
 
       return matchesSearch && matchesCategory && matchesView;
     });
@@ -204,7 +204,7 @@ export function ServicesListClient({ initialServices }: Props) {
           <button onClick={() => setViewFilter("ALL")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "ALL" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Vše</button>
           <button onClick={() => setViewFilter("MANAGED")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "MANAGED" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Mnou spravované</button>
           <button onClick={() => setViewFilter("AVAILABLE")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "AVAILABLE" ? "btn-primary shadow-sm" : "btn-ghost"}`}>K dispozici</button>
-          <button onClick={() => setViewFilter("SHARED")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "SHARED" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Držím přístup</button>
+          <button onClick={() => setViewFilter("SHARED")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "SHARED" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Aktivní přístupy</button>
         </div>
 
         <div className="input-with-icon flex-1 ml-4">
