@@ -54,16 +54,7 @@ export default async function SettlementsPage() {
 
   return (
     <div className="page-content animate-fade-in">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Vyúčtování</h1>
-          <p className="page-subtitle">
-            {totalOwed > 0
-              ? `Celkem dlužíš ${totalOwed.toFixed(2)} Kč. Čas platit, kamaráde! 💸`
-              : "Všechno zaplaceno. Jsi zlatý! 🏆"}
-          </p>
-        </div>
-      </div>
+
 
       {totalOwed > 0 && (
         <div className="alert alert-warning mb-6">

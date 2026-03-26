@@ -67,14 +67,7 @@ export default function RequestsPage() {
 
   return (
     <div className="page-content animate-fade-in">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Žádosti o přístup</h1>
-          <p className="page-subtitle">
-            Správce přání a snů ostatních lidí. Mocné postavení, velká odpovědnost. 🦸
-          </p>
-        </div>
-      </div>
+
 
       <div className="tabs">
         <button

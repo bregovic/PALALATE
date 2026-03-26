@@ -92,19 +92,11 @@ export default function NotificationsPage() {
 
   return (
     <div className="page-content animate-fade-in">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Notifikace</h1>
-          <p className="page-subtitle">
-            {unread > 0
-              ? `${unread} nepřečtených. Čti, nebo to přečte za tebe AI. 🤖`
-              : "Vše přečteno. Jsi rychlý. 🚀"}
-          </p>
-        </div>
+      <div className="flex justify-end mb-2">
         {unread > 0 && (
           <button
             id="mark-all-read-btn"
-            className="btn btn-secondary"
+            className="btn btn-secondary btn-sm"
             onClick={markAllRead}
           >
             Označit vše jako přečtené

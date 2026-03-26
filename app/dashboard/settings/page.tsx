@@ -82,12 +82,7 @@ export default function SettingsPage() {
   return (
     <>
       <div className="page-content animate-fade-in">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Nastavení</h1>
-          <p className="page-subtitle">Tvůj profil, bezpečnost a preference</p>
-        </div>
-      </div>
+
 
       <div className="tabs">
         <button className={`tab ${tab === "profile" ? "active" : ""}`} onClick={() => setTab("profile")}>
