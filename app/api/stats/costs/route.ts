@@ -13,6 +13,7 @@ interface ServiceWithIntervals {
   serviceName: string;
   category: string | null;
   periodicPrice: any;
+  currency: string;
   billingCycle: string;
   status: string;
   isTerminated: boolean;
@@ -21,6 +22,24 @@ interface ServiceWithIntervals {
   startDate: Date | string | null;
   archivedAt: Date | null;
   priceIntervals: PriceInterval[];
+}
+
+// Static exchange rates to CZK (update manually when needed, or replace with live API)
+const RATES_TO_CZK: Record<string, number> = {
+  CZK: 1,
+  EUR: 25.0,
+  USD: 23.0,
+  GBP: 29.5,
+  CHF: 26.0,
+  PLN: 5.8,
+  HUF: 0.065,
+  SKK: 1, // legacy Slovak crowns ~ CZK parity
+};
+
+/** Convert any amount to CZK */
+function toCZK(amount: number, currency: string): number {
+  const rate = RATES_TO_CZK[currency?.toUpperCase()] ?? 1;
+  return amount * rate;
 }
 
 export async function GET(_req: NextRequest) {
@@ -47,7 +66,7 @@ export async function GET(_req: NextRequest) {
     
     let lifetimeTotal = 0;
 
-    // Helper to get price for a specific date
+    // Helper to get price for a specific date (returns CZK)
     const getPriceForDate = (service: ServiceWithIntervals, date: Date) => {
       // Check intervals first
       const interval = service.priceIntervals.find((pi: PriceInterval) => {
@@ -56,28 +75,34 @@ export async function GET(_req: NextRequest) {
         return date >= start && (!end || date <= end);
       });
 
-      const price = interval ? Number(interval.price) : Number(service.periodicPrice);
+      const rawPrice = interval ? Number(interval.price) : Number(service.periodicPrice);
       const cycle = service.billingCycle;
 
-      // Normalize to monthly
+      // Normalize to monthly price in original currency
+      let monthlyRaw: number;
       switch (cycle) {
-        case "WEEKLY": return price * 4.33;
-        case "MONTHLY": return price;
-        case "QUARTERLY": return price / 3;
-        case "SEMI_ANNUALLY": return price / 6;
-        case "YEARLY": return price / 12;
-        case "ONEOFF": 
-          // One-off prices are tricky in a monthly timeline. 
-          // For now, let's only count them in the month they happened (startDate).
+        case "WEEKLY": monthlyRaw = rawPrice * 4.33; break;
+        case "MONTHLY": monthlyRaw = rawPrice; break;
+        case "QUARTERLY": monthlyRaw = rawPrice / 3; break;
+        case "SEMI_ANNUALLY": monthlyRaw = rawPrice / 6; break;
+        case "YEARLY": monthlyRaw = rawPrice / 12; break;
+        case "ONEOFF": {
           const sdRaw = service.startDate || service.createdAt;
           const sd = new Date(sdRaw);
           if (date.getMonth() === sd.getMonth() && date.getFullYear() === sd.getFullYear()) {
-             return price;
+            monthlyRaw = rawPrice;
+          } else {
+            monthlyRaw = 0;
           }
-          return 0;
-        default: return price;
+          break;
+        }
+        default: monthlyRaw = rawPrice;
       }
+
+      // Convert to CZK
+      return toCZK(monthlyRaw, service.currency);
     };
+
 
     // Iterate through months from the earliest service start date to now
     let earliestDate = new Date();
