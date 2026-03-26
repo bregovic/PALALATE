@@ -60,28 +60,6 @@ const StarIcon = () => (
   </svg>
 );
 
-const navItems = [
-  { href: "/dashboard", label: "Přehled", icon: <LayoutGridIcon />, emoji: "🏠" },
-  { href: "/dashboard/wall", label: "Nástěnka", icon: <LayoutIcon />, emoji: "📰" },
-  { href: "/dashboard/chat", label: "Chat", icon: <MessageSquareIcon />, emoji: "💬" },
-  { href: "/dashboard/services", label: "Služby", icon: <CreditCardIcon />, emoji: "💳" },
-  { href: "/dashboard/discover", label: "Přátelé", icon: <GlobeIcon />, emoji: "🌍" },
-  { href: "/dashboard/wishes", label: "Přání", icon: <StarIcon />, emoji: "✨" },
-  { href: "/dashboard/costs", label: "Náklady", icon: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-      <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6" y1="20" x2="6" y2="14" />
-    </svg>
-  ), emoji: "📊" },
-  { href: "/dashboard/contacts", label: "Kontakty", icon: <UsersIcon />, emoji: "👥" },
-  { href: "/dashboard/settings", label: "Nastavení", icon: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  ), emoji: "⚙️" },
-];
-
 export default function DashboardShell({ 
   user, 
   pendingRequests, 
@@ -96,7 +74,7 @@ export default function DashboardShell({
   return (
     <div className="app-shell">
       {/* Mobile Topbar */}
-      <header className="mobile-header">
+      <header className="mobile-header" style={{ borderBottom: '1px solid #e2e8f0' }}>
         <button 
           className="btn btn-ghost btn-icon" 
           onClick={() => setIsSidebarOpen(true)}
@@ -136,13 +114,12 @@ export default function DashboardShell({
         <div style={{ width: 40, flexShrink: 0 }} /> {/* Right spacer for balance */}
       </header>
 
-
-
       <Sidebar 
         user={user} 
         pendingRequests={pendingRequests} 
         unreadNotifs={unreadNotifs} 
         pendingFriends={pendingFriends}
+        unreadMessages={unreadMessages}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />

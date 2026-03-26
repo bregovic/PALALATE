@@ -152,7 +152,7 @@ export default function Sidebar({
       )}
       
       <aside className={`sidebar ${isOpen ? "open" : ""}`} id="sidebar">
-        <div className="sidebar-logo" style={{ justifyContent: 'space-between', padding: '24px 20px' }}>
+        <div className="sidebar-logo" style={{ justifyContent: 'space-between', padding: '24px 20px', borderBottom: '1px solid #e2e8f0' }}>
           <Link href="/dashboard" className="flex transition-opacity hover:opacity-80" onClick={onClose}>
             <Image src="/logo.png" alt="PalalateLogo" width={140} height={60} style={{ objectFit: 'contain', height: 'auto' }} priority />
           </Link>
@@ -169,7 +169,10 @@ export default function Sidebar({
         <nav className="sidebar-nav" role="navigation" aria-label="Hlavní navigace">
           <span className="nav-section-label">Hlavní menu</span>
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            // Strict match for dashboard to avoid double highlighting
+            const isActive = item.href === "/dashboard" 
+               ? pathname === "/dashboard" 
+               : pathname.startsWith(item.href);
 
             return (
               <Link
