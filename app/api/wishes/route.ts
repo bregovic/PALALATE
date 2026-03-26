@@ -41,7 +41,21 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(wishes);
+
+    // Enforce icons from ServiceRegistry
+    const registryServices = await prisma.serviceRegistry.findMany({
+      where: { name: { in: wishes.map(w => w.serviceName) } },
+      select: { name: true, iconUrl: true }
+    });
+
+    const iconMap = new Map(registryServices.map(s => [s.name, s.iconUrl]));
+
+    const enrichedWishes = wishes.map(w => ({
+      ...w,
+      iconUrl: iconMap.get(w.serviceName) || null
+    }));
+
+    return NextResponse.json(enrichedWishes);
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -81,7 +95,6 @@ export async function POST(req: NextRequest) {
           data: {
             name: serviceName,
             description: description,
-            // If the link looks like a normal URL (not an image), use it as websiteUrl
             websiteUrl: (link && !link.startsWith('data:') && !link.includes('cloudinary') && !link.includes('storage')) ? link : undefined,
             iconUrl: (link && (link.startsWith('data:') || link.includes('cloudinary') || link.includes('storage'))) ? link : undefined,
           }

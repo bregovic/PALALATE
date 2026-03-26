@@ -119,19 +119,6 @@ export default function WishesPage() {
           >
             🌐 Přátelé
           </button>
-          <div style={{ width: 1, height: 24, background: "var(--border-subtle)", margin: "0 8px", flexShrink: 0 }} />
-          {friends.map(f => (
-            <button 
-              key={f.id}
-              onClick={() => setViewScope(f.id)} 
-              className={`btn btn-sm px-4 rounded-full border-none whitespace-nowrap flex items-center gap-2 ${viewScope === f.id ? "btn-primary" : "bg-muted text-muted"}`}
-            >
-              <div className="user-avatar" style={{ width: 18, height: 18, fontSize: '0.5rem' }}>
-                {f.avatar ? <img src={f.avatar} alt="" /> : f.name[0]}
-              </div>
-              {f.name}
-            </button>
-          ))}
         </div>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
@@ -196,11 +183,19 @@ export default function WishesPage() {
                       <td style={{ padding: "14px 16px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                           <div className="user-avatar" style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', flexShrink: 0, overflow: 'hidden' }}>
-                            {wish.link?.includes('netflix') ? <img src="https://www.google.com/s2/favicons?domain=netflix.com&sz=64" alt="" /> :
-                             wish.link?.includes('spotify') ? <img src="https://www.google.com/s2/favicons?domain=spotify.com&sz=64" alt="" /> :
-                             wish.link?.includes('hbomax') ? <img src="https://www.google.com/s2/favicons?domain=hbomax.com&sz=64" alt="" /> :
-                             wish.link?.includes('disneyplus') ? <img src="https://www.google.com/s2/favicons?domain=disneyplus.com&sz=64" alt="" /> :
-                             wish.serviceName[0].toUpperCase()}
+                            {(wish as any).iconUrl ? (
+                              <img src={(wish as any).iconUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            ) : wish.link?.includes('netflix') ? (
+                              <img src="https://www.google.com/s2/favicons?domain=netflix.com&sz=64" alt="" />
+                            ) : wish.link?.includes('spotify') ? (
+                              <img src="https://www.google.com/s2/favicons?domain=spotify.com&sz=64" alt="" />
+                            ) : wish.link?.includes('hbomax') ? (
+                              <img src="https://www.google.com/s2/favicons?domain=hbomax.com&sz=64" alt="" />
+                            ) : wish.link?.includes('disneyplus') ? (
+                              <img src="https://www.google.com/s2/favicons?domain=disneyplus.com&sz=64" alt="" />
+                            ) : (
+                              wish.serviceName[0].toUpperCase()
+                            )}
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div className="font-bold text-sm truncate" style={{ color: "var(--text-primary)" }}>{wish.serviceName}</div>
