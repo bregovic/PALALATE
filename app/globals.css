@@ -1113,6 +1113,9 @@ tbody tr:hover { background: var(--bg-elevated); }
   }
   
   .main-content { margin-left: 0; padding-top: var(--topbar-height); }
+  .social-layout { padding-top: 0 !important; }
+  .feed-container { margin-top: 0 !important; }
+  .feed-main { padding-top: 0 !important; }
   
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   
@@ -1555,15 +1558,16 @@ tbody tr:hover { background: var(--bg-elevated); }
 
   /* Wall/Chat/Wishes/Services/Settings Header optimization */
   .wall-header, .chat-header, .wishes-header, .services-header, .page-header { display: none !important; }
-  .social-layout { padding-top: 5px !important; }
-  .tabs { margin-top: -15px; margin-bottom: 12px; }
-  .page-content { padding: 8px 8px !important; }
-  .card { padding: 12px !important; }
+  .social-layout { padding-top: 0 !important; }
+  .tabs { margin-top: -8px; margin-bottom: 8px; }
+  .page-content { padding: 4px 8px !important; }
+  .card { padding: 10px !important; margin-bottom: 8px !important; }
   .page-subtitle { display: none !important; }
-  .feed-container { gap: 8px !important; }
-  .chat-list-item { padding: 10px !important; }
-  .user-avatar { width: 38px !important; height: 38px !important; }
-  .mb-8 { margin-bottom: 12px !important; }
+  .feed-container { gap: 6px !important; margin-top: 0 !important; }
+  .chat-list-item { padding: 8px 10px !important; gap: 10px !important; border-radius: 12px !important; }
+  .user-avatar { width: 34px !important; height: 34px !important; }
+  .mb-8, .mb-4 { margin-bottom: 8px !important; }
+  .divider { margin: 6px 0 !important; }
 }
 
 .table-wrap .mobile-hide { transition: opacity 0.2s; }
