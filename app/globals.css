@@ -634,9 +634,16 @@ code {
 .form-hint { font-size: 0.8rem; color: var(--text-muted); }
 .form-error { font-size: 0.8rem; color: var(--danger-400); }
 
-.input-with-icon {
-  position: relative;
-}
+.input-with-icon { position: relative; }
+
+/* Utilities for Post Dialog */
+.border-bottom { border-bottom: 1px solid var(--border-subtle); }
+.border-top { border-top: 1px solid var(--border-subtle); }
+.border-subtle { border-color: rgba(0, 0, 0, 0.05) !important; }
+.bg-muted { background-color: var(--bg-elevated) !important; }
+.animate-zoom-in { animation: zoomIn 0.2s ease-out forwards; }
+@keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
 
 .input-with-icon svg {
   position: absolute;
@@ -1115,7 +1122,8 @@ tbody tr:hover { background: var(--bg-elevated); }
   .main-content { margin-left: 0; padding-top: var(--topbar-height); }
   .social-layout { padding-top: 0 !important; }
   .feed-container { margin-top: 0 !important; }
-  .feed-main { padding-top: 0 !important; }
+  .feed-main { padding-top: 8px !important; }
+  .mobile-header-divider { display: block; height: 1px; background: rgba(0,0,0,0.1); width: 100%; margin-top: 0; }
   
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   

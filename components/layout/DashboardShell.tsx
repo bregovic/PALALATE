@@ -113,6 +113,7 @@ export default function DashboardShell({
         
         <div style={{ width: 40, flexShrink: 0 }} /> {/* Right spacer for balance */}
       </header>
+      <div className="mobile-header-divider" />
 
       <Sidebar 
         user={user} 
