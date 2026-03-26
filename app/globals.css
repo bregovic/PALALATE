@@ -156,6 +156,7 @@ code {
   flex: 1;
   min-height: 100vh;
   background: var(--bg-base);
+  width: 100%; /* Fallback */
 }
 
 .topbar {
@@ -180,12 +181,7 @@ code {
 
 /* 📱 Social Media Layout (Left aligned feed) */
 .social-layout {
-  margin: 0 !important;
-  max-width: 100% !important;
-  padding-left: 0 !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: flex-start !important;
+  padding: 32px 24px;
 }
 
 .feed-container {
@@ -1123,11 +1119,11 @@ tbody tr:hover { background: var(--bg-elevated); }
     transform: translateX(0); 
   }
   
-  .main-content { margin-left: 0 !important; padding-top: var(--topbar-height); width: 100% !important; max-width: 100vw !important; overflow-x: hidden !important; }
-  .social-layout { padding-top: 0 !important; padding-left: 0 !important; padding-right: 0 !important; margin-left: 0 !important; margin-right: 0 !important; width: 100% !important; max-width: 100% !important; display: block !important; }
-  .feed-container { margin-top: 0 !important; justify-content: center !important; width: 100% !important; padding: 0 !important; }
-  .feed-main { padding-top: 8px !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding-left: 12px !important; padding-right: 12px !important; }
-  .mobile-header-divider { display: block; height: 1.5px; background: rgba(0,0,0,1); width: 100%; margin-top: 0; }
+  .main-content { margin-left: 0 !important; padding-top: var(--topbar-height); width: 100% !important; }
+  .social-layout { padding: 12px 0 !important; margin: 0 !important; width: 100% !important; }
+  .feed-container { margin: 0 !important; justify-content: center !important; width: 100% !important; padding: 0 !important; }
+  .feed-main { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 12px !important; }
+  .mobile-header-divider { display: block; height: 1.5px; background: #000; width: 100%; }
   
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   
@@ -1572,18 +1568,12 @@ tbody tr:hover { background: var(--bg-elevated); }
   .table-wrap td, .table-wrap th { padding: 12px 10px; }
   .table-wrap .user-avatar { width: 28px !important; height: 28px !important; }
 
-  /* Wall/Chat/Wishes/Services/Settings Header optimization */
   .wall-header, .chat-header, .wishes-header, .services-header, .page-header { display: none !important; }
-  .social-layout { padding-top: 0 !important; }
-  .tabs { margin-top: -8px; margin-bottom: 8px; }
-  .page-content { padding: 8px 12px !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
-  .card { padding: 10px !important; margin-bottom: 8px !important; width: 100% !important; }
-  .page-subtitle { display: none !important; }
-  .feed-container { gap: 6px !important; margin-top: 0 !important; padding: 0 !important; width: 100% !important; }
-  .chat-list-item { padding: 8px 10px !important; gap: 10px !important; border-radius: 12px !important; }
-  .user-avatar { width: 34px !important; height: 34px !important; }
-  .mb-8, .mb-4 { margin-bottom: 8px !important; }
-  .divider { margin: 6px 0 !important; }
+  .page-content { padding: 12px !important; margin: 0 !important; width: 100% !important; }
+  .card { padding: 12px !important; margin-bottom: 8px !important; }
+  .feed-container { gap: 8px !important; margin-top: 0 !important; }
+  .chat-list-item { padding: 10px !important; border-radius: 12px !important; }
+  .user-avatar { width: 40px !important; height: 40px !important; }
 }
 
 .table-wrap .mobile-hide { transition: opacity 0.2s; }
