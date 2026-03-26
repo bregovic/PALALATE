@@ -55,11 +55,6 @@ export default async function ServicesPage() {
 
   return (
     <div className="page-content animate-fade-in">
-      <div style={{ display: "flex", gap: 12, alignItems: "center", width: "100%", justifyContent: "flex-end", marginBottom: 16 }}>
-        <VoiceServiceAssigner />
-        <ImportExportTools />
-      </div>
-
       <div style={{ marginBottom: 16 }}>
         <ServicesListClient initialServices={allServices.map((s: any) => ({
           ...s,

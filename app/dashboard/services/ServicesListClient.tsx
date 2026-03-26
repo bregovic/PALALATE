@@ -2,6 +2,10 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ImportExportTools } from "@/components/services/ImportExportTools";
+import { VoiceServiceAssigner } from "@/components/services/VoiceServiceAssigner";
+import { ServiceGridPicker } from "@/components/services/ServiceGridPicker";
 
 interface Service {
   id: string;
@@ -60,15 +64,17 @@ const billingLabels: Record<string, string> = {
 };
 
 export function ServicesListClient({ initialServices }: Props) {
+  const router = useRouter();
   const [services] = useState(initialServices);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [sortCol, setSortCol] = useState<"name" | "price" | "renewal" | "category" | "sharing">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [viewFilter, setViewFilter] = useState<"ALL" | "MANAGED" | "AVAILABLE" | "SHARED">("ALL");
+  const [viewFilter, setViewFilter] = useState<"ALL" | "MANAGED" | "AVAILABLE" | "SHARED_OUT">("ALL");
   const [requestingId, setRequestingId] = useState<string | null>(null);
 
   const [showFilters, setShowFilters] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [updatingBulk, setUpdatingBulk] = useState(false);
 
@@ -87,9 +93,9 @@ export function ServicesListClient({ initialServices }: Props) {
       const matchesCategory = !categoryFilter || s.category === categoryFilter;
       
       let matchesView = true;
-      if (viewFilter === "MANAGED") matchesView = !s.isShared && !s.isAvailable;
+      if (viewFilter === "MANAGED") matchesView = !s.isShared && !s.isAvailable && s.status === "ACTIVE";
       if (viewFilter === "AVAILABLE") matchesView = s.isAvailable === true;
-      if (viewFilter === "SHARED") matchesView = s.isShared === true; // Active subscriptions I have access to
+      if (viewFilter === "SHARED_OUT") matchesView = !s.isShared && !s.isAvailable && s._count.accessGrants > 0;
 
       return matchesSearch && matchesCategory && matchesView;
     });
@@ -119,7 +125,7 @@ export function ServicesListClient({ initialServices }: Props) {
     });
 
     return result;
-  }, [services, search, categoryFilter, sortCol, sortDir]);
+  }, [services, search, categoryFilter, sortCol, sortDir, viewFilter]);
 
   const toggleSort = (col: typeof sortCol) => {
     if (sortCol === col) {
@@ -152,7 +158,7 @@ export function ServicesListClient({ initialServices }: Props) {
         body: JSON.stringify({ ids: selectedIds, usageMode: mode }),
       });
       if (res.ok) {
-        window.location.reload(); // Quick refresh
+        window.location.reload();
       }
     } finally {
       setUpdatingBulk(false);
@@ -199,15 +205,30 @@ export function ServicesListClient({ initialServices }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="flex bg-muted p-1 rounded-xl gap-1">
-          <button onClick={() => setViewFilter("ALL")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "ALL" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Vše</button>
-          <button onClick={() => setViewFilter("MANAGED")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "MANAGED" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Mnou spravované</button>
-          <button onClick={() => setViewFilter("AVAILABLE")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "AVAILABLE" ? "btn-primary shadow-sm" : "btn-ghost"}`}>K dispozici</button>
-          <button onClick={() => setViewFilter("SHARED")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "SHARED" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Aktivní přístupy</button>
+      <div className="flex bg-muted p-1 rounded-xl self-start mb-2">
+        <button onClick={() => setViewFilter("ALL")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "ALL" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Vše</button>
+        <button onClick={() => setViewFilter("MANAGED")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "MANAGED" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Moje aktivní služby</button>
+        <button onClick={() => setViewFilter("AVAILABLE")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "AVAILABLE" ? "btn-primary shadow-sm" : "btn-ghost"}`}>K dispozici (přátelé)</button>
+        <button onClick={() => setViewFilter("SHARED_OUT")} className={`btn btn-sm px-4 py-1.5 rounded-lg border-none ${viewFilter === "SHARED_OUT" ? "btn-primary shadow-sm" : "btn-ghost"}`}>Poskytnuté služby</button>
+      </div>
+
+      <div className="flex items-center gap-3 mb-2 flex-wrap">
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <ServiceGridPicker activeServiceNames={services.map(s => s.serviceName)} />
+          <VoiceServiceAssigner />
+          <ImportExportTools />
+          
+          <div className="w-px h-6 bg-border-subtle mx-2" />
+          
+          <button 
+            onClick={() => { setShowBulk(!showBulk); if(showBulk) setSelectedIds([]); }}
+            className={`btn btn-sm ${showBulk ? 'btn-secondary' : 'btn-ghost'} px-4 border border-subtle`}
+          >
+            {showBulk ? 'Zavřít hromadnou změnu' : 'Hromadná změna'}
+          </button>
         </div>
 
-        <div className="input-with-icon flex-1 ml-4">
+        <div className="input-with-icon flex-1 min-w-[200px]">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -222,15 +243,12 @@ export function ServicesListClient({ initialServices }: Props) {
         
         <button 
           onClick={() => setShowFilters(!showFilters)}
-          className={`btn ${showFilters ? 'btn-secondary' : 'btn-ghost'} flex items-center gap-2 px-4 h-[44px]`}
+          className={`btn ${showFilters ? 'btn-secondary' : 'btn-ghost'} flex items-center gap-2 px-4 h-[44px] border border-subtle`}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
           </svg>
           <span className="font-bold">Filtr</span>
-          {hasActiveFilters && (
-             <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse"></span>
-          )}
         </button>
       </div>
 
@@ -302,51 +320,53 @@ export function ServicesListClient({ initialServices }: Props) {
           <table>
             <thead>
               <tr>
-                <th style={{ width: 40, paddingRight: 0 }}>
-                   <input 
-                     type="checkbox" 
-                     className="w-4 h-4 cursor-pointer"
-                     checked={filteredAndSorted.length > 0 && selectedIds.length === filteredAndSorted.length}
-                     onChange={handleSelectAll}
-                   />
-                </th>
+                {showBulk && (
+                  <th style={{ width: 40, paddingRight: 0 }}>
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 cursor-pointer"
+                      checked={filteredAndSorted.length > 0 && selectedIds.length === filteredAndSorted.length}
+                      onChange={handleSelectAll}
+                    />
+                  </th>
+                )}
                 <th onClick={() => toggleSort("name")} className="cursor-pointer hover:text-brand-600">
                   Služba {sortCol === "name" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
                 <th onClick={() => toggleSort("category")} className="cursor-pointer hover:text-brand-600 mobile-hide">
                   Kategorie {sortCol === "category" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th onClick={() => toggleSort("price")} className="cursor-pointer hover:text-brand-600 text-right">
-                  Cena {sortCol === "price" && (sortDir === "asc" ? "↑" : "↓")}
-                </th>
-                <th className="text-center mobile-hide">Perioda</th>
                 <th className="text-center mobile-hide">Stav</th>
                 <th onClick={() => toggleSort("sharing")} className="cursor-pointer hover:text-brand-600 text-center mobile-hide">
                   Sdílení {sortCol === "sharing" && (sortDir === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="text-center">Uživatelé</th>
-                <th></th>
+                <th className="text-right">Akce</th>
               </tr>
             </thead>
             <tbody>
               {filteredAndSorted.map((svc) => {
                 const icon = CATEGORY_ICONS[svc.category?.toLowerCase() || "other"] || "📦";
-                const days = svc.renewalDate
-                  ? Math.ceil((new Date(svc.renewalDate).getTime() - Date.now()) / 86400000)
-                  : null;
-
                 return (
-                  <tr key={svc.id} className={selectedIds.includes(svc.id) ? "bg-brand-50/30" : (svc.isShared ? "bg-slate-50/50" : "")}>
-                    <td style={{ width: 40, paddingRight: 0 }}>
-                       {!svc.isShared && (
-                         <input 
-                           type="checkbox" 
-                           className="w-4 h-4 cursor-pointer"
-                           checked={selectedIds.includes(svc.id)}
-                           onChange={() => toggleSelect(svc.id)}
-                         />
-                       )}
-                    </td>
+                  <tr 
+                    key={svc.id} 
+                    className={`cursor-pointer transition-all ${selectedIds.includes(svc.id) ? "bg-brand-50/30" : ""} hover:bg-slate-50`}
+                    onClick={(e) => {
+                      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'BUTTON' || (e.target as HTMLElement).closest('a')) return;
+                      router.push(`/dashboard/services/${svc.id}`);
+                    }}
+                  >
+                    {showBulk && (
+                      <td style={{ width: 40, paddingRight: 0 }}>
+                        {!svc.isShared && (
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 cursor-pointer"
+                            checked={selectedIds.includes(svc.id)}
+                            onChange={(e) => { e.stopPropagation(); toggleSelect(svc.id); }}
+                          />
+                        )}
+                      </td>
+                    )}
                     <td>
                       <div className="flex items-center gap-3">
                         <div 
@@ -374,10 +394,6 @@ export function ServicesListClient({ initialServices }: Props) {
                          {svc.category || "Ostatní"}
                        </span>
                     </td>
-                    <td className="font-bold text-primary text-right">
-                      {Number(svc.periodicPrice).toFixed(2)} {svc.currency}
-                    </td>
-                    <td className="text-sm text-center mobile-hide">{billingLabels[svc.billingCycle]}</td>
                     <td className="text-center mobile-hide">
                       {svc.isTerminated ? (
                         <span className="badge badge-red">Ukončeno</span>
@@ -394,32 +410,12 @@ export function ServicesListClient({ initialServices }: Props) {
                           </span>
                         ) : sharingBadge((svc as any).usageMode)}
                      </td>
-                    <td className="text-center">
-                       {!svc.isShared ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <span className="text-sm font-bold text-primary">{svc._count.accessGrants}</span>
-                          {svc._count.accessRequests > 0 && (
-                            <div 
-                              title={`${svc._count.accessRequests} nových žádostí`}
-                              className="w-5 h-5 bg-brand-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-sm animate-pulse"
-                            >
-                              {svc._count.accessRequests}
-                            </div>
-                          )}
-                        </div>
-                       ) : (
-                          <div className="flex justify-center" title={`Vlastní ${svc.owner?.name}`}>
-                             <div className="w-6 h-6 rounded-full bg-slate-200 border border-white shadow-sm overflow-hidden flex items-center justify-center text-[10px] font-bold text-slate-500">
-                                {svc.owner?.avatar ? <img src={svc.owner.avatar} alt="" className="w-full h-full object-cover" /> : svc.owner?.name.charAt(0)}
-                             </div>
-                          </div>
-                       )}
-                    </td>
-                    <td>
+                    <td className="text-right">
                       {svc.isAvailable ? (
                         <button
-                          className={`btn ${svc.hasPendingRequest ? 'btn-glow' : 'btn-primary'} btn-sm w-full`}
-                          onClick={async () => {
+                          className={`btn ${svc.hasPendingRequest ? 'btn-glow' : 'btn-primary'} btn-sm`}
+                          onClick={async (e) => {
+                             e.stopPropagation();
                              if (svc.hasPendingRequest || requestingId) return;
                              setRequestingId(svc.id);
                              const res = await fetch(`/api/services/${svc.id}/access-requests`, {
@@ -438,6 +434,7 @@ export function ServicesListClient({ initialServices }: Props) {
                         <Link
                           href={`/dashboard/services/${svc.id}`}
                           className="btn btn-ghost btn-sm"
+                          onClick={e => e.stopPropagation()}
                         >
                           {svc.isShared ? "Prohlédnout →" : "Detail →"}
                         </Link>
