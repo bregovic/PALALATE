@@ -465,35 +465,104 @@ function ServicesTab() {
 
       {showFormModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowFormModal(false)}>
-          <div className="modal animate-fade-in" style={{ maxWidth: 500 }}>
-            <div className="modal-header"><h3>{editingServiceId ? "Upravit" : "Přidat"} službu</h3></div>
-            <form onSubmit={save} className="modal-body flex flex-col gap-4">
-              <div className="form-group">
-                <label className="form-label">Název</label>
-                <input className="form-input" value={svcForm.name} onChange={e => setSvcForm({...svcForm, name: e.target.value})} required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Kategorie</label>
-                <select className="form-select" value={svcForm.category} onChange={e => setSvcForm({...svcForm, category: e.target.value})}>
-                  <option value="">-- Vyberte --</option>
-                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                </select>
-              </div>
+          <div className="modal animate-fade-in" style={{ maxWidth: 650 }}>
+            <div className="modal-header"><h3>{editingServiceId ? "Upravit" : "Přidat"} službu do číselníku</h3></div>
+            <form onSubmit={save} className="modal-body flex flex-col gap-5 overflow-y-auto max-h-[80vh]">
               <div className="grid-2 gap-4">
                 <div className="form-group">
-                  <label className="form-label">Cena</label>
-                  <input type="number" step="0.01" className="form-input" value={svcForm.defaultPrice} onChange={e => setSvcForm({...svcForm, defaultPrice: parseFloat(e.target.value)})} />
+                  <label className="form-label">Název služby</label>
+                  <input className="form-input" value={svcForm.name} onChange={e => setSvcForm({...svcForm, name: e.target.value})} required />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Měna</label>
-                  <select className="form-select" value={svcForm.currency} onChange={e => setSvcForm({...svcForm, currency: e.target.value})}>
-                    <option value="CZK">CZK</option><option value="EUR">EUR</option><option value="USD">USD</option>
+                  <label className="form-label">Kategorie</label>
+                  <select className="form-select" value={svcForm.category} onChange={e => setSvcForm({...svcForm, category: e.target.value})}>
+                    <option value="">-- Vyberte --</option>
+                    {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                   </select>
                 </div>
               </div>
-              <div className="modal-footer px-0 pb-0 mt-4">
+
+              <div className="grid-2 gap-4">
+                <div className="form-group">
+                  <label className="form-label">Výchozí cena</label>
+                  <div className="input-group">
+                    <input type="number" step="0.01" className="form-input" value={svcForm.defaultPrice} onChange={e => setSvcForm({...svcForm, defaultPrice: parseFloat(e.target.value)})} />
+                    <select className="form-select !w-32" value={svcForm.currency} onChange={e => setSvcForm({...svcForm, currency: e.target.value})}>
+                      <option value="CZK">CZK</option><option value="EUR">EUR</option><option value="USD">USD</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Frekvence platby</label>
+                  <select className="form-select" value={svcForm.billingCycle} onChange={e => setSvcForm({...svcForm, billingCycle: e.target.value})}>
+                    <option value="MONTHLY">Měsíčně</option>
+                    <option value="YEARLY">Ročně</option>
+                    <option value="QUARTERLY">Čtvrtletně</option>
+                    <option value="WEEKLY">Týdně</option>
+                    <option value="ONEOFF">Jednorázově</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">URL adresa služby (Odkaz)</label>
+                <input className="form-input" placeholder="https://..." value={svcForm.url} onChange={e => setSvcForm({...svcForm, url: e.target.value})} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">URL Logo / Ikona</label>
+                <div className="flex gap-3">
+                  <input className="form-input flex-1" placeholder="https://.../logo.png" value={svcForm.iconUrl} onChange={e => setSvcForm({...svcForm, iconUrl: e.target.value})} />
+                  {svcForm.iconUrl && <img src={svcForm.iconUrl} className="w-10 h-10 rounded border object-contain bg-white" alt="Preview" />}
+                </div>
+              </div>
+
+              <div className="grid-2 gap-4">
+                <div className="form-group">
+                  <label className="form-label">Typ zpoplatnění</label>
+                  <select className="form-select" value={svcForm.pricingType} onChange={e => setSvcForm({...svcForm, pricingType: e.target.value})}>
+                    <option value="PAID">Placené</option>
+                    <option value="FREE">Zdarma</option>
+                    <option value="TRIAL">Trial / Zkušební</option>
+                    <option value="INCLUDED">V rámci jiného balíčku</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Způsob užití</label>
+                  <select className="form-select" value={svcForm.usageMode} onChange={e => setSvcForm({...svcForm, usageMode: e.target.value})}>
+                    <option value="PRIVATE">Soukromé</option>
+                    <option value="SHARED">Sdílené</option>
+                    <option value="SHARED_ROTATION">Sdílené (Střídání)</option>
+                    <option value="LICENSE">Licenční klíče</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                 <label className="form-label">Popis služby</label>
+                 <textarea className="form-textarea" rows={3} value={svcForm.description} onChange={e => setSvcForm({...svcForm, description: e.target.value})} />
+              </div>
+
+              <div className="flex flex-col gap-3 p-4 bg-muted border border-subtle rounded-xl">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input type="checkbox" className="w-5 h-5 rounded border-subtle shadow-inner" checked={svcForm.isShareable} onChange={e => setSvcForm({...svcForm, isShareable: e.target.checked})} />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold">Povolit sdílení</span>
+                    <span className="text-[10px] text-muted">Umožňuje uživatelům sdílet přístup k této službě s přáteli.</span>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input type="checkbox" className="w-5 h-5 rounded border-subtle shadow-inner" checked={svcForm.requiresBookingApproval} onChange={e => setSvcForm({...svcForm, requiresBookingApproval: e.target.checked})} />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold">Vyžadovat schválení rezervací</span>
+                    <span className="text-[10px] text-muted">Nutné manuální potvrzení majitelem při žádosti o slot.</span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="modal-footer px-0 pb-0 mt-2">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowFormModal(false)}>Zrušit</button>
-                <button type="submit" className="btn btn-primary">Uložit</button>
+                <button type="submit" className="btn btn-primary">Uložit službu</button>
               </div>
             </form>
           </div>
