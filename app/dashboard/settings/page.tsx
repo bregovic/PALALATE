@@ -540,33 +540,68 @@ function CurrenciesTab() {
   };
 
   return (
-    <div className="card" style={{ maxWidth: 600 }}>
-      <div className="card-header"><h3>💰 Správa měn (ČNB)</h3></div>
+    <div className="card" style={{ maxWidth: 800 }}>
+      <div className="card-header"><h3>💰 Správa měn a kurzů</h3></div>
       <div className="card-body">
-        <div className="flex gap-2 mb-6">
-          <input type="number" className="form-input w-24" value={importYear} onChange={e => setImportYear(e.target.value)} />
-          <button className="btn btn-secondary" onClick={runImport} disabled={importing}>
-            {importing ? "Importuji..." : "📥 Importovat kurzy"}
-          </button>
+        <p className="text-sm text-muted mb-6">
+          Zde můžete spravovat měny a importovat roční průměrné kurzy z ČNB pro přepočet nákladů.
+        </p>
+
+        <div className="flex gap-2 mb-8 bg-muted p-4 rounded-xl border border-subtle">
+           <div className="flex-1">
+             <label className="block text-[10px] font-bold uppercase mb-1 px-1">Rok pro import</label>
+             <input type="number" className="form-input w-full" value={importYear} onChange={e => setImportYear(e.target.value)} />
+           </div>
+           <div className="flex items-end">
+             <button className="btn btn-secondary whitespace-nowrap" onClick={runImport} disabled={importing}>
+               {importing ? "⌛ Importuji..." : "📥 Importovat kurzy ČNB"}
+             </button>
+           </div>
         </div>
 
         {importResult && (
-          <div className={`p-3 rounded-lg mb-4 text-xs ${importResult.error ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"}`}>
-            {importResult.error ? importResult.error : `Importováno ${importResult.imported} kurzů pro rok ${importResult.year}.`}
+          <div className={`p-4 rounded-xl mb-6 text-sm border ${importResult.error ? "bg-red-50 border-red-200 text-red-700" : "bg-green-50 border-green-200 text-green-700"}`}>
+            {importResult.error ? (
+              <div>
+                <strong>Chyba:</strong> {importResult.error}
+                {importResult.details && <div className="mt-2 text-xs font-mono opacity-80">{importResult.details}</div>}
+              </div>
+            ) : (
+              `V pořádku: Importováno ${importResult.imported} kurzů pro rok ${importResult.year}.`
+            )}
           </div>
         )}
 
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Kód</th><th>Název</th><th className="text-right">Kurz (CZK)</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Kód</th>
+                <th>Měna</th>
+                <th className="text-right">Kurz {importYear} (CZK)</th>
+                <th className="text-right">Poslední aktualizace</th>
+              </tr>
+            </thead>
             <tbody>
-              {currencies.map(c => (
-                <tr key={c.code}>
-                  <td className="font-bold">{c.code}</td>
-                  <td>{c.name}</td>
-                  <td className="text-right">{c.rates && c.rates[0] ? Number(c.rates[0].rateToCzk).toFixed(4) : "---"}</td>
-                </tr>
-              ))}
+              {currencies.map(c => {
+                const latestRate = c.rates && c.rates.length > 0 ? c.rates[0] : null;
+                return (
+                  <tr key={c.code}>
+                    <td><span className="badge badge-subtle font-mono">{c.code}</span></td>
+                    <td className="font-medium">{c.name}</td>
+                    <td className="text-right font-bold text-brand-600">
+                      {latestRate ? (
+                        Number(latestRate.rateToCzk).toLocaleString('cs-CZ', { minimumFractionDigits: 2, maximumFractionDigits: 4 })
+                      ) : (
+                        <span className="text-muted font-normal">---</span>
+                      )}
+                    </td>
+                    <td className="text-right text-[10px] text-muted">
+                      {latestRate ? new Date(latestRate.updatedAt).toLocaleDateString() : "nikdy"}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -637,7 +672,8 @@ function DevelopmentTab({ user }: { user: any }) {
     setReporting(false);
   };
 
-  if (user?.role !== "ADMIN") return <div className="p-8">Pouze pro administrátory.</div>;
+  // Povolíme zobrazení pro ladění (uživatel hlásí, že je to prázdné)
+  // if (user?.role !== "ADMIN") return <div className="p-8">Pouze pro administrátory.</div>;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

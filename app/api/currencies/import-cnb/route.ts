@@ -186,27 +186,35 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      await db.exchangeRate.upsert({
+      // Hledáme existující záznam (findFirst místo findUnique umožní lehčí práci s null v composite indexu)
+      const existing = await db.exchangeRate.findFirst({
         where: {
-          currencyCode_year_month: {
-            currencyCode: currency.code,
-            year: targetYear,
-            month: null,
-          },
-        },
-        create: {
           currencyCode: currency.code,
           year: targetYear,
           month: null,
-          rateToCzk: cnbRow.rate,
-          source: "CNB",
-        },
-        update: {
-          rateToCzk: cnbRow.rate,
-          source: "CNB",
-          updatedAt: new Date(),
-        },
+        }
       });
+
+      if (existing) {
+        await db.exchangeRate.update({
+          where: { id: existing.id },
+          data: {
+            rateToCzk: cnbRow.rate,
+            source: "CNB",
+            updatedAt: new Date(),
+          }
+        });
+      } else {
+        await db.exchangeRate.create({
+          data: {
+            currencyCode: currency.code,
+            year: targetYear,
+            month: null, // roční průměr
+            rateToCzk: cnbRow.rate,
+            source: "CNB",
+          }
+        });
+      }
 
       results.push({ code: currency.code, rate: cnbRow.rate, status: "OK" });
     }
@@ -218,12 +226,15 @@ export async function POST(req: NextRequest) {
       results,
     });
 
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
+  } catch (err: any) {
+    if (err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.error("[POST /api/currencies/import-cnb]", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("[POST /api/currencies/import-cnb] ERROR:", err);
+    return NextResponse.json({ 
+      error: "Server error při ukládání do DB", 
+      details: err.message 
+    }, { status: 500 });
   }
 }
 
