@@ -448,7 +448,7 @@ function ServicesTab() {
               {services.map(s => (
                 <tr key={s.id}>
                   <td><div className="flex items-center gap-2">
-                    {s.iconUrl ? <img src={s.iconUrl} className="w-8 h-8 object-contain" /> : <span>📦</span>}
+                    {s.iconUrl ? <img src={s.iconUrl} style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, objectFit: 'contain' }} /> : <span>📦</span>}
                     <span className="font-bold">{s.name}</span>
                   </div></td>
                   <td>{s.category}</td>
@@ -601,12 +601,92 @@ function SystemTab({ user }: { user: any }) {
 }
 
 function DevelopmentTab({ user }: { user: any }) {
+  const [releases, setReleases] = useState<any[]>([]);
+  const [bugs, setBugs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [bugTitle, setBugTitle] = useState("");
+  const [bugText, setBugText] = useState("");
+  const [reporting, setReporting] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const [rr, br] = await Promise.all([
+      fetch("/api/development/releases"),
+      fetch("/api/development/bugs")
+    ]);
+    setReleases(await rr.json());
+    setBugs(await br.json());
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const reportBug = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bugTitle) return;
+    setReporting(true);
+    const res = await fetch("/api/development/bugs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: bugTitle, description: bugText, priority: "MEDIUM" }),
+    });
+    if (res.ok) {
+      setBugTitle(""); setBugText("");
+      load();
+    }
+    setReporting(false);
+  };
+
   if (user?.role !== "ADMIN") return <div className="p-8">Pouze pro administrátory.</div>;
+
   return (
-    <div className="card" style={{ maxWidth: 600 }}>
-      <div className="card-header"><h3>🛠️ Vývojářské nástroje</h3></div>
-      <div className="card-body">
-         <p className="text-sm">Vítejte v admin módu.</p>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Historie vývoje */}
+      <div className="card">
+        <div className="card-header"><h3>🚀 Historie vývoje</h3></div>
+        <div className="card-body flex flex-col gap-6">
+          {releases.map((rel, idx) => (
+            <div key={rel.id} className="relative pl-6 pb-6 border-l-2 border-brand-100 last:pb-0">
+               <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-brand-500 border-4 border-white shadow-sm" />
+               <div className="flex justify-between items-start mb-1">
+                 <h4 className="font-bold text-brand-700">{rel.version}</h4>
+                 <span className="text-[10px] text-muted">{new Date(rel.createdAt).toLocaleDateString()}</span>
+               </div>
+               <p className="text-sm text-balance leading-relaxed text-slate-600">{rel.description}</p>
+            </div>
+          ))}
+          {releases.length === 0 && <p className="text-muted italic">Žádné záznamy o verzích.</p>}
+        </div>
+      </div>
+
+      {/* Bug reporting */}
+      <div className="flex flex-col gap-8">
+        <div className="card">
+          <div className="card-header"><h3>🐞 Nahlásit chybu</h3></div>
+          <form onSubmit={reportBug} className="card-body flex flex-col gap-4">
+            <input className="form-input" placeholder="Stručný název chyby..." value={bugTitle} onChange={e => setBugTitle(e.target.value)} required />
+            <textarea className="form-textarea" placeholder="Detailní popis a kroky k reprodukci..." value={bugText} onChange={e => setBugText(e.target.value)} />
+            <button className="btn btn-primary" disabled={reporting}>{reporting ? "Odesílám..." : "Nahlásit bug"}</button>
+          </form>
+        </div>
+
+        <div className="card">
+          <div className="card-header"><h3>📋 Seznam nahlášených chyb</h3></div>
+          <div className="card-body flex flex-col gap-2">
+             {bugs.map(bug => (
+               <div key={bug.id} className="p-3 bg-muted rounded-xl border border-subtle flex justify-between items-center group">
+                 <div>
+                   <div className="font-bold text-sm">{bug.title}</div>
+                   <div className="text-[10px] text-muted">Od: {bug.reporter?.name || "Anonym"} • {new Date(bug.createdAt).toLocaleDateString()}</div>
+                 </div>
+                 <span className={`badge ${bug.status === 'FIXED' ? 'badge-green' : 'badge-yellow'} text-[10px]`}>
+                   {bug.status}
+                 </span>
+               </div>
+             ))}
+             {bugs.length === 0 && <p className="text-muted italic p-4 text-center">Zatím žádné nahlášené chyby. Hurá!</p>}
+          </div>
+        </div>
       </div>
     </div>
   );

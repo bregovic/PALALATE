@@ -36,10 +36,14 @@ async function fetchCnbYearlyRates(year: number): Promise<CnbRateRow[]> {
     throw new Error(`ČNB API vrátilo ${res.status}`);
   }
 
-  // ČNB odpovídá v windows-1250 kódování
+  // ČNB odpovídá typicky v windows-1250, ale v některých prostředích už v UTF-8.
   const buffer = await res.arrayBuffer();
-  const decoder = new TextDecoder("windows-1250");
-  const text = decoder.decode(buffer);
+  let text = new TextDecoder("utf-8").decode(buffer);
+  
+  // Pokud UTF-8 verze neobsahuje očekávaná slova, zkusíme windows-1250
+  if (!text.includes("kód") && !text.includes("kurz") && !text.includes("Země") && !text.includes("měna")) {
+    text = new TextDecoder("windows-1250").decode(buffer);
+  }
 
   const lines = text.split("\n").map(l => l.trim()).filter(l => l);
   if (lines.length < 2) throw new Error("Neplatná odpověď z ČNB (málo řádků)");
