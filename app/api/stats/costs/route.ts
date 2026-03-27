@@ -24,8 +24,8 @@ interface ServiceWithIntervals {
   priceIntervals: PriceInterval[];
 }
 
-// Static exchange rates to CZK (update manually when needed, or replace with live API)
-const RATES_TO_CZK: Record<string, number> = {
+// Fallback kurzy kdyby v DB nebyly žádné záznamy
+const FALLBACK_RATES_TO_CZK: Record<string, number> = {
   CZK: 1,
   EUR: 25.0,
   USD: 23.0,
@@ -33,26 +33,53 @@ const RATES_TO_CZK: Record<string, number> = {
   CHF: 26.0,
   PLN: 5.8,
   HUF: 0.065,
-  SKK: 1, // legacy Slovak crowns ~ CZK parity
+  SKK: 1,
 };
 
-/** Convert any amount to CZK */
-function toCZK(amount: number, currency: string): number {
-  const rate = RATES_TO_CZK[currency?.toUpperCase()] ?? 1;
-  return amount * rate;
+// Načte kurzy z DB — vrátí mapu: currency -> year -> rate
+type YearRateMap = Map<string, Map<number, number>>;
+
+async function loadDbRates(): Promise<YearRateMap> {
+  const rates = await (prisma as any).exchangeRate.findMany({
+    where: { month: null }, // jen roční průměry
+    orderBy: { year: "asc" },
+  });
+
+  const map: YearRateMap = new Map();
+  for (const r of rates) {
+    if (!map.has(r.currencyCode)) map.set(r.currencyCode, new Map());
+    map.get(r.currencyCode)!.set(r.year, Number(r.rateToCzk));
+  }
+  return map;
+}
+
+/** Najde nejlepší kurz pro daný rok — přesný, nebo nejbližší starší, nebo fallback */
+function getRateForYear(dbRates: YearRateMap, currency: string, year: number): number {
+  if (currency === "CZK") return 1;
+  const currRates = dbRates.get(currency.toUpperCase());
+  if (currRates && currRates.size > 0) {
+    if (currRates.has(year)) return currRates.get(year)!;
+    const older = [...currRates.keys()].filter(y => y <= year).sort((a, b) => b - a);
+    if (older.length > 0) return currRates.get(older[0])!;
+    const newer = [...currRates.keys()].sort((a, b) => a - b);
+    if (newer.length > 0) return currRates.get(newer[0])!;
+  }
+  return FALLBACK_RATES_TO_CZK[currency.toUpperCase()] ?? 1;
 }
 
 export async function GET(_req: NextRequest) {
   try {
     const user = await requireAuth();
     
-    // Fetch all services including ones that are archived/terminated for historical data
     const services = await (prisma.service as any).findMany({
       where: { ownerId: user.id },
       include: {
         priceIntervals: { orderBy: { startDate: "asc" } },
       }
     }) as ServiceWithIntervals[];
+
+    // Načteme kurzy z DB jednou dopředu
+    const dbRates = await loadDbRates();
 
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -99,8 +126,9 @@ export async function GET(_req: NextRequest) {
         default: monthlyRaw = rawPrice;
       }
 
-      // Convert to CZK
-      return toCZK(monthlyRaw, service.currency);
+      // Convert to CZK using year-specific rate from DB
+      const rate = getRateForYear(dbRates, service.currency, date.getFullYear());
+      return monthlyRaw * rate;
     };
 
 
@@ -133,8 +161,9 @@ export async function GET(_req: NextRequest) {
         const isArchived = service.status === "ARCHIVED" || service.isTerminated;
         const archivedDate = service.archivedAt ? new Date(service.archivedAt) : null;
 
+        // Pokud je archivováno ale chybí archivedAt, bereme jako neaktivní (neznámé datum odstranění)
         const wasActive = iterDate >= new Date(start.getFullYear(), start.getMonth(), 1) && 
-                          (!isArchived || !archivedDate || iterDate <= archivedDate);
+                          (!isArchived || (archivedDate !== null && iterDate <= archivedDate));
 
         if (wasActive) {
           const monthlyPrice = getPriceForDate(service, iterDate);

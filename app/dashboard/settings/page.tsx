@@ -24,7 +24,7 @@ export default function SettingsPage() {
   const [avatar, setAvatar] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [tab, setTab] = useState<"profile" | "security" | "services" | "categories" | "system" | "development">("profile");
+  const [tab, setTab] = useState<"profile" | "security" | "services" | "categories" | "currencies" | "system" | "development">("profile");
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [systemUnlocked, setSystemUnlocked] = useState(false);
   const [adminPass, setAdminPass] = useState("");
@@ -96,6 +96,9 @@ export default function SettingsPage() {
         </button>
         <button className={`tab ${tab === "categories" ? "active" : ""}`} onClick={() => setTab("categories")}>
           📁 Kategorie
+        </button>
+        <button className={`tab ${tab === "currencies" ? "active" : ""}`} onClick={() => setTab("currencies")}>
+          💱 Měny
         </button>
         <button className={`tab ${tab === "system" ? "active" : ""}`} onClick={() => setTab("system")}>
           ⚙️ Systém
@@ -304,6 +307,7 @@ export default function SettingsPage() {
 
       {tab === "services" && <ServicesTab />}
       {tab === "categories" && <CategoriesTab />}
+      {tab === "currencies" && <CurrenciesTab />}
       {tab === "system" && (
         <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
           {/* PWA Section for Everyone */}
@@ -1472,6 +1476,408 @@ function InstallPwaCard() {
         {deferredPrompt ? "📲 Instalovat aplikaci" : "⌛ Čekám na prohlížeč..."}
       </button>
       {!deferredPrompt && <p className="text-[9px] text-muted mt-2 text-center">Pokud tlačítko nesvítí, tvůj prohlížeč instalaci nepodporuje nebo už je hotovo.</p>}
+    </div>
+  );
+}
+
+// ─── CURRENCIES TAB ──────────────────────────────────────────────────────────
+
+// Předdefinované populární měny z ČNB číselníku pro rychlé přidání
+const POPULAR_CURRENCIES = [
+  { code: "EUR", name: "Euro", symbol: "€" },
+  { code: "USD", name: "Americký dolar", symbol: "$" },
+  { code: "GBP", name: "Britská libra", symbol: "£" },
+  { code: "CHF", name: "Švýcarský frank", symbol: "Fr" },
+  { code: "PLN", name: "Polský zlotý", symbol: "zł" },
+  { code: "HUF", name: "Maďarský forint", symbol: "Ft" },
+  { code: "SEK", name: "Švédská koruna", symbol: "kr" },
+  { code: "NOK", name: "Norská koruna", symbol: "kr" },
+  { code: "DKK", name: "Dánská koruna", symbol: "kr" },
+  { code: "JPY", name: "Japonský jen", symbol: "¥" },
+  { code: "CAD", name: "Kanadský dolar", symbol: "CA$" },
+  { code: "AUD", name: "Australský dolar", symbol: "A$" },
+  { code: "RON", name: "Rumunský leu", symbol: "lei" },
+  { code: "TRY", name: "Turecká lira", symbol: "₺" },
+];
+
+function CurrenciesTab() {
+  const [currencies, setCurrencies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importYear, setImportYear] = useState(new Date().getFullYear().toString());
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newCode, setNewCode] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newSymbol, setNewSymbol] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [expandedRates, setExpandedRates] = useState<string | null>(null);
+  const [allRates, setAllRates] = useState<Record<string, any[]>>({});
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/currencies");
+      const data = await res.json();
+      setCurrencies(Array.isArray(data) ? data : []);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const addCurrency = async (code: string, name: string, symbol: string) => {
+    setAdding(true);
+    try {
+      const res = await fetch("/api/currencies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, name, symbol }),
+      });
+      if (res.ok) {
+        setNewCode(""); setNewName(""); setNewSymbol("");
+        setShowAddForm(false);
+        load();
+      } else {
+        const d = await res.json();
+        alert("Chyba: " + d.error);
+      }
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const toggleActive = async (code: string, isActive: boolean) => {
+    await fetch(`/api/currencies/${code}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive }),
+    });
+    load();
+  };
+
+  const deleteCurrency = async (code: string) => {
+    if (!confirm(`Opravdu chceš odebrat měnu ${code}? Tím se odstraní i všechny její kurzy.`)) return;
+    await fetch(`/api/currencies/${code}`, { method: "DELETE" });
+    load();
+  };
+
+  const runImport = async () => {
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const res = await fetch("/api/currencies/import-cnb", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ year: parseInt(importYear) }),
+      });
+      const data = await res.json();
+      setImportResult(data);
+      if (res.ok) load();
+    } catch {
+      setImportResult({ error: "Nepodařilo se spojit se serverem." });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const loadAllRates = async (code: string) => {
+    if (expandedRates === code) { setExpandedRates(null); return; }
+    setExpandedRates(code);
+    if (!allRates[code]) {
+      try {
+        const res = await fetch(`/api/currencies`);
+        const data = await res.json();
+        const found = data.find((c: any) => c.code === code);
+        setAllRates(prev => ({ ...prev, [code]: found?.rates || [] }));
+      } catch {
+        setAllRates(prev => ({ ...prev, [code]: [] }));
+      }
+    }
+  };
+
+  const notAdded = POPULAR_CURRENCIES.filter(p => !currencies.find(c => c.code === p.code));
+
+  return (
+    <div style={{ maxWidth: 720 }}>
+      {/* Header */}
+      <div className="card animate-fade-in mb-6">
+        <div className="card-header flex justify-between items-center">
+          <div>
+            <h3>💱 Správa měn</h3>
+            <p className="text-sm text-muted mt-1">
+              Evidujte měny používané ve službách. Kurzy se automaticky stáhnou z ČNB a použijí
+              pro přepočet nákladů do CZK v přehledech.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => { setShowImportDialog(true); setImportResult(null); }}
+            >
+              📥 Import kurzů z ČNB
+            </button>
+          </div>
+        </div>
+
+        {/* Aktivní měny */}
+        <div className="card-body">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-bold text-sm uppercase tracking-wider text-muted">Evidované měny</h4>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowAddForm(v => !v)}
+            >
+              {showAddForm ? "✕ Zrušit" : "＋ Přidat měnu"}
+            </button>
+          </div>
+
+          {showAddForm && (
+            <div className="p-4 bg-brand-50 border border-brand-200 rounded-xl mb-4 animate-fade-in">
+              <h5 className="font-bold mb-3 text-sm">Vlastní měna</h5>
+              <div className="flex gap-2 flex-wrap">
+                <input
+                  className="form-input w-20"
+                  placeholder="CZK"
+                  value={newCode}
+                  onChange={e => setNewCode(e.target.value.toUpperCase())}
+                  maxLength={5}
+                />
+                <input
+                  className="form-input flex-1"
+                  placeholder="Název měny..."
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                />
+                <input
+                  className="form-input w-16"
+                  placeholder="€"
+                  value={newSymbol}
+                  onChange={e => setNewSymbol(e.target.value)}
+                />
+                <button
+                  className="btn btn-primary"
+                  disabled={adding || !newCode || !newName}
+                  onClick={() => addCurrency(newCode, newName, newSymbol)}
+                >
+                  {adding ? "Ukládám..." : "Přidat"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tabulka evidovaných měn */}
+          {loading ? (
+            <div className="text-muted text-sm p-4">Načítám...</div>
+          ) : currencies.length === 0 ? (
+            <div className="p-6 text-center text-muted">
+              <div className="text-3xl mb-2">💱</div>
+              Zatím žádné měny. Přidejte EUR, USD nebo jiné měny ze seznamu níže.
+            </div>
+          ) : (
+            <div className="table-wrap mb-0">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Kód</th>
+                    <th>Název</th>
+                    <th>Symbol</th>
+                    <th className="text-right">Poslední kurz</th>
+                    <th className="text-center">Aktivní</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currencies.map((c: any) => (
+                    <>
+                      <tr key={c.code} className={!c.isActive ? "opacity-50" : ""}>
+                        <td>
+                          <div className="flex items-center gap-2">
+                            <span className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold ${c.isBase ? "bg-amber-100 text-amber-700" : "bg-brand-100 text-brand-700"}`}>
+                              {c.code}
+                            </span>
+                            {c.isBase && <span className="badge badge-yellow text-[10px]">základ</span>}
+                          </div>
+                        </td>
+                        <td className="font-medium">{c.name}</td>
+                        <td className="text-muted">{c.symbol || "—"}</td>
+                        <td className="text-right">
+                          {c.rates && c.rates[0] ? (
+                            <button
+                              className="text-sm font-bold text-brand-600 hover:underline cursor-pointer"
+                              onClick={() => loadAllRates(c.code)}
+                            >
+                              {Number(c.rates[0].rateToCzk).toFixed(4)} CZK
+                              <span className="text-xs text-muted ml-1">({c.rates[0].year})</span>
+                            </button>
+                          ) : (
+                            <span className="text-xs text-muted italic">Bez kurzu</span>
+                          )}
+                        </td>
+                        <td className="text-center">
+                          {c.isBase ? (
+                            <span className="text-xs text-muted">—</span>
+                          ) : (
+                            <label className="switch switch-sm">
+                              <input
+                                type="checkbox"
+                                checked={c.isActive}
+                                onChange={e => toggleActive(c.code, e.target.checked)}
+                              />
+                              <span className="slider round"></span>
+                            </label>
+                          )}
+                        </td>
+                        <td>
+                          {!c.isBase && (
+                            <button
+                              className="btn btn-ghost btn-icon btn-sm text-danger"
+                              onClick={() => deleteCurrency(c.code)}
+                              title="Odebrat"
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      {/* Rozbalené kurzy */}
+                      {expandedRates === c.code && (
+                        <tr key={`${c.code}-rates`}>
+                          <td colSpan={6} className="bg-slate-50 p-0">
+                            <div className="p-4 animate-fade-in">
+                              <h5 className="text-xs font-bold uppercase tracking-wider text-muted mb-3">
+                                Historie kurzů — {c.code}
+                              </h5>
+                              {(allRates[c.code] || []).length === 0 ? (
+                                <p className="text-xs text-muted italic">Žádné kurzy. Importujte z ČNB.</p>
+                              ) : (
+                                <div className="flex flex-wrap gap-2">
+                                  {(allRates[c.code] || [])
+                                    .sort((a: any, b: any) => b.year - a.year)
+                                    .map((r: any) => (
+                                      <div key={r.id} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs">
+                                        <span className="font-bold text-slate-700">{r.year}</span>
+                                        <span className="text-muted mx-1">→</span>
+                                        <span className="font-mono text-brand-600">{Number(r.rateToCzk).toFixed(4)}</span>
+                                        <span className="text-muted ml-1">CZK</span>
+                                      </div>
+                                    ))}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Rychlé přidání populárních měn */}
+      {notAdded.length > 0 && (
+        <div className="card animate-fade-in">
+          <div className="card-header">
+            <h4>⚡ Rychlé přidání</h4>
+          </div>
+          <div className="card-body">
+            <p className="text-sm text-muted mb-4">Klikni pro okamžité přidání do číselníku:</p>
+            <div className="flex flex-wrap gap-2">
+              {notAdded.map(p => (
+                <button
+                  key={p.code}
+                  className="btn btn-secondary btn-sm flex items-center gap-2"
+                  onClick={() => addCurrency(p.code, p.name, p.symbol)}
+                >
+                  <span className="font-bold text-brand-700">{p.code}</span>
+                  <span className="text-muted text-xs">{p.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import dialog */}
+      {showImportDialog && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowImportDialog(false); }}>
+          <div className="modal animate-fade-in" style={{ maxWidth: 500 }}>
+            <div className="modal-header">
+              <h3>📥 Import kurzů z ČNB</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => setShowImportDialog(false)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <p className="text-sm text-muted">
+                Systém stáhne roční průměrné kurzy z ČNB pro všechny aktivně evidované měny.
+                Tyto kurzy se pak použijí pro přepočet nákladů k danému roku.
+              </p>
+
+              <div className="form-group">
+                <label className="form-label">Rok</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={importYear}
+                  min={2000}
+                  max={new Date().getFullYear()}
+                  onChange={e => setImportYear(e.target.value)}
+                />
+                <span className="form-hint">
+                  Dostupné: 2000 – {new Date().getFullYear()}
+                  {parseInt(importYear) === new Date().getFullYear() && " (průměr za celý aktuální rok zatím nemusí být dostupný)"}
+                </span>
+              </div>
+
+              {importResult && (
+                <div className={`p-4 rounded-xl border text-sm ${importResult.error ? "bg-red-50 border-red-200 text-red-700" : "bg-green-50 border-green-200 text-green-800"}`}>
+                  {importResult.error ? (
+                    <div>❌ {importResult.error}</div>
+                  ) : (
+                    <>
+                      <div className="font-bold mb-2">
+                        ✅ Importováno {importResult.imported} kurzů za rok {importResult.year}
+                        {importResult.skipped > 0 && `, ${importResult.skipped} přeskočeno`}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {(importResult.results || []).map((r: any) => (
+                          <div key={r.code} className="flex items-center gap-2 text-xs">
+                            <span className={`w-2 h-2 rounded-full ${r.status === "OK" ? "bg-green-500" : "bg-orange-400"}`} />
+                            <span className="font-bold">{r.code}</span>
+                            {r.rate ? (
+                              <span>{Number(r.rate).toFixed(4)} CZK</span>
+                            ) : (
+                              <span className="text-muted italic">{r.status}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setShowImportDialog(false)}>Zavřít</button>
+              <button
+                className="btn btn-primary"
+                onClick={runImport}
+                disabled={importing || !importYear}
+              >
+                {importing ? (
+                  <><div className="spinner" style={{ width: 16, height: 16 }} /> Stahuji z ČNB...</>
+                ) : (
+                  "📥 Importovat"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

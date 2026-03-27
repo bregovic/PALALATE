@@ -120,9 +120,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
 
     // BACK-PROPAGATION: Update Registry if name changed or if registry is missing info
-    const searchName = serviceName || service.serviceName;
     const registryEntry = await prisma.serviceRegistry.findFirst({
-      where: { name: service.serviceName } // Always look up by the OLD name first if we want to update it
+      where: { name: service.serviceName }
     });
 
     if (registryEntry) {
@@ -135,12 +134,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       // Fill in missing info in registry from this user's data
       if (!registryEntry.description && description) registryUpdate.description = description;
-      // Always sync icon to registry if user provided one (overwrite so best icon wins)
-      if (iconUrl) registryUpdate.iconUrl = iconUrl;
       if (!registryEntry.url && url) registryUpdate.url = url;
       if (!registryEntry.category && category) registryUpdate.category = category;
       
-      // Update price ONLY if registry price is 0 or null (user said "upravit unikátně")
+      // Icon sync: prefer base64 (user-uploaded) over any URL, URL over null
+      const isBase64 = (s: string | null | undefined) => !!s && s.startsWith("data:");
+      const currentRegIcon = registryEntry.iconUrl;
+      if (iconUrl) {
+        // New icon is better if: new is base64 and old isn't, OR old is null/empty
+        if (!currentRegIcon || isBase64(iconUrl) || !isBase64(currentRegIcon)) {
+          registryUpdate.iconUrl = iconUrl;
+        }
+      }
+
+      // Update price ONLY if registry price is 0 or null
       const regPrice = Number(registryEntry.defaultPrice || 0);
       if (regPrice === 0 && periodicPrice) registryUpdate.defaultPrice = Number(periodicPrice);
 
@@ -150,16 +157,33 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           data: registryUpdate
         });
 
-        // Propagate new icon to all other users' services that don't have their own icon yet
+        // Propagate new icon to ALL other users' services with the same service name
+        // (overwrite if their icon is "worse" — i.e. not base64 while new one is)
         if (registryUpdate.iconUrl) {
-          await prisma.service.updateMany({
-            where: {
-              serviceName: registryEntry.name,
-              ownerId: { not: user.id }, // don't touch the current user's service
-              OR: [{ iconUrl: null }, { iconUrl: "" }],
-            },
-            data: { iconUrl: registryUpdate.iconUrl },
-          });
+          const newIcon = registryUpdate.iconUrl;
+          const isNewBase64 = isBase64(newIcon);
+
+          if (isNewBase64) {
+            // New icon is a real uploaded image — push to everyone without a base64 icon
+            await prisma.service.updateMany({
+              where: {
+                serviceName: registryEntry.name,
+                ownerId: { not: user.id },
+                NOT: { iconUrl: { startsWith: "data:" } }, // don't overwrite existing user uploads
+              },
+              data: { iconUrl: newIcon },
+            });
+          } else {
+            // New icon is a URL — push only to users with no icon at all
+            await prisma.service.updateMany({
+              where: {
+                serviceName: registryEntry.name,
+                ownerId: { not: user.id },
+                OR: [{ iconUrl: null }, { iconUrl: "" }],
+              },
+              data: { iconUrl: newIcon },
+            });
+          }
         }
       }
     }

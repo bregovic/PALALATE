@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 
+const isBase64 = (s: string | null | undefined) => !!s && s.startsWith("data:");
+
+/** Returns true if iconA is "better" than iconB (base64 > http URL > null) */
+function isBetterIcon(iconA: string | null | undefined, iconB: string | null | undefined): boolean {
+  if (!iconA) return false;
+  if (!iconB) return true;
+  if (isBase64(iconA) && !isBase64(iconB)) return true; // uploaded beats favicon URL
+  return false;
+}
+
 // POST /api/admin/sync-services — sync user services → registry + propagate icons back
 export async function POST(req: Request) {
   try {
@@ -45,11 +55,14 @@ export async function POST(req: Request) {
         const svcPrice = Number(svc.periodicPrice || 0);
 
         if (regPrice === 0 && svcPrice > 0) updates.defaultPrice = svcPrice;
-        // Always propagate icon if user has one and registry is missing it
-        if (!registryEntry.iconUrl && svc.iconUrl) updates.iconUrl = svc.iconUrl;
         if (!registryEntry.description && svc.description) updates.description = svc.description;
         if (!registryEntry.category && svc.category) updates.category = svc.category;
         if (!registryEntry.url && svc.url) updates.url = svc.url;
+
+        // Promote icon only if the user's icon is "better" than registry's
+        if (isBetterIcon(svc.iconUrl, registryEntry.iconUrl)) {
+          updates.iconUrl = svc.iconUrl;
+        }
 
         if (Object.keys(updates).length > 0) {
           await prisma.serviceRegistry.update({
@@ -59,16 +72,30 @@ export async function POST(req: Request) {
           updatedCount++;
         }
 
-        // Propagate registry icon back to all user services without icon
-        if (registryEntry.iconUrl || updates.iconUrl) {
-          const iconToUse = updates.iconUrl || registryEntry.iconUrl;
-          const result = await prisma.service.updateMany({
-            where: {
-              serviceName: { equals: registryEntry.name, mode: "insensitive" },
-              OR: [{ iconUrl: null }, { iconUrl: "" }],
-            },
-            data: { iconUrl: iconToUse },
-          });
+        // Propagate best available icon back to all user services
+        const bestIcon = updates.iconUrl || registryEntry.iconUrl;
+        if (bestIcon) {
+          const isBestBase64 = isBase64(bestIcon);
+          let result;
+          if (isBestBase64) {
+            // Push to everyone who doesn't have their own uploaded image
+            result = await prisma.service.updateMany({
+              where: {
+                serviceName: { equals: registryEntry.name, mode: "insensitive" },
+                NOT: { iconUrl: { startsWith: "data:" } },
+              },
+              data: { iconUrl: bestIcon },
+            });
+          } else {
+            // Push URL favicon only to those with no icon
+            result = await prisma.service.updateMany({
+              where: {
+                serviceName: { equals: registryEntry.name, mode: "insensitive" },
+                OR: [{ iconUrl: null }, { iconUrl: "" }],
+              },
+              data: { iconUrl: bestIcon },
+            });
+          }
           iconsPropagated += result.count;
         }
       }
@@ -84,6 +111,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
+
 
 // DELETE /api/admin/sync-services — deduplicate registry (merge duplicates by case-insensitive name)
 export async function DELETE() {

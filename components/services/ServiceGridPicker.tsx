@@ -14,6 +14,8 @@ interface RegistryService {
   pricingType: string;
   usageMode?: string;
   requiresBookingApproval?: boolean;
+  iconUrl?: string | null;
+  url?: string | null;
 }
 
 interface Category {
@@ -115,7 +117,9 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
             pricingType: item.pricingType || "PAID",
             billingCycle: item.billingCycle || "MONTHLY",
             usageMode: item.usageMode || "PRIVATE",
-            requiresBookingApproval: item.requiresBookingApproval || false
+            requiresBookingApproval: item.requiresBookingApproval || false,
+            iconUrl: item.iconUrl || null,
+            url: item.url || null,
           }),
         });
       }
