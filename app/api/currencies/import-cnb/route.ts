@@ -18,7 +18,15 @@ interface CnbRateRow {
 }
 
 async function fetchCnbYearlyRates(year: number): Promise<CnbRateRow[]> {
-  const url = `https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/rok.txt?rok=${year}`;
+  const currentYear = new Date().getFullYear();
+  
+  // Pro aktuální rok se rok.txt na webu ČNB chová jako časová řada (jiný formát), 
+  // tak raději použijeme denní kurz pro získání aktuálních dat.
+  // Pro minulé roky rok.txt vrací tabulku ročních průměrů.
+  const url = (year === currentYear) 
+    ? `https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt`
+    : `https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/rok.txt?rok=${year}`;
+
   const res = await fetch(url, {
     headers: { "Accept": "text/plain; charset=utf-8" },
     cache: "no-store",
@@ -28,49 +36,112 @@ async function fetchCnbYearlyRates(year: number): Promise<CnbRateRow[]> {
     throw new Error(`ČNB API vrátilo ${res.status}`);
   }
 
-  // ČNB odpovídá v windows-1250, ale většinou jako latin1 — potřebujeme přečíst jako arrayBuffer a dekódovat
+  // ČNB odpovídá v windows-1250 kódování
   const buffer = await res.arrayBuffer();
   const decoder = new TextDecoder("windows-1250");
   const text = decoder.decode(buffer);
 
-  const lines = text.split("\n").filter(l => l.trim());
-  if (lines.length < 2) throw new Error("Neplatná odpověď z ČNB");
+  const lines = text.split("\n").map(l => l.trim()).filter(l => l);
+  if (lines.length < 2) throw new Error("Neplatná odpověď z ČNB (málo řádků)");
 
-  const headerLine = lines[0];
-  const dataLines = lines.slice(1);
+  // Pomocná funkce pro normalizaci textu (odstranění diakritiky a na malá písmena)
+  const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
-  // Záhlaví: "Zem|Měna|Množství|Kód|Kurz" (case insensitive, různé diakritiky)
-  const headers = headerLine.split("|").map(h => h.trim().toLowerCase()
-    .replace(/\u00e1/g, "a").replace(/\u011b/g, "e").replace(/\u00ed/g, "i")
-    .replace(/\u00fd/g, "y").replace(/\u016f/g, "u").replace(/\u017e/g, "z")
-  );
+  // Najdeme řádek se záhlavím (může být na 1. nebo 2. řádku)
+  let headerIdx = -1;
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const l = norm(lines[i]);
+    if (l.includes("|") && (l.includes("kod") || l.includes("mena") || l.includes("kurz") || l.includes("prumer"))) {
+      headerIdx = i;
+      break;
+    }
+  }
+
+  // Speciální případ: Pokud rok.txt pro aktuální rok vrátí formát "Datum|1 AUD|1 BRL|..."
+  if (headerIdx === -1 && norm(lines[0]).startsWith("datum|")) {
+    return parseCnbPivotFormat(lines);
+  }
+
+  if (headerIdx === -1) {
+    throw new Error(`Neznámý formát ČNB (záhlaví nebylo rozpoznáno). První řádek: ${lines[0].substring(0, 100)}`);
+  }
+
+  const headers = lines[headerIdx].split("|").map(h => norm(h));
+  const dataLines = lines.slice(headerIdx + 1);
 
   const amountIdx = headers.findIndex(h => h.includes("mnozstvi") || h.includes("mnozst"));
   const codeIdx = headers.findIndex(h => h === "kod" || h.includes("kod"));
-  const rateIdx = headers.findIndex(h => h === "kurz");
+  const rateIdx = headers.findIndex(h => h === "kurz" || h === "prumer" || h.includes("prumer"));
 
   if (codeIdx === -1 || rateIdx === -1) {
-    throw new Error(`Neznámý formát ČNB (záhlaví: ${headerLine})`);
+    throw new Error(`Neznámý formát ČNB záhlaví (kod=${codeIdx}, rate=${rateIdx}). Záhlaví: ${lines[headerIdx]}`);
   }
 
   const rows: CnbRateRow[] = [];
   for (const line of dataLines) {
-    if (!line.trim()) continue;
     const cols = line.split("|");
-    if (cols.length <= rateIdx) continue;
+    if (cols.length <= Math.max(codeIdx, rateIdx)) continue;
 
     const code = cols[codeIdx]?.trim().toUpperCase();
-    const amount = amountIdx !== -1 ? parseFloat(cols[amountIdx]?.replace(",", ".")) : 1;
-    const rateRaw = parseFloat(cols[rateIdx]?.replace(",", ".").trim());
+    const amountStr = amountIdx !== -1 ? cols[amountIdx] : "1";
+    const amount = parseFloat(amountStr?.replace(",", ".")) || 1;
+    const rateStr = cols[rateIdx]?.replace(",", ".").trim();
+    const rateRaw = parseFloat(rateStr);
 
     if (!code || isNaN(rateRaw)) continue;
 
-    const ratePer1 = rateRaw / (isNaN(amount) || amount === 0 ? 1 : amount);
-    rows.push({ code, amount: isNaN(amount) ? 1 : amount, rate: ratePer1 });
+    rows.push({
+      code,
+      amount,
+      rate: rateRaw / amount
+    });
   }
 
   return rows;
 }
+
+/**
+ * Zpracuje formát kde sloupce jsou měny a řádky dny (použije poslední dostupný den).
+ * Záhlaví: Datum|1 AUD|1 BRL|1 CAD|...
+ */
+function parseCnbPivotFormat(lines: string[]): CnbRateRow[] {
+  const headerCols = lines[0].split("|");
+  const dataCols = lines[lines.length - 1].split("|"); // Poslední (nejnovější) řádek
+
+  if (headerCols.length !== dataCols.length) {
+    throw new Error("Pivot formát ČNB: Počet sloupců v záhlaví a datech nesouhlasí.");
+  }
+
+  const rows: CnbRateRow[] = [];
+  // Od indexu 1 (přeskakujeme 'Datum')
+  for (let i = 1; i < headerCols.length; i++) {
+    const header = headerCols[i].trim(); // např. "1 AUD" nebo "100 HUF"
+    const valStr = dataCols[i].trim().replace(",", ".");
+    const rateRaw = parseFloat(valStr);
+    
+    if (isNaN(rateRaw)) continue;
+
+    // Rozdělíme "100 HUF" na množství a kód
+    const parts = header.split(/\s+/);
+    let amount = 1;
+    let code = header;
+    
+    if (parts.length >= 2) {
+      amount = parseFloat(parts[0]) || 1;
+      code = parts[1].toUpperCase();
+    } else {
+      code = header.toUpperCase();
+    }
+
+    rows.push({
+      code,
+      amount,
+      rate: rateRaw / amount
+    });
+  }
+  return rows;
+}
+
 
 // POST /api/currencies/import-cnb — importuje kurzy pro daný rok
 export async function POST(req: NextRequest) {
