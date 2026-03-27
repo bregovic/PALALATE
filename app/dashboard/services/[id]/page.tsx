@@ -103,6 +103,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     url: "",
     iconUrl: "",
     priceIntervals: [] as PriceInterval[],
+    sharingStatus: "SHARING_DISABLED",
   });
   const [showIconEditor, setShowIconEditor] = useState(false);
   const [priceInput, setPriceInput] = useState("");
@@ -148,6 +149,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         isTerminated: data.isTerminated ?? false,
         url: data.url || "",
         iconUrl: data.iconUrl || "",
+        sharingStatus: data.sharingStatus || "SHARING_DISABLED",
         priceIntervals: (data.priceIntervals || []).map((pi: any) => ({
           ...pi,
           startDate: pi.startDate ? pi.startDate.split("T")[0] : "",
@@ -929,24 +931,39 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                 <div className="form-group" style={{ gridColumn: "1 / -1" }}>
                   <div className="flex flex-col gap-3 p-3 bg-muted rounded-lg border border-subtle">
                      <label className="text-xs font-bold uppercase text-muted">Režim používání / Sdílení</label>
-                     <div className="flex gap-4 items-center">
-                       <select 
-                         className="form-select text-sm flex-1"
-                         value={editForm.usageMode}
-                         onChange={e => setEditForm({...editForm, usageMode: e.target.value as any})}
-                       >
-                         <option value="PRIVATE">🔒 Soukromé</option>
-                         <option value="SHARED">👥 Sdílené (Souběžné)</option>
-                         <option value="SHARED_ROTATION">🕒 Sdílené (Střídání / Rezervace)</option>
-                         <option value="LICENSE">🔑 Licence / Slot</option>
-                       </select>
-                       {editForm.usageMode === "SHARED_ROTATION" && (
-                          <label className="flex items-center gap-2 cursor-pointer ml-auto border-l pl-4 border-subtle">
-                            <input type="checkbox" checked={editForm.requiresBookingApproval} onChange={e => setEditForm({...editForm, requiresBookingApproval: e.target.checked})} />
-                            <span className="text-sm">Schvalování termínů</span>
-                          </label>
-                       )}
-                     </div>
+                     <div className="flex flex-col gap-3">
+                        <div className="flex gap-4 items-center">
+                          <select 
+                            className="form-select text-sm flex-1"
+                            value={editForm.usageMode}
+                            onChange={e => setEditForm({...editForm, usageMode: e.target.value as any})}
+                          >
+                            <option value="PRIVATE">🔒 Soukromé</option>
+                            <option value="SHARED">👥 Sdílené (Souběžné)</option>
+                            <option value="SHARED_ROTATION">🕒 Sdílené (Střídání / Rezervace)</option>
+                            <option value="LICENSE">🔑 Licence / Slot</option>
+                          </select>
+                          {editForm.usageMode === "SHARED_ROTATION" && (
+                            <label className="flex items-center gap-2 cursor-pointer ml-auto border-l pl-4 border-subtle">
+                              <input type="checkbox" checked={editForm.requiresBookingApproval} onChange={e => setEditForm({...editForm, requiresBookingApproval: e.target.checked})} />
+                              <span className="text-sm">Schvalování termínů</span>
+                            </label>
+                          )}
+                        </div>
+                        
+                        <label className="flex items-center gap-3 cursor-pointer pt-2 border-t border-subtle border-dashed">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4"
+                            checked={editForm.sharingStatus === "SHARING_ENABLED"} 
+                            onChange={e => setEditForm({...editForm, sharingStatus: e.target.checked ? "SHARING_ENABLED" : "SHARING_DISABLED"})} 
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold">Viditelnost pro přátele (Discovery)</span>
+                            <span className="text-[10px] text-muted">Pokud zapnete, uvidí vaši přátelé tuto službu v seznamu k objevení.</span>
+                          </div>
+                        </label>
+                      </div>
                   </div>
                 </div>
                 <div className="form-group flex items-center gap-2" style={{ gridColumn: "1 / -1", padding: '8px 0' }}>

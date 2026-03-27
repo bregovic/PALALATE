@@ -48,7 +48,9 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
     pricingDetails: "",
     description: "",
     usageMode: "PRIVATE",
-    requiresBookingApproval: false
+    requiresBookingApproval: false,
+    url: "",
+    iconUrl: ""
   });
 
   useEffect(() => {
@@ -421,13 +423,24 @@ export function ServiceGridPicker({ activeServiceNames }: { activeServiceNames: 
                 )}
 
                 <div className="form-group">
-                  <label className="form-label">Poznámka</label>
+                  <label className="form-label">Poznámka / Popis (volitelné)</label>
                   <textarea 
                     className="form-input" 
                     style={{ minHeight: 60 }}
                     value={customService.description}
                     onChange={e => setCustomService({...customService, description: e.target.value})}
                   />
+                </div>
+
+                <div className="grid-2 gap-4">
+                  <div className="form-group">
+                    <label className="form-label">Webová adresa (URL)</label>
+                    <input className="form-input" placeholder="https://..." value={customService.url} onChange={e => setCustomService({...customService, url: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">URL Loga / Ikony</label>
+                    <input className="form-input" placeholder="https://.../logo.png" value={customService.iconUrl} onChange={e => setCustomService({...customService, iconUrl: e.target.value})} />
+                  </div>
                 </div>
               </div>
             </div>
